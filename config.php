@@ -17,7 +17,7 @@ try {
 
     // 3. Connect to the specific database
     $pdo = new PDO("mysql:host=" . DB_SERVER . ";port=" . DB_PORT . ";dbname=" . DB_NAME, DB_USERNAME, DB_PASSWORD);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, DB_PASSWORD === '' ? PDO::ERRMODE_EXCEPTION : PDO::ERRMODE_WARNING);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // 4. Create users table if it does not exist
     $createTableSQL = "CREATE TABLE IF NOT EXISTS users (

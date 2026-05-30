@@ -19,8 +19,10 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Install Python packages inside virtual environment
 RUN pip install --no-cache-dir numpy opencv-python-headless
 
-# Enable Apache rewrite module
-RUN a2enmod rewrite
+# Enable Apache rewrite module and enforce mpm_prefork to prevent MPM conflicts on Railway
+RUN a2dismod mpm_event mpm_worker || true \
+    && a2enmod mpm_prefork \
+    && a2enmod rewrite
 
 # Configure Apache to listen on dynamic Railway PORT
 RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf \

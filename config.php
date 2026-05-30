@@ -1,21 +1,22 @@
 <?php
 // config.php - Database Configuration & Connection with Auto-Setup
 
-define('DB_SERVER', 'localhost');
-define('DB_USERNAME', 'root');
-define('DB_PASSWORD', '');
-define('DB_NAME', 'green_forensics');
+define('DB_SERVER', getenv('MYSQLHOST') ?: 'localhost');
+define('DB_USERNAME', getenv('MYSQLUSER') ?: 'root');
+define('DB_PASSWORD', getenv('MYSQLPASSWORD') !== false ? getenv('MYSQLPASSWORD') : '');
+define('DB_NAME', getenv('MYSQLDATABASE') ?: 'green_forensics');
+define('DB_PORT', getenv('MYSQLPORT') ?: '3306');
 
 try {
     // 1. First connect to MySQL server without selecting database
-    $pdo = new PDO("mysql:host=" . DB_SERVER, DB_USERNAME, DB_PASSWORD);
+    $pdo = new PDO("mysql:host=" . DB_SERVER . ";port=" . DB_PORT, DB_USERNAME, DB_PASSWORD);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // 2. Create database if it does not exist
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
     // 3. Connect to the specific database
-    $pdo = new PDO("mysql:host=" . DB_SERVER . ";dbname=" . DB_NAME, DB_USERNAME, DB_PASSWORD);
+    $pdo = new PDO("mysql:host=" . DB_SERVER . ";port=" . DB_PORT . ";dbname=" . DB_NAME, DB_USERNAME, DB_PASSWORD);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, DB_PASSWORD === '' ? PDO::ERRMODE_EXCEPTION : PDO::ERRMODE_WARNING);
 
     // 4. Create users table if it does not exist

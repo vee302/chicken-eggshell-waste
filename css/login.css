@@ -454,3 +454,65 @@ footer {
     margin-top: 0.75rem;
     border-radius: 12px;
 }
+
+/* ===================================
+   REGISTER LINK STYLES
+   =================================== */
+.register-link-wrapper {
+    text-align: center;
+    margin-top: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--gray);
+}
+
+.register-link-wrapper span {
+    margin-right: 4px;
+}
+
+.register-link {
+    color: var(--dark-green);
+    text-decoration: none;
+    font-weight: 700;
+    border-bottom: 1.5px solid rgba(47, 79, 58, 0.2);
+    padding-bottom: 2px;
+    transition: all 0.2s ease-in-out;
+}
+
+.register-link:hover {
+    color: var(--soft-green);
+    border-bottom-color: var(--soft-green);
+}
+
+/* ===================================
+   REGISTER PAGE STYLES
+   =================================== */
+.alert-success {
+    background-color: rgba(107, 143, 113, 0.1);
+    color: var(--dark-green);
+    border: 1px solid rgba(107, 143, 113, 0.25);
+}
+
+.login-link-wrapper {
+    text-align: center;
+    margin-top: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--gray);
+}
+
+.login-link-wrapper span {
+    margin-right: 4px;
+}
+
+.login-link {
+    color: var(--dark-green);
+    text-decoration: none;
+    font-weight: 700;
+    border-bottom: 1.5px solid rgba(47, 79, 58, 0.2);
+    padding-bottom: 2px;
+    transition: all 0.2s ease-in-out;
+}
+
+.login-link:hover {
+    color: var(--soft-green);
+    border-bottom-color: var(--soft-green);
+}

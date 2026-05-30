@@ -1,7 +1,6 @@
 <?php
-// login.php - Secure login system for Green Forensics Evaluating System
+// register.php - User Registration for Green Forensics Evaluating System
 
-// Start the session
 session_start();
 
 // Redirect to dashboard if already logged in
@@ -17,80 +16,63 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 // Include database configuration
 require_once "config.php";
 
-$email = $password = "";
+$name = $email = $password = $confirm_password = "";
 $error_message = "";
+$success_message = "";
 
-// Process form data when post request is submitted
+// Process form data when POST request is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Trim input values
+    $name = trim($_POST["name"]);
     $email = trim($_POST["email"]);
     $password = trim($_POST["password"]);
+    $confirm_password = trim($_POST["confirm_password"]);
 
-    // Validate credentials
-    if (empty($email) || empty($password)) {
-        $error_message = "Please enter both email and password.";
+    // Validate inputs
+    if (empty($name) || empty($email) || empty($password) || empty($confirm_password)) {
+        $error_message = "Please fill in all fields.";
+    } elseif (strlen($name) < 2 || strlen($name) > 100) {
+        $error_message = "Full name must be between 2 and 100 characters.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error_message = "Please enter a valid email address.";
+    } elseif (strlen($password) < 6) {
+        $error_message = "Password must be at least 6 characters.";
+    } elseif ($password !== $confirm_password) {
+        $error_message = "Passwords do not match.";
     } else {
-        // Prepare a select statement
-        $sql = "SELECT id, name AS full_name, email, password, status FROM users WHERE email = :email";
-        
+        // Check if email already exists
         try {
-            if ($stmt = $pdo->prepare($sql)) {
-                // Bind variables to the prepared statement as parameters
-                $stmt->bindParam(":email", $param_email, PDO::PARAM_STR);
-                $param_email = $email;
-                
-                // Attempt to execute the prepared statement
-                if ($stmt->execute()) {
-                    // Check if email exists
-                    if ($stmt->rowCount() == 1) {
-                        if ($row = $stmt->fetch()) {
-                            $id = $row["id"];
-                            $full_name = $row["full_name"];
-                            $hashed_password = $row["password"];
-                            $status = $row["status"];
-                            
-                            // Verify password
-                            if (password_verify($password, $hashed_password)) {
-                                // Check if user account is active
-                                if ($status === 'active') {
-                                    // Password is correct, start a new session
-                                    $_SESSION["logged_in"] = true;
-                                    $_SESSION["user_id"] = $id;
-                                    $_SESSION["user_name"] = $full_name;
-                                    $_SESSION["user_email"] = $email;
-                                    
-                                    // Redirect to appropriate dashboard page
-                                    if ($email === 'admin@greenforensics.com' || $email === 'admin@greenforensics.edu.ph') {
-                                        header("Location: admin/admin_dashboard.php");
-                                    } else {
-                                        header("Location: dashboard.php");
-                                    }
-                                    exit;
-                                } else {
-                                    $error_message = "Account is inactive.";
-                                }
-                            } else {
-                                // Display generic error for security
-                                $error_message = "Invalid email address or password.";
-                            }
-                        }
-                    } else {
-                        // Display generic error for security
-                        $error_message = "Invalid email address or password.";
-                    }
+            $checkSQL = "SELECT id FROM users WHERE email = :email";
+            $checkStmt = $pdo->prepare($checkSQL);
+            $checkStmt->bindParam(":email", $email, PDO::PARAM_STR);
+            $checkStmt->execute();
+
+            if ($checkStmt->rowCount() > 0) {
+                $error_message = "An account with this email already exists.";
+            } else {
+                // Hash the password
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+                // Insert the new user
+                $insertSQL = "INSERT INTO users (name, email, password, status) VALUES (:name, :email, :password, 'active')";
+                $insertStmt = $pdo->prepare($insertSQL);
+                $insertStmt->bindParam(":name", $name, PDO::PARAM_STR);
+                $insertStmt->bindParam(":email", $email, PDO::PARAM_STR);
+                $insertStmt->bindParam(":password", $hashed_password, PDO::PARAM_STR);
+
+                if ($insertStmt->execute()) {
+                    $success_message = "Account created successfully! You can now log in.";
+                    // Clear form fields
+                    $name = $email = $password = $confirm_password = "";
                 } else {
-                    $error_message = "Oops! Something went wrong. Please try again later.";
+                    $error_message = "Something went wrong. Please try again.";
                 }
-                
-                // Close statement
-                unset($stmt);
             }
+            unset($checkStmt);
         } catch (PDOException $e) {
             $error_message = "Connection error: " . $e->getMessage();
         }
     }
-    
-    // Close connection
+
     unset($pdo);
 }
 ?>
@@ -99,17 +81,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Green Forensics Evaluating System - Login</title>
-    <!-- CSS Stylesheet -->
+    <title>Green Forensics Evaluating System - Register</title>
     <link rel="stylesheet" href="css/login.css">
-    <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <header>
         <h1>Green Forensics Evaluating System</h1>
-        <p>Innovative Sustainable Fingerprint Powder Using Chicken Eggshell Waste</p>
+        <p>Create your account to access the evaluating system</p>
     </header>
 
     <main class="login-container">
@@ -123,28 +103,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="skeleton-item skeleton-input"></div>
                 <div class="skeleton-item skeleton-label"></div>
                 <div class="skeleton-item skeleton-input"></div>
+                <div class="skeleton-item skeleton-label"></div>
+                <div class="skeleton-item skeleton-input"></div>
+                <div class="skeleton-item skeleton-label"></div>
+                <div class="skeleton-item skeleton-input"></div>
                 <div class="skeleton-item skeleton-button"></div>
             </div>
         </div>
 
-        <!-- REAL LOGIN FORM (hidden initially) -->
-        <div class="login-card" id="realLoginCard" style="display: none; opacity: 0;">
+        <!-- REAL REGISTER FORM (hidden initially) -->
+        <div class="login-card" id="realRegisterCard" style="display: none; opacity: 0;">
             <div class="card-header">
                 <div class="card-icon">
-                    <!-- Fingerprint SVG Icon -->
+                    <!-- User Plus SVG Icon -->
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2a10 10 0 0 0-7.3 16.8"></path>
-                        <path d="M12 2a10 10 0 0 1 7.3 16.8"></path>
-                        <path d="M12 6a6 6 0 0 0-4.4 10.1"></path>
-                        <path d="M12 6a6 6 0 0 1 4.4 10.1"></path>
-                        <path d="M12 10a2 2 0 0 0-1.5 3.4"></path>
-                        <path d="M12 10a2 2 0 0 1 1.5 3.4"></path>
-                        <path d="M12 14v4"></path>
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
                     </svg>
                 </div>
-                <h2>System Authentication</h2>
-                <p>Please enter your credentials below</p>
+                <h2>Create Account</h2>
+                <p>Fill in the details below to register</p>
             </div>
+
+            <!-- Success Alert -->
+            <?php if (!empty($success_message)): ?>
+                <div class="alert alert-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span><?php echo htmlspecialchars($success_message); ?></span>
+                </div>
+            <?php endif; ?>
 
             <!-- Error Alert -->
             <?php if (!empty($error_message)): ?>
@@ -159,6 +151,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <?php endif; ?>
 
             <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" autocomplete="off">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </span>
+                        <input type="text" name="name" id="name" class="form-control" placeholder="Enter your full name" value="<?php echo htmlspecialchars($name); ?>" required>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="email">Email Address</label>
                     <div class="input-wrapper">
@@ -181,26 +186,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                             </svg>
                         </span>
-                        <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
+                        <input type="password" name="password" id="password" class="form-control" placeholder="Minimum 6 characters" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 11 12 14 22 4"></polyline>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                        </span>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Re-enter your password" required>
                     </div>
                 </div>
 
                 <button type="submit" class="btn-primary">
-                    <span>Login Securely</span>
+                    <span>Create Account</span>
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                         <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
                 </button>
             </form>
-            
-            <div style="text-align: center; margin-top: 1.5rem; font-size: 0.8rem; color: var(--gray); font-style: italic;">
-                Authorized users only.
-            </div>
 
-            <div class="register-link-wrapper">
-                <span>Don't have an account?</span>
-                <a href="register.php" class="register-link">Register here</a>
+            <div class="login-link-wrapper">
+                <span>Already have an account?</span>
+                <a href="login.php" class="login-link">Login here</a>
             </div>
 
             <div class="back-link-wrapper">
@@ -223,7 +237,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Skeleton → Real Form reveal transition
         document.addEventListener("DOMContentLoaded", () => {
             const skeleton = document.getElementById("skeletonCard");
-            const realCard = document.getElementById("realLoginCard");
+            const realCard = document.getElementById("realRegisterCard");
 
             setTimeout(() => {
                 // Fade out skeleton

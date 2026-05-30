@@ -1,0 +1,10 @@
+.git
+.gitignore
+.vscode
+Dockerfile
+.dockerignore
+uploads/*
+!uploads/.gitkeep
+!uploads/fingerprints/.gitkeep
+database.sql
+test_processor.php

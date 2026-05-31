@@ -34,9 +34,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                 } else {
                     // Insert new user
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                    $insertStmt = $pdo->prepare("INSERT INTO users (name, email, password, status) VALUES (:name, :email, :password, :status)");
+                    $insertStmt = $pdo->prepare("INSERT INTO users (full_name, email, password, role, status) VALUES (:full_name, :email, :password, :role, :status)");
                     $insertStmt->execute([
-                        ':name' => $name,
+                        ':full_name' => $name,
+                        ':role' => 'criminology_student',
                         ':email' => $email,
                         ':password' => $hashed_password,
                         ':status' => $status
@@ -67,9 +68,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                     $error = "Email address is already in use by another account.";
                 } else {
                     // Update user
-                    $updateStmt = $pdo->prepare("UPDATE users SET name = :name, email = :email, status = :status WHERE id = :id");
+                    $updateStmt = $pdo->prepare("UPDATE users SET full_name = :full_name, email = :email, status = :status WHERE id = :id");
                     $updateStmt->execute([
-                        ':name' => $name,
+                        ':full_name' => $name,
                         ':email' => $email,
                         ':status' => $status,
                         ':id' => $id
@@ -138,11 +139,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
 $search = isset($_GET["search"]) ? trim($_GET["search"]) : "";
 $filter_status = isset($_GET["status"]) ? trim($_GET["status"]) : "";
 
-$query_str = "SELECT id, name, email, status, created_at FROM users WHERE 1=1";
+$query_str = "SELECT id, full_name, email, role, status, created_at FROM users WHERE 1=1";
 $params = [];
 
 if (!empty($search)) {
-    $query_str .= " AND (name LIKE :search OR email LIKE :search)";
+    $query_str .= " AND (full_name LIKE :search OR email LIKE :search)";
     $params[':search'] = '%' . $search . '%';
 }
 
@@ -385,7 +386,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <tr>
                                             <td><?php echo $user['id']; ?></td>
                                             <td style="font-weight: 600; color: var(--dark-green);">
-                                                <?php echo htmlspecialchars($user['name']); ?></td>
+                                                <?php echo htmlspecialchars($user['full_name']); ?></td>
                                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                                             <td>
                                                 <span class="badge badge-<?php echo $user['status']; ?>">
@@ -414,7 +415,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                                                     <!-- Edit User Info Button -->
                                                     <button class="icon-btn" title="Edit account details"
-                                                        onclick="openEditModal(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($user['email'], ENT_QUOTES); ?>', '<?php echo $user['status']; ?>')">
+                                                        onclick="openEditModal(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['full_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($user['email'], ENT_QUOTES); ?>', '<?php echo $user['status']; ?>')">
                                                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
                                                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                                             stroke-linejoin="round">
@@ -428,7 +429,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                                                     <!-- Reset Password Button -->
                                                     <button class="icon-btn" title="Reset password"
-                                                        onclick="openResetModal(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['name'], ENT_QUOTES); ?>')">
+                                                        onclick="openResetModal(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['full_name'], ENT_QUOTES); ?>')">
                                                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
                                                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                                             stroke-linejoin="round">

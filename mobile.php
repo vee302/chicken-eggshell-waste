@@ -283,163 +283,241 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 <h2 class="section-title">Latent Print Development</h2>
             </div>
 
-            <div class="fingerprint-demo">
-                <div class="demo-left-column">
-                    <div class="demo-surface">
-                        <span class="surface-label">Glass Surface</span>
+            <style>
+                /* Scoped Redesign for Latent Print Section */
+                .latent-redesign {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 4rem;
+                    align-items: center;
+                    margin-top: 2rem;
+                }
+                .latent-col-left, .latent-col-right {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2rem;
+                }
+                /* Clean Glass Image Card */
+                .glass-card-clean {
+                    background: #fff;
+                    border-radius: 20px;
+                    overflow: hidden;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+                    border: 1px solid rgba(0,0,0,0.04);
+                    position: relative;
+                }
+                .glass-img-bg {
+                    width: 100%;
+                    height: 280px;
+                    background-image: url('images/glass-surface.png');
+                    background-size: cover;
+                    background-position: center;
+                }
+                .glass-label-badge {
+                    position: absolute;
+                    top: 1.5rem;
+                    left: 1.5rem;
+                    background: rgba(255,255,255,0.95);
+                    padding: 6px 14px;
+                    border-radius: 20px;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    letter-spacing: 1px;
+                    color: var(--dark-green);
+                    text-transform: uppercase;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                }
+                /* Minimal Camera Preview Card */
+                .camera-preview-clean {
+                    background: #fafaf8;
+                    border-radius: 20px;
+                    padding: 2.5rem;
+                    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+                    text-align: center;
+                }
+                .camera-preview-clean h3 {
+                    color: var(--dark-green);
+                    font-size: 1.3rem;
+                    margin-bottom: 0.5rem;
+                }
+                .camera-preview-clean > p {
+                    color: #666;
+                    font-size: 0.95rem;
+                    margin-bottom: 2rem;
+                }
+                .preview-box-ui {
+                    background: #fff;
+                    border: 2px dashed rgba(0,0,0,0.1);
+                    border-radius: 12px;
+                    padding: 2.5rem 1rem;
+                    margin-bottom: 2rem;
+                    color: #888;
+                }
+                .preview-btns {
+                    display: flex;
+                    gap: 1rem;
+                    margin-bottom: 1rem;
+                }
+                .preview-btns button {
+                    flex: 1;
+                    padding: 12px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    font-size: 0.8rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    transition: all 0.2s ease;
+                }
+                .btn-green-light {
+                    background: rgba(46, 125, 50, 0.1);
+                    color: var(--dark-green);
+                    border: none;
+                }
+                .btn-green-light:hover {
+                    background: rgba(46, 125, 50, 0.15);
+                }
+                .btn-outline {
+                    background: transparent;
+                    border: 1px solid rgba(0,0,0,0.15);
+                    color: #555;
+                }
+                .btn-outline:hover {
+                    background: rgba(0,0,0,0.03);
+                }
+                .btn-solid-green {
+                    width: 100%;
+                    background: var(--dark-green);
+                    color: #fff;
+                    border: none;
+                    padding: 14px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    margin-bottom: 1.5rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    text-decoration: none;
+                    transition: all 0.2s ease;
+                }
+                .btn-solid-green:hover {
+                    opacity: 0.9;
+                }
+                /* Info Cards on Right */
+                .intro-text-clean {
+                    font-size: 1.1rem;
+                    line-height: 1.6;
+                    color: #555;
+                    margin-bottom: 0.5rem;
+                }
+                .info-card-clean {
+                    background: #fff;
+                    border-radius: 16px;
+                    padding: 1.8rem;
+                    box-shadow: 0 8px 30px rgba(0,0,0,0.03);
+                    border: 1px solid rgba(0,0,0,0.04);
+                    border-left: 4px solid var(--soft-green);
+                    transition: transform 0.3s ease;
+                }
+                .info-card-clean:hover {
+                    transform: translateX(5px);
+                }
+                .info-card-clean h4 {
+                    color: var(--dark-green);
+                    font-size: 1.1rem;
+                    margin-bottom: 0.5rem;
+                }
+                .info-card-clean p {
+                    color: #666;
+                    font-size: 0.95rem;
+                    line-height: 1.5;
+                    margin: 0;
+                }
+                @media(max-width: 992px) {
+                    .latent-redesign {
+                        grid-template-columns: 1fr;
+                        gap: 3rem;
+                    }
+                }
+            </style>
 
-                        <!-- Fingerprint SVG that reveals on scroll -->
-                        <svg class="fingerprint-reveal" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <mask id="fingerprintMask">
-                                    <rect width="200" height="0" fill="white" id="maskRect" />
-                                </mask>
-                            </defs>
-                            <g mask="url(#fingerprintMask)">
-                                <!-- Fingerprint ridges -->
-                                <ellipse cx="100" cy="100" rx="70" ry="85" fill="none" stroke="var(--dark-green)"
-                                    stroke-width="2.5" opacity="0.9" />
-                                <ellipse cx="100" cy="100" rx="60" ry="75" fill="none" stroke="var(--soft-green)"
-                                    stroke-width="2.5" opacity="0.9" />
-                                <ellipse cx="100" cy="100" rx="50" ry="65" fill="none" stroke="var(--soft-green)"
-                                    stroke-width="2.5" opacity="0.9" />
-                                <ellipse cx="100" cy="100" rx="40" ry="55" fill="none" stroke="var(--soft-green)"
-                                    stroke-width="2.5" opacity="0.9" />
-                                <ellipse cx="100" cy="100" rx="30" ry="45" fill="none" stroke="var(--soft-green)"
-                                    stroke-width="2.5" opacity="0.9" />
-                                <ellipse cx="100" cy="100" rx="20" ry="35" fill="none" stroke="var(--soft-green)"
-                                    stroke-width="2.5" opacity="0.9" />
-                                <ellipse cx="100" cy="100" rx="10" ry="25" fill="none" stroke="var(--soft-green)"
-                                    stroke-width="2.5" opacity="0.9" />
-                            </g>
-                        </svg>
-
-                        <!-- Powder particles spreading -->
-                        <div class="powder-spread">
-                            <div class="powder-dot"></div>
-                            <div class="powder-dot"></div>
-                            <div class="powder-dot"></div>
-                            <div class="powder-dot"></div>
-                            <div class="powder-dot"></div>
-                        </div>
+            <div class="latent-redesign">
+                <!-- Left Column -->
+                <div class="latent-col-left">
+                    <!-- Glass Surface Image Card -->
+                    <div class="glass-card-clean">
+                        <div class="glass-label-badge">GLASS SURFACE</div>
+                        <div class="glass-img-bg"></div>
                     </div>
 
-                    <div class="info-card">
-                        <h4>Effectiveness</h4>
-                        <p>Comparable results to commercial powders on glass, paper, and wood surfaces</p>
+                    <!-- Camera Preview Card -->
+                    <div class="camera-preview-clean">
+                        <span style="display: inline-block; padding: 4px 12px; background: rgba(46, 125, 50, 0.1); color: var(--dark-green); border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-bottom: 1rem;">PREVIEW ONLY</span>
+                        <h3>Camera-Based Evaluation Preview</h3>
+                        <p>Visual preview of the secured student dashboard feature.</p>
+                        
+                        <div class="preview-box-ui">
+                            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px; opacity: 0.6;">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                            <div style="font-weight: 600; color: #555; margin-bottom: 6px; font-size: 0.95rem;">Camera Preview / Uploaded Image</div>
+                            <div style="font-size: 0.8rem; color: #999;">Preview Mode Only</div>
+                        </div>
+
+                        <div class="preview-btns">
+                            <button class="btn-green-light" onclick="alert('Please login to access the secured camera-based evaluation feature.')">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                                START CAMERA
+                            </button>
+                            <button class="btn-outline" onclick="alert('Please login to access the secured camera-based evaluation feature.')">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                UPLOAD FILE
+                            </button>
+                        </div>
+
+                        <button class="btn-solid-green" onclick="alert('Please login to access the secured camera-based evaluation feature.')">
+                            EVALUATE PRINT CLARITY
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                        </button>
+
+                        <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 1.5rem; margin-top: 1rem;">
+                            <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                Fingerprint images are protected through login authentication and role-based access control.
+                            </p>
+                            <a href="login.php" class="btn-solid-green" style="margin-bottom: 0; margin-top: 1.5rem; background: #222;">
+                                LOGIN TO USE CAMERA-BASED EVALUATION
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-                <div class="demo-right-column demo-info">
-                    <div class="info-card">
+                <!-- Right Column -->
+                <div class="latent-col-right">
+                    <p class="intro-text-clean">
+                        Our sustainable eggshell-based powder is designed to be applied on common test surfaces to help reveal latent fingerprints for classroom, laboratory, and simulation-based evaluation.
+                    </p>
+
+                    <div class="info-card-clean">
                         <h4>Application Method</h4>
-                        <p>Eggshell powder is gently brushed onto surfaces containing latent fingerprints</p>
+                        <p>Eggshell powder is gently applied to surfaces containing latent fingerprints.</p>
                     </div>
-                    <div class="info-card">
+
+                    <div class="info-card-clean">
                         <h4>Visibility</h4>
-                        <p>Fine calcium carbonate particles adhere to oils and residues, revealing ridge patterns</p>
+                        <p>Fine calcium carbonate particles adhere to fingerprint residues, revealing ridge patterns.</p>
                     </div>
 
-                    <!-- Camera Capture Interface Card -->
-                    <div class="camera-capture-card">
-                        <div class="camera-card-header">
-                            <span class="card-badge">INPUT DEVICE</span>
-                            <h3>Latent Print Capture</h3>
-                            <p>Capture or upload the developed latent fingerprint for Python evaluation.</p>
-                        </div>
-
-                        <div class="camera-view-container">
-                            <video id="cameraStream" autoplay playsinline class="camera-video"
-                                style="display: none;"></video>
-                            <canvas id="photoPreviewCanvas" class="photo-preview-canvas"
-                                style="display: none;"></canvas>
-                            <div id="cameraPlaceholder" class="camera-placeholder">
-                                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
-                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                                    class="placeholder-icon">
-                                    <path
-                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
-                                    </path>
-                                    <circle cx="12" cy="13" r="4"></circle>
-                                </svg>
-                                <p>Camera Preview / Uploaded Image</p>
-                                <span class="placeholder-subtext">No media source active</span>
-                            </div>
-
-                            <!-- Glowing scanner line during analysis simulation -->
-                            <div id="analysisScannerLine" class="analysis-scanner-line" style="display: none;"></div>
-                        </div>
-
-                        <div class="camera-controls">
-                            <!-- Toggle Video Stream -->
-                            <button type="button" id="btnToggleCamera" class="camera-btn secondary-btn">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path
-                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
-                                    </path>
-                                    <circle cx="12" cy="13" r="4"></circle>
-                                </svg>
-                                <span>Start Camera</span>
-                            </button>
-
-                            <!-- Capture Snapshot (only visible when video is streaming) -->
-                            <button type="button" id="btnCapturePhoto" class="camera-btn primary-btn"
-                                style="display: none;">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                                <span>Capture Photo</span>
-                            </button>
-
-                            <!-- File Upload (Alternative) -->
-                            <button type="button" id="btnUploadTrigger" class="camera-btn outline-btn">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                                </svg>
-                                <span>Upload File</span>
-                            </button>
-                            <input type="file" id="cameraFileInput" accept="image/*" capture="environment"
-                                style="display: none;">
-                        </div>
-
-                        <!-- Analysis Action Button -->
-                        <button type="button" id="btnStartEvaluation" class="evaluate-action-btn" disabled>
-                            <span>EVALUATE PRINT CLARITY</span>
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 11 12 14 22 4"></polyline>
-                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                            </svg>
-                        </button>
-
-                        <!-- Simulation Result Display -->
-                        <div id="evaluationResultContainer" class="evaluation-result-card" style="display: none;">
-                            <div class="result-status-header">
-                                <span class="pulse-dot-green"></span>
-                                <h4>PYTHON ANALYSIS RESULT</h4>
-                            </div>
-                            <div class="result-metrics">
-                                <div class="result-metric-item">
-                                    <span class="label">Ridge Contrast</span>
-                                    <span id="metricRidgeContrast" class="value">--</span>
-                                </div>
-                                <div class="result-metric-item">
-                                    <span class="label">Minutiae Points</span>
-                                    <span id="metricMinutiae" class="value">--</span>
-                                </div>
-                                <div class="result-metric-item">
-                                    <span class="label">Clarity Rating</span>
-                                    <span id="metricClarityRating" class="value-large">--</span>
-                                </div>
-                            </div>
-                            <p id="evaluationFeedback" class="result-feedback-text"></p>
-                        </div>
+                    <div class="info-card-clean">
+                        <h4>Effectiveness</h4>
+                        <p>Results can be compared across glass, paper, wood, plastic, and metal surfaces.</p>
                     </div>
                 </div>
             </div>

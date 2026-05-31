@@ -34,24 +34,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                 } else {
                     // Insert new user
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-<<<<<<< HEAD
-                    $insertStmt = $pdo->prepare("INSERT INTO users (full_name, email, password, role, status) VALUES (:full_name, :email, :password, :role, :status)");
+                    $insertStmt = $pdo->prepare("INSERT INTO users (name, email, password, status) VALUES (:name, :email, :password, :status)");
                     $insertStmt->execute([
-                        ':full_name' => $name,
-                        ':role' => 'criminology_student',
+                        ':name' => $name,
                         ':email' => $email,
                         ':password' => $hashed_password,
                         ':status' => $status
-=======
-                    $role = in_array($_POST['role'] ?? '', ['super_admin','faculty_researcher','criminology_student','alumni_police_partner']) ? $_POST['role'] : 'criminology_student';
-                    $insertStmt = $pdo->prepare("INSERT INTO users (full_name, email, password, role, status) VALUES (:full_name, :email, :password, :role, :status)");
-                    $insertStmt->execute([
-                        ':full_name' => $name,
-                        ':email'     => $email,
-                        ':password'  => $hashed_password,
-                        ':role'      => $role,
-                        ':status'    => $status
->>>>>>> mobile
                     ]);
                     $success = "User account created successfully!";
                 }
@@ -81,16 +69,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                     // Update user
                     $updateStmt = $pdo->prepare("UPDATE users SET full_name = :full_name, email = :email, status = :status WHERE id = :id");
                     $updateStmt->execute([
-                        ':full_name' => $name,
-<<<<<<< HEAD
+                        ':name' => $name,
                         ':email' => $email,
                         ':status' => $status,
                         ':id' => $id
-=======
-                        ':email'     => $email,
-                        ':status'    => $status,
-                        ':id'        => $id
->>>>>>> mobile
                     ]);
                     $success = "User account updated successfully!";
                 }
@@ -404,10 +386,12 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <tr>
                                             <td><?php echo $user['id']; ?></td>
                                             <td style="font-weight: 600; color: var(--dark-green);">
-                                                <?php echo htmlspecialchars($user['full_name']); ?>
+                                                <?php echo htmlspecialchars($user['name']); ?>
                                             </td>
                                             <td><?php echo htmlspecialchars($user['email']); ?></td>
-                                            <td><span style="font-size:.75rem;font-weight:700;text-transform:capitalize;color:#6c757d;"><?php echo str_replace('_',' ', $user['role'] ?? '—'); ?></span></td>
+                                            <td><span
+                                                    style="font-size:.75rem;font-weight:700;text-transform:capitalize;color:#6c757d;"><?php echo str_replace('_', ' ', $user['role'] ?? '—'); ?></span>
+                                            </td>
                                             <td>
                                                 <span class="badge badge-<?php echo $user['status']; ?>">
                                                     <?php echo $user['status']; ?>

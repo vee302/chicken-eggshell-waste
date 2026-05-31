@@ -385,7 +385,8 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <tr>
                                             <td><?php echo $user['id']; ?></td>
                                             <td style="font-weight: 600; color: var(--dark-green);">
-                                                <?php echo htmlspecialchars($user['name']); ?></td>
+                                                <?php echo htmlspecialchars($user['name']); ?>
+                                            </td>
                                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                                             <td>
                                                 <span class="badge badge-<?php echo $user['status']; ?>">

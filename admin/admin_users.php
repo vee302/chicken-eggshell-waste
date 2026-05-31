@@ -34,6 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                 } else {
                     // Insert new user
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+<<<<<<< HEAD
                     $insertStmt = $pdo->prepare("INSERT INTO users (full_name, email, password, role, status) VALUES (:full_name, :email, :password, :role, :status)");
                     $insertStmt->execute([
                         ':full_name' => $name,
@@ -41,6 +42,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                         ':email' => $email,
                         ':password' => $hashed_password,
                         ':status' => $status
+=======
+                    $role = in_array($_POST['role'] ?? '', ['super_admin','faculty_researcher','criminology_student','alumni_police_partner']) ? $_POST['role'] : 'criminology_student';
+                    $insertStmt = $pdo->prepare("INSERT INTO users (full_name, email, password, role, status) VALUES (:full_name, :email, :password, :role, :status)");
+                    $insertStmt->execute([
+                        ':full_name' => $name,
+                        ':email'     => $email,
+                        ':password'  => $hashed_password,
+                        ':role'      => $role,
+                        ':status'    => $status
+>>>>>>> mobile
                     ]);
                     $success = "User account created successfully!";
                 }
@@ -71,9 +82,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                     $updateStmt = $pdo->prepare("UPDATE users SET full_name = :full_name, email = :email, status = :status WHERE id = :id");
                     $updateStmt->execute([
                         ':full_name' => $name,
+<<<<<<< HEAD
                         ':email' => $email,
                         ':status' => $status,
                         ':id' => $id
+=======
+                        ':email'     => $email,
+                        ':status'    => $status,
+                        ':id'        => $id
+>>>>>>> mobile
                     ]);
                     $success = "User account updated successfully!";
                 }
@@ -375,6 +392,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <th>ID</th>
                                     <th>Full Name</th>
                                     <th>Email Address</th>
+                                    <th>Role</th>
                                     <th>Status</th>
                                     <th>Created Date</th>
                                     <th style="text-align: right;">Actions</th>
@@ -386,8 +404,10 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <tr>
                                             <td><?php echo $user['id']; ?></td>
                                             <td style="font-weight: 600; color: var(--dark-green);">
-                                                <?php echo htmlspecialchars($user['full_name']); ?></td>
+                                                <?php echo htmlspecialchars($user['full_name']); ?>
+                                            </td>
                                             <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                            <td><span style="font-size:.75rem;font-weight:700;text-transform:capitalize;color:#6c757d;"><?php echo str_replace('_',' ', $user['role'] ?? '—'); ?></span></td>
                                             <td>
                                                 <span class="badge badge-<?php echo $user['status']; ?>">
                                                     <?php echo $user['status']; ?>
@@ -501,6 +521,15 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <label for="add_password">Initial Password</label>
                         <input type="password" name="password" id="add_password" class="form-control"
                             placeholder="Minimum 6 characters" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="add_role">Role</label>
+                        <select name="role" id="add_role" class="form-control">
+                            <option value="criminology_student">Criminology Student</option>
+                            <option value="faculty_researcher">Faculty Researcher</option>
+                            <option value="alumni_police_partner">Alumni / Police Partner</option>
+                            <option value="super_admin">Super Admin</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="add_status">Account Status</label>

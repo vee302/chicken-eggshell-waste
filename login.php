@@ -6,8 +6,11 @@ session_start();
 
 // Redirect to dashboard if already logged in
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    if ($_SESSION["user_email"] === 'admin@greenforensics.com' || $_SESSION["user_email"] === 'admin@greenforensics.edu.ph') {
+    $role = $_SESSION['user_role'] ?? '';
+    if ($role === 'super_admin') {
         header("Location: admin/admin_dashboard.php");
+    } elseif ($role === 'faculty_researcher') {
+        header("Location: faculty/faculty_dashboard.php");
     } else {
         header("Location: dashboard.php");
     }
@@ -31,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error_message = "Please enter both email and password.";
     } else {
         // Prepare a select statement
-        $sql = "SELECT id, name AS full_name, email, password, status FROM users WHERE email = :email";
+        $sql = "SELECT id, full_name, email, password, role, status FROM users WHERE email = :email";
         
         try {
             if ($stmt = $pdo->prepare($sql)) {
@@ -47,21 +50,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             $id = $row["id"];
                             $full_name = $row["full_name"];
                             $hashed_password = $row["password"];
+                            $user_role = $row["role"];
                             $status = $row["status"];
                             
                             // Verify password
                             if (password_verify($password, $hashed_password)) {
                                 // Check if user account is active
                                 if ($status === 'active') {
-                                    // Password is correct, start a new session
+                                    // Set session variables
                                     $_SESSION["logged_in"] = true;
-                                    $_SESSION["user_id"] = $id;
+                                    $_SESSION["user_id"]   = $id;
                                     $_SESSION["user_name"] = $full_name;
-                                    $_SESSION["user_email"] = $email;
+                                    $_SESSION["user_email"]= $email;
+                                    $_SESSION["user_role"] = $user_role;
                                     
-                                    // Redirect to appropriate dashboard page
-                                    if ($email === 'admin@greenforensics.com' || $email === 'admin@greenforensics.edu.ph') {
+                                    // Redirect based on role
+                                    if ($user_role === 'super_admin') {
                                         header("Location: admin/admin_dashboard.php");
+                                    } elseif ($user_role === 'faculty_researcher') {
+                                        header("Location: faculty/faculty_dashboard.php");
                                     } else {
                                         header("Location: dashboard.php");
                                     }

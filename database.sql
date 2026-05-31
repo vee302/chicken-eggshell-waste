@@ -1,30 +1,128 @@
 -- database.sql
 -- Green Forensics Evaluating System Database Schema
+-- Updated: Role-based system with Faculty Researcher support
 
 CREATE DATABASE IF NOT EXISTS `green_forensics` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `green_forensics`;
 
--- Create users table
+-- ============================================================
+-- USERS TABLE
+-- Roles: super_admin | faculty_researcher | criminology_student | alumni_police_partner
+-- ============================================================
 CREATE TABLE IF NOT EXISTS `users` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(100) NOT NULL,
+    `full_name` VARCHAR(150) NOT NULL,
     `email` VARCHAR(150) NOT NULL UNIQUE,
-    `username` VARCHAR(80) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
-    `role_id` INT(11) NOT NULL,
-    `status` ENUM('active', 'inactive') DEFAULT 'active',
-    `profile_pic` VARCHAR(255) DEFAULT NULL,
-    `last_login` DATETIME DEFAULT NULL,
+    `role` ENUM('super_admin','faculty_researcher','criminology_student','alumni_police_partner') NOT NULL DEFAULT 'criminology_student',
+    `status` ENUM('active','inactive') DEFAULT 'active',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Seed default user accounts
--- Emails: admin@greenforensics.com (or admin@greenforensics.edu.ph)
--- Password: admin123 (for admin accounts) or password (for other accounts)
--- Hashing generated using PHP's password_hash() function
-INSERT INTO `users` (`id`, `name`, `email`, `username`, `password`, `role_id`, `status`)
-VALUES 
-(1, 'System Administrator', 'admin@greenforensics.com', 'admin', '$2y$10$vU3vA6Kj24M75WqYFfL2aO/Qk2tQZlS66HWhFmgz4qEw3Q1c6lGxe', 1, 'active'),
-(2, 'System Administrator (Edu)', 'admin@greenforensics.edu.ph', 'admin_edu', '$2y$10$Cde1Vjp9ICu1HX.MbUnSXek0NUwgFr6m2VThMuTikxhTYlgn4sc.C', 1, 'active')
+-- ============================================================
+-- FINGERPRINT TESTS TABLE
+-- Student trial submissions
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `fingerprint_tests` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `student_id` INT NOT NULL,
+    `powder_type` ENUM('eggshell','commercial') NOT NULL DEFAULT 'eggshell',
+    `surface_type` ENUM('glass','paper','wood','plastic','metal') NOT NULL,
+    `fingerprint_image` VARCHAR(255) DEFAULT NULL,
+    `ridge_clarity_score` DECIMAL(5,2) DEFAULT 0.00,
+    `visibility_score` DECIMAL(5,2) DEFAULT 0.00,
+    `adhesion_score` DECIMAL(5,2) DEFAULT 0.00,
+    `accuracy_score` DECIMAL(5,2) DEFAULT 0.00,
+    `status` ENUM('pending','approved','rejected') DEFAULT 'pending',
+    `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- SAFETY AND CLIMATE LOG TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `safety_climate_log` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `test_id` INT NOT NULL,
+    `student_id` INT NOT NULL,
+    `temperature` DECIMAL(5,2) DEFAULT NULL COMMENT 'in Celsius',
+    `humidity` DECIMAL(5,2) DEFAULT NULL COMMENT 'in percent',
+    `health_feedback` TEXT DEFAULT NULL,
+    `irritation_report` TEXT DEFAULT NULL,
+    `remarks` TEXT DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`test_id`) REFERENCES `fingerprint_tests`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- FACULTY REMARKS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `faculty_remarks` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `test_id` INT NOT NULL,
+    `faculty_id` INT NOT NULL,
+    `remarks` TEXT NOT NULL,
+    `decision` ENUM('approved','rejected') NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`test_id`) REFERENCES `fingerprint_tests`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`faculty_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- REPORTS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `reports` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `generated_by` INT NOT NULL,
+    `report_title` VARCHAR(255) NOT NULL,
+    `report_filter` TEXT DEFAULT NULL COMMENT 'JSON filter params used',
+    `generated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`generated_by`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- SEED: Default Users
+-- Passwords hashed using PASSWORD_BCRYPT via password_hash()
+-- super_admin: admin123 | faculty: faculty123 | student: student123
+-- ============================================================
+INSERT INTO `users` (`id`, `full_name`, `email`, `password`, `role`, `status`) VALUES
+(1, 'System Administrator', 'admin@greenforensics.com', '$2y$10$vU3vA6Kj24M75WqYFfL2aO/Qk2tQZlS66HWhFmgz4qEw3Q1c6lGxe', 'super_admin', 'active'),
+(2, 'System Administrator (Edu)', 'admin@greenforensics.edu.ph', '$2y$10$Cde1Vjp9ICu1HX.MbUnSXek0NUwgFr6m2VThMuTikxhTYlgn4sc.C', 'super_admin', 'active'),
+(3, 'Dr. Maria Santos', 'faculty@greenforensics.edu.ph', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'faculty_researcher', 'active'),
+(4, 'Juan dela Cruz', 'student@greenforensics.edu.ph', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'criminology_student', 'active')
 ON DUPLICATE KEY UPDATE `id`=`id`;
+
+-- ============================================================
+-- SEED: Sample fingerprint test submissions
+-- ============================================================
+INSERT INTO `fingerprint_tests` (`id`, `student_id`, `powder_type`, `surface_type`, `fingerprint_image`, `ridge_clarity_score`, `visibility_score`, `adhesion_score`, `accuracy_score`, `status`, `submitted_at`) VALUES
+(1, 4, 'eggshell', 'glass', NULL, 88.50, 91.00, 85.00, 88.17, 'pending', '2026-05-28 08:30:00'),
+(2, 4, 'commercial', 'glass', NULL, 90.00, 92.50, 88.00, 90.17, 'approved', '2026-05-28 09:00:00'),
+(3, 4, 'eggshell', 'paper', NULL, 82.00, 79.50, 80.00, 80.50, 'pending', '2026-05-29 10:00:00'),
+(4, 4, 'eggshell', 'wood', NULL, 75.00, 77.00, 73.00, 75.00, 'rejected', '2026-05-29 11:00:00'),
+(5, 4, 'commercial', 'plastic', NULL, 93.00, 94.00, 92.00, 93.00, 'approved', '2026-05-30 09:30:00'),
+(6, 4, 'eggshell', 'metal', NULL, 86.00, 88.00, 84.00, 86.00, 'pending', '2026-05-30 10:30:00')
+ON DUPLICATE KEY UPDATE `id`=`id`;
+
+-- ============================================================
+-- SEED: Sample safety climate logs
+-- ============================================================
+INSERT INTO `safety_climate_log` (`test_id`, `student_id`, `temperature`, `humidity`, `health_feedback`, `irritation_report`, `remarks`) VALUES
+(1, 4, 27.50, 65.00, 'No discomfort reported during testing.', 'None', 'Testing conditions were within safe parameters.'),
+(2, 4, 28.00, 68.00, 'Mild dryness in throat after 30 minutes.', 'Minimal', 'Recommended to use mask during extended testing.'),
+(3, 4, 26.00, 60.00, 'No issues reported.', 'None', 'Comfortable testing environment.'),
+(4, 4, 29.00, 72.00, 'Slight irritation in eyes noted.', 'Mild eye irritation', 'Goggles required for next session.'),
+(5, 4, 27.00, 63.00, 'No discomfort.', 'None', 'Good environmental conditions.'),
+(6, 4, 28.50, 70.00, 'No issues.', 'None', 'Standard testing protocol followed.')
+ON DUPLICATE KEY UPDATE `test_id`=`test_id`;
+
+-- ============================================================
+-- SEED: Sample faculty remarks
+-- ============================================================
+INSERT INTO `faculty_remarks` (`test_id`, `faculty_id`, `remarks`, `decision`) VALUES
+(2, 3, 'Clear ridge patterns visible. Eggshell powder showed comparable results to commercial grade. Approved for inclusion in final report.', 'approved'),
+(4, 3, 'Ridge clarity insufficient on wood surface. Recommend re-testing with finer powder particle size.', 'rejected'),
+(5, 3, 'Excellent results on plastic surface. Commercial powder baseline confirmed.', 'approved')
+ON DUPLICATE KEY UPDATE `test_id`=`test_id`;

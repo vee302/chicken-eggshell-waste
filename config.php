@@ -121,46 +121,48 @@ try {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // ============================================================
-    // 9. Seed default accounts if table is empty
+    // 9. Seed default accounts using INSERT IGNORE
+    //    Always runs — skips silently if email already exists.
     //    super_admin: admin123 | faculty: faculty123 | student: student123
     // ============================================================
-    $count = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
-    if ($count == 0) {
-        $accounts = [
-            [
-                'full_name' => 'System Administrator',
-                'email'     => 'admin@greenforensics.com',
-                'password'  => password_hash('admin123', PASSWORD_DEFAULT),
-                'role'      => 'super_admin',
-                'status'    => 'active'
-            ],
-            [
-                'full_name' => 'System Administrator (Edu)',
-                'email'     => 'admin@greenforensics.edu.ph',
-                'password'  => password_hash('admin123', PASSWORD_DEFAULT),
-                'role'      => 'super_admin',
-                'status'    => 'active'
-            ],
-            [
-                'full_name' => 'Dr. Maria Santos',
-                'email'     => 'faculty@greenforensics.edu.ph',
-                'password'  => password_hash('faculty123', PASSWORD_DEFAULT),
-                'role'      => 'faculty_researcher',
-                'status'    => 'active'
-            ],
-            [
-                'full_name' => 'Juan dela Cruz',
-                'email'     => 'student@greenforensics.edu.ph',
-                'password'  => password_hash('student123', PASSWORD_DEFAULT),
-                'role'      => 'criminology_student',
-                'status'    => 'active'
-            ],
-        ];
-        $ins = $pdo->prepare("INSERT INTO users (full_name, email, password, role, status) VALUES (:full_name, :email, :password, :role, :status)");
-        foreach ($accounts as $acc) {
-            $ins->execute($acc);
-        }
+    $defaultAccounts = [
+        [
+            'full_name' => 'System Administrator',
+            'email'     => 'admin@greenforensics.com',
+            'password'  => password_hash('admin123', PASSWORD_DEFAULT),
+            'role'      => 'super_admin',
+            'status'    => 'active'
+        ],
+        [
+            'full_name' => 'System Administrator (Edu)',
+            'email'     => 'admin@greenforensics.edu.ph',
+            'password'  => password_hash('admin123', PASSWORD_DEFAULT),
+            'role'      => 'super_admin',
+            'status'    => 'active'
+        ],
+        [
+            'full_name' => 'Dr. Maria Santos',
+            'email'     => 'faculty@greenforensics.edu.ph',
+            'password'  => password_hash('faculty123', PASSWORD_DEFAULT),
+            'role'      => 'faculty_researcher',
+            'status'    => 'active'
+        ],
+        [
+            'full_name' => 'Juan dela Cruz',
+            'email'     => 'student@greenforensics.edu.ph',
+            'password'  => password_hash('student123', PASSWORD_DEFAULT),
+            'role'      => 'criminology_student',
+            'status'    => 'active'
+        ],
+    ];
+    $ins = $pdo->prepare(
+        "INSERT IGNORE INTO users (full_name, email, password, role, status)
+         VALUES (:full_name, :email, :password, :role, :status)"
+    );
+    foreach ($defaultAccounts as $acc) {
+        $ins->execute($acc);
     }
+
 
 } catch (PDOException $e) {
     die("DATABASE ERROR: " . $e->getMessage());

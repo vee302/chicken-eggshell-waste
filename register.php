@@ -471,15 +471,57 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
                     <div class="form-group">
                         <label for="password">Password <span class="required-star">*</span></label>
-                        <input type="password" id="password" name="password" class="form-control-plain"
-                            placeholder="Minimum 6 characters">
+                        <div class="password-wrapper">
+                            <input type="password" id="password" name="password" class="form-control-plain"
+                                placeholder="Minimum 6 characters">
+                            <button type="button" class="password-toggle" data-password-toggle="password"
+                                aria-label="Show password" aria-pressed="false">
+                                <span class="icon-eye">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </span>
+                                <span class="icon-eye-off">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                        <path d="M9.9 4.24A10.84 10.84 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                        <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"></path>
+                                        <line x1="3" y1="3" x2="21" y2="21"></line>
+                                    </svg>
+                                </span>
+                            </button>
+                        </div>
                         <p class="field-hint">At least 6 characters</p>
                     </div>
 
                     <div class="form-group">
                         <label for="confirm_password">Confirm Password <span class="required-star">*</span></label>
-                        <input type="password" id="confirm_password" name="confirm_password" class="form-control-plain"
-                            placeholder="Re-enter your password">
+                        <div class="password-wrapper">
+                            <input type="password" id="confirm_password" name="confirm_password" class="form-control-plain"
+                                placeholder="Re-enter your password">
+                            <button type="button" class="password-toggle" data-password-toggle="confirm_password"
+                                aria-label="Show password" aria-pressed="false">
+                                <span class="icon-eye">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </span>
+                                <span class="icon-eye-off">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                        <path d="M9.9 4.24A10.84 10.84 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                        <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"></path>
+                                        <line x1="3" y1="3" x2="21" y2="21"></line>
+                                    </svg>
+                                </span>
+                            </button>
+                        </div>
                         <p class="field-hint" id="passMatchHint" style="display:none;color:#c0392b;">Passwords do not match.</p>
                     </div>
 
@@ -562,6 +604,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     }
                 });
             }
+
+            document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+                const input = document.getElementById(button.dataset.passwordToggle);
+                if (!input) return;
+
+                button.addEventListener("click", () => {
+                    const shouldShow = input.type === "password";
+                    input.type = shouldShow ? "text" : "password";
+                    button.classList.toggle("is-visible", shouldShow);
+                    button.setAttribute("aria-pressed", shouldShow ? "true" : "false");
+                    button.setAttribute("aria-label", shouldShow ? "Hide password" : "Show password");
+                });
+            });
         });
 
         function goToStep2(fromError = false) {

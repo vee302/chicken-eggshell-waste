@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     $id_number       = trim($_POST["id_number"] ?? "");
     $department      = trim($_POST["department"] ?? "");
     $contact_number  = trim($_POST["contact_number"] ?? "");
-    $email           = trim($_POST["email"] ?? "");
+    $email           = strtolower(trim($_POST["email"] ?? ""));
     $requested_role  = trim($_POST["requested_role"] ?? "");
     $reason          = trim($_POST["reason_for_access"] ?? "");
     $password        = trim($_POST["password"] ?? "");
@@ -48,16 +48,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "Invalid requested role.";
     } else {
         try {
-            $chk = $pdo->prepare("SELECT id FROM users WHERE email = :email");
+            $chk = $pdo->prepare("SELECT id, status FROM users WHERE email = :email LIMIT 1");
             $chk->execute([':email' => $email]);
-            if ($chk->rowCount() > 0) {
-                $error_message = "An account with this email already exists.";
+            $existing_user = $chk->fetch(PDO::FETCH_ASSOC);
+
+            if ($existing_user && $existing_user['status'] === 'active') {
+                $error_message = "An active account with this email already exists. Please login or use another email.";
+            } elseif ($existing_user && in_array($existing_user['status'], ['inactive', 'suspended'], true)) {
+                $error_message = "This email belongs to an inactive account. Please contact the administrator.";
             } else {
                 $hashed = password_hash($password, PASSWORD_DEFAULT);
-                $ins = $pdo->prepare("INSERT INTO users 
-                    (first_name, middle_name, last_name, full_name, email, password, contact_number, id_number, department, affiliation, requested_role, reason_for_access, role, status)
-                    VALUES (:fn,:mn,:ln,:full,:email,:pass,:contact,:idnum,:dept,:aff,:reqrole,:reason,NULL,'pending')");
-                $ins->execute([
+
+                $registrationData = [
                     ':fn'      => $first_name,
                     ':mn'      => $middle_name,
                     ':ln'      => $last_name,
@@ -70,7 +72,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     ':aff'     => '',
                     ':reqrole' => $requested_role,
                     ':reason'  => $reason,
-                ]);
+                ];
+
+                if ($existing_user) {
+                    $upd = $pdo->prepare("UPDATE users SET
+                        first_name = :fn,
+                        middle_name = :mn,
+                        last_name = :ln,
+                        full_name = :full,
+                        email = :email,
+                        password = :pass,
+                        contact_number = :contact,
+                        id_number = :idnum,
+                        department = :dept,
+                        affiliation = :aff,
+                        requested_role = :reqrole,
+                        reason_for_access = :reason,
+                        role = NULL,
+                        status = 'pending',
+                        created_at = CURRENT_TIMESTAMP
+                        WHERE id = :existing_id");
+                    $registrationData[':existing_id'] = $existing_user['id'];
+                    $upd->execute($registrationData);
+                } else {
+                    $ins = $pdo->prepare("INSERT INTO users
+                        (first_name, middle_name, last_name, full_name, email, password, contact_number, id_number, department, affiliation, requested_role, reason_for_access, role, status)
+                        VALUES (:fn,:mn,:ln,:full,:email,:pass,:contact,:idnum,:dept,:aff,:reqrole,:reason,NULL,'pending')");
+                    $ins->execute($registrationData);
+                }
+
                 $success_message = "Registration submitted successfully. Please wait for Super Administrator approval.";
                 $form_data = [];
             }

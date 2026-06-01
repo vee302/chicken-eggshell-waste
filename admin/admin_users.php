@@ -18,12 +18,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
         $name = trim($_POST["name"]);
         $email = trim($_POST["email"]);
         $password = trim($_POST["password"]);
+        $role = $_POST["role"] ?? "criminology_student";
         $status = $_POST["status"];
 
         if (empty($name) || empty($email) || empty($password)) {
             $error = "Please fill in all required fields.";
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = "Invalid email format.";
+        } elseif (!in_array($role, ['super_admin','faculty_researcher','criminology_student','alumni_police_partner'], true)) {
+            $error = "Invalid role selected.";
         } else {
             try {
                 // Check if email already exists
@@ -34,11 +37,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                 } else {
                     // Insert new user
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                    $insertStmt = $pdo->prepare("INSERT INTO users (name, email, password, status) VALUES (:name, :email, :password, :status)");
+                    $insertStmt = $pdo->prepare("INSERT INTO users (full_name, email, password, role, status) VALUES (:full_name, :email, :password, :role, :status)");
                     $insertStmt->execute([
-                        ':name' => $name,
+                        ':full_name' => $name,
                         ':email' => $email,
                         ':password' => $hashed_password,
+                        ':role' => $role,
                         ':status' => $status
                     ]);
                     $success = "User account created successfully!";
@@ -69,7 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                     // Update user
                     $updateStmt = $pdo->prepare("UPDATE users SET full_name = :full_name, email = :email, status = :status WHERE id = :id");
                     $updateStmt->execute([
-                        ':name' => $name,
+                        ':full_name' => $name,
                         ':email' => $email,
                         ':status' => $status,
                         ':id' => $id
@@ -395,7 +399,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <tr>
                                             <td><?php echo $user['id']; ?></td>
                                             <td style="font-weight: 600; color: var(--dark-green);">
-                                                <?php echo htmlspecialchars($user['name']); ?>
+                                                <?php echo htmlspecialchars($user['full_name']); ?>
                                             </td>
                                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                                             <td><span
@@ -478,7 +482,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="6" style="text-align: center; color: var(--gray); padding: 2rem;">No
+                                        <td colspan="7" style="text-align: center; color: var(--gray); padding: 2rem;">No
                                             user accounts found matching query.</td>
                                     </tr>
                                 <?php endif; ?>

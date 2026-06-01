@@ -536,7 +536,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
         function goToStep2(fromError = false) {
             // Validate step 1 fields
-            const fields = ['first_name','last_name','id_number','department','contact_number','email'];
+            const fields = ['first_name','last_name','id_number','contact_number','email'];
             let valid = true;
             fields.forEach(f => {
                 const el = document.getElementById(f);

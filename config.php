@@ -126,9 +126,24 @@ try {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     $testCols = $pdo->query("SHOW COLUMNS FROM `fingerprint_tests`")->fetchAll(PDO::FETCH_COLUMN);
-    if (!in_array('notes', $testCols, true)) {
-        $pdo->exec("ALTER TABLE `fingerprint_tests` ADD COLUMN `notes` TEXT DEFAULT NULL AFTER `accuracy_score`");
-    }
+    $addTestColumn = function ($column, $definition) use ($pdo, &$testCols) {
+        if (!in_array($column, $testCols, true)) {
+            $pdo->exec("ALTER TABLE `fingerprint_tests` ADD COLUMN $definition");
+            $testCols[] = $column;
+        }
+    };
+
+    $addTestColumn('fingerprint_image', "`fingerprint_image` VARCHAR(255) DEFAULT NULL AFTER `surface_type`");
+    $addTestColumn('ridge_clarity_score', "`ridge_clarity_score` DECIMAL(5,2) DEFAULT 0.00 AFTER `fingerprint_image`");
+    $addTestColumn('visibility_score', "`visibility_score` DECIMAL(5,2) DEFAULT 0.00 AFTER `ridge_clarity_score`");
+    $addTestColumn('adhesion_score', "`adhesion_score` DECIMAL(5,2) DEFAULT 0.00 AFTER `visibility_score`");
+    $addTestColumn('accuracy_score', "`accuracy_score` DECIMAL(5,2) DEFAULT 0.00 AFTER `adhesion_score`");
+    $addTestColumn('notes', "`notes` TEXT DEFAULT NULL AFTER `accuracy_score`");
+    $addTestColumn('status', "`status` ENUM('pending','approved','rejected') DEFAULT 'pending' AFTER `notes`");
+    $addTestColumn('submitted_at', "`submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER `status`");
+
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `status`
+        ENUM('pending','approved','rejected') DEFAULT 'pending'");
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `surface_type`
         ENUM('glass','paper','wood','plastic','metal','ceramic','fabric') NOT NULL");
 

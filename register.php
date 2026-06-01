@@ -94,15 +94,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                         WHERE id = :existing_id");
                     $registrationData[':existing_id'] = $existing_user['id'];
                     $upd->execute($registrationData);
+                    $registeredUserId = (int)$existing_user['id'];
                 } else {
                     $ins = $pdo->prepare("INSERT INTO users
                         (first_name, middle_name, last_name, full_name, email, password, contact_number, id_number, department, affiliation, requested_role, reason_for_access, role, status)
                         VALUES (:fn,:mn,:ln,:full,:email,:pass,:contact,:idnum,:dept,:aff,:reqrole,:reason,NULL,'pending')");
                     $ins->execute($registrationData);
+                    $registeredUserId = (int)$pdo->lastInsertId();
                 }
 
-                $success_message = "Registration submitted successfully. Please wait for Super Administrator approval.";
-                $form_data = [];
+                $_SESSION['pending_registration_user_id'] = $registeredUserId;
+                $_SESSION['pending_registration_email'] = $email;
+
+                header("Location: pending_approval.php");
+                exit;
             }
         } catch (PDOException $e) {
             $error_message = "Error: " . $e->getMessage();

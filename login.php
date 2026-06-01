@@ -77,10 +77,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         header("Location: dashboard.php");
                                     }
                                     exit;
-                                } elseif ($status === 'pending') {
-                                    $error_message = "Your account is still pending approval. Please wait for the Super Administrator to review your registration.";
-                                } elseif ($status === 'rejected') {
-                                    $error_message = "Your registration was not approved. Please contact the administrator for more information.";
+                                } elseif ($status === 'pending' || $status === 'rejected') {
+                                    $_SESSION['pending_registration_user_id'] = $id;
+                                    $_SESSION['pending_registration_email'] = $email;
+                                    header("Location: pending_approval.php");
+                                    exit;
                                 } elseif ($status === 'suspended') {
                                     $error_message = "Your account has been suspended. Please contact the administrator.";
                                 } else {

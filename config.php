@@ -1,11 +1,12 @@
 <?php
 // config.php - Database Configuration & Connection with Auto-Setup
 
-define('DB_SERVER',   getenv('MYSQLHOST')     ?: 'localhost');
-define('DB_USERNAME', getenv('MYSQLUSER')     ?: 'root');
+define('DB_SERVER', getenv('MYSQLHOST') ?: 'localhost');
+define('DB_USERNAME', getenv('MYSQLUSER') ?: 'root');
+http://localhost/waste-eggshell/
 define('DB_PASSWORD', getenv('MYSQLPASSWORD') !== false ? getenv('MYSQLPASSWORD') : '');
-define('DB_NAME',     getenv('MYSQLDATABASE') ?: 'green_forensics');
-define('DB_PORT',     getenv('MYSQLPORT')     ?: '3306');
+define('DB_NAME', getenv('MYSQLDATABASE') ?: 'green_forensics');
+define('DB_PORT', getenv('MYSQLPORT') ?: '3306');
 
 try {
     // 1. Connect to MySQL without selecting a database first
@@ -18,7 +19,8 @@ try {
     // 3. Re-connect to the specific database
     $pdo = new PDO(
         "mysql:host=" . DB_SERVER . ";port=" . DB_PORT . ";dbname=" . DB_NAME,
-        DB_USERNAME, DB_PASSWORD,
+        DB_USERNAME,
+        DB_PASSWORD,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
@@ -281,40 +283,40 @@ try {
             'middle_name' => null,
             'last_name' => 'Administrator',
             'full_name' => 'System Administrator',
-            'email'     => 'admin@greenforensics.com',
-            'password'  => password_hash('admin123', PASSWORD_DEFAULT),
-            'role'      => 'super_admin',
-            'status'    => 'active'
+            'email' => 'admin@greenforensics.com',
+            'password' => password_hash('admin123', PASSWORD_DEFAULT),
+            'role' => 'super_admin',
+            'status' => 'active'
         ],
         [
             'first_name' => 'System',
             'middle_name' => null,
             'last_name' => 'Administrator',
             'full_name' => 'System Administrator (Edu)',
-            'email'     => 'admin@greenforensics.edu.ph',
-            'password'  => password_hash('admin123', PASSWORD_DEFAULT),
-            'role'      => 'super_admin',
-            'status'    => 'active'
+            'email' => 'admin@greenforensics.edu.ph',
+            'password' => password_hash('admin123', PASSWORD_DEFAULT),
+            'role' => 'super_admin',
+            'status' => 'active'
         ],
         [
             'first_name' => 'Maria',
             'middle_name' => null,
             'last_name' => 'Santos',
             'full_name' => 'Dr. Maria Santos',
-            'email'     => 'faculty@greenforensics.edu.ph',
-            'password'  => password_hash('faculty123', PASSWORD_DEFAULT),
-            'role'      => 'faculty_researcher',
-            'status'    => 'active'
+            'email' => 'faculty@greenforensics.edu.ph',
+            'password' => password_hash('faculty123', PASSWORD_DEFAULT),
+            'role' => 'faculty_researcher',
+            'status' => 'active'
         ],
         [
             'first_name' => 'Juan',
             'middle_name' => null,
             'last_name' => 'dela Cruz',
             'full_name' => 'Juan dela Cruz',
-            'email'     => 'student@greenforensics.edu.ph',
-            'password'  => password_hash('student123', PASSWORD_DEFAULT),
-            'role'      => 'criminology_student',
-            'status'    => 'active'
+            'email' => 'student@greenforensics.edu.ph',
+            'password' => password_hash('student123', PASSWORD_DEFAULT),
+            'role' => 'criminology_student',
+            'status' => 'active'
         ],
     ];
     $ins = $pdo->prepare(

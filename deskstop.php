@@ -5,7 +5,7 @@ if (session_status() == PHP_SESSION_NONE) {
 $target_link = "login.php";
 if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
     if (isset($_SESSION["user_email"]) && ($_SESSION["user_email"] === 'admin@greenforensics.com' || $_SESSION["user_email"] === 'admin@greenforensics.edu.ph')) {
-        $target_link = "admin/admin_dashboard.php";
+        $target_link = "admin/dashboard.php";
     } else {
         $target_link = "dashboard.php";
     }

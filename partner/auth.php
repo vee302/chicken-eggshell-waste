@@ -1,23 +1,23 @@
 <?php
-// student/auth.php - Criminology Student Session Authentication
+// partner/auth.php - Alumni / Police Partner Session Authentication
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
 /**
- * Checks if the current session belongs to a criminology_student.
+ * Checks if the current session belongs to an alumni_police_partner.
  * Redirects to login or shows Unauthorized Access if not.
  */
-function check_student_auth() {
+function check_partner_auth() {
     // 1. Must be logged in
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         header('Location: ../login.php');
         exit;
     }
 
-    // 2. Must be a criminology_student
-    if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'criminology_student') {
+    // 2. Must be an alumni_police_partner
+    if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'alumni_police_partner') {
         $role = $_SESSION['user_role'] ?? '';
 
         // Redirect to correct dashboard by role
@@ -27,8 +27,8 @@ function check_student_auth() {
         } elseif ($role === 'faculty_researcher') {
             header('Location: ../faculty/faculty_dashboard.php');
             exit;
-        } elseif ($role === 'alumni_police_partner') {
-            header('Location: ../partner/partner_dashboard.php');
+        } elseif ($role === 'criminology_student') {
+            header('Location: ../student/student_dashboard.php');
             exit;
         }
 
@@ -61,7 +61,7 @@ function check_student_auth() {
             </svg>
         </div>
         <h1>Unauthorized Access</h1>
-        <p>You do not have permission to view this page. This area is restricted to Criminology Student accounts only.</p>
+        <p>You do not have permission to view this page. This area is restricted to Alumni / Police Partner accounts only.</p>
         <a href="../login.php" class="btn">Back to Login</a>
     </div>
 </body>

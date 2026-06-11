@@ -4,16 +4,23 @@ session_start();
 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     $role = $_SESSION['user_role'] ?? '';
-    if ($role === 'super_admin') header("Location: admin/admin_dashboard.php");
-    elseif ($role === 'faculty_researcher') header("Location: faculty/faculty_dashboard.php");
-    else header("Location: dashboard.php");
+    if ($role === 'super_admin') {
+        header("Location: admin/dashboard.php");
+    } elseif ($role === 'faculty_researcher') {
+        header("Location: faculty/faculty_dashboard.php");
+    } elseif ($role === 'criminology_student') {
+        header("Location: student/student_dashboard.php");
+    } elseif ($role === 'alumni_police_partner') {
+        header("Location: partner/partner_dashboard.php");
+    } else {
+        header("Location: dashboard.php");
+    }
     exit;
 }
 
 require_once "config.php";
 
 $error_message = "";
-$success_message = "";
 $form_data = [];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])) {
@@ -21,7 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     $middle_name     = trim($_POST["middle_name"] ?? "");
     $last_name       = trim($_POST["last_name"] ?? "");
     $id_number       = trim($_POST["id_number"] ?? "");
-    $department      = trim($_POST["department"] ?? "");
     $contact_number  = trim($_POST["contact_number"] ?? "");
     $email           = strtolower(trim($_POST["email"] ?? ""));
     $requested_role  = trim($_POST["requested_role"] ?? "");
@@ -31,78 +37,64 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     $full_name       = trim("$first_name $middle_name $last_name");
 
     // Preserve form data for re-fill
-    $form_data = compact('first_name','middle_name','last_name','id_number','department','contact_number','email','requested_role','reason');
+    $form_data = compact('first_name', 'middle_name', 'last_name', 'id_number', 'contact_number', 'email', 'requested_role', 'reason');
 
-    // Validation
-    if (empty($first_name) || empty($last_name) || empty($id_number) || empty($contact_number) || empty($email) || empty($requested_role) || empty($reason) || empty($password) || empty($confirm_pass)) {
-        $error_message = "Please fill in all required fields.";
+    // Server-side Validation
+    if (empty($first_name)) {
+        $error_message = "First Name is required.";
+    } elseif (empty($last_name)) {
+        $error_message = "Last Name is required.";
+    } elseif (empty($id_number)) {
+        $error_message = "ID Number is required.";
+    } elseif (empty($contact_number)) {
+        $error_message = "Contact Number is required.";
+    } elseif (empty($email)) {
+        $error_message = "Email Address is required.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error_message = "Please enter a valid email address.";
-    } elseif (!preg_match('/^(09|\+639)\d{9}$/', $contact_number)) {
-        $error_message = "Contact number must be a valid Philippine mobile number (e.g. 09XXXXXXXXX).";
+    } elseif (empty($requested_role)) {
+        $error_message = "Requested Role is required.";
+    } elseif (!in_array($requested_role, ['criminology_student', 'faculty_researcher', 'alumni_police_partner'])) {
+        $error_message = "Invalid requested role selected.";
+    } elseif (empty($reason)) {
+        $error_message = "Reason for Access is required.";
+    } elseif (empty($password)) {
+        $error_message = "Password is required.";
     } elseif (strlen($password) < 6) {
         $error_message = "Password must be at least 6 characters.";
+    } elseif (empty($confirm_pass)) {
+        $error_message = "Confirm Password is required.";
     } elseif ($password !== $confirm_pass) {
-        $error_message = "Passwords do not match.";
-    } elseif (!in_array($requested_role, ['criminology_student','faculty_researcher','alumni_police_partner'])) {
-        $error_message = "Invalid requested role.";
+        $error_message = "Password and Confirm Password must match.";
     } else {
         try {
-            $chk = $pdo->prepare("SELECT id, status FROM users WHERE email = :email LIMIT 1");
+            // Check email uniqueness
+            $chk = $pdo->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
             $chk->execute([':email' => $email]);
-            $existing_user = $chk->fetch(PDO::FETCH_ASSOC);
-
-            if ($existing_user && $existing_user['status'] === 'active') {
-                $error_message = "An active account with this email already exists. Please login or use another email.";
-            } elseif ($existing_user && in_array($existing_user['status'], ['inactive', 'suspended'], true)) {
-                $error_message = "This email belongs to an inactive account. Please contact the administrator.";
+            
+            if ($chk->fetch()) {
+                $error_message = "An account with this email address already exists.";
             } else {
                 $hashed = password_hash($password, PASSWORD_DEFAULT);
 
-                $registrationData = [
+                $ins = $pdo->prepare("INSERT INTO users
+                    (first_name, middle_name, last_name, full_name, email, password, contact_number, id_number, requested_role, reason_for_access, role, status)
+                    VALUES (:fn, :mn, :ln, :full, :email, :pass, :contact, :idnum, :reqrole, :reason, NULL, 'pending')");
+                
+                $ins->execute([
                     ':fn'      => $first_name,
-                    ':mn'      => $middle_name,
+                    ':mn'      => $middle_name !== "" ? $middle_name : null,
                     ':ln'      => $last_name,
                     ':full'    => $full_name,
                     ':email'   => $email,
                     ':pass'    => $hashed,
                     ':contact' => $contact_number,
                     ':idnum'   => $id_number,
-                    ':dept'    => '',
-                    ':aff'     => '',
                     ':reqrole' => $requested_role,
-                    ':reason'  => $reason,
-                ];
+                    ':reason'  => $reason
+                ]);
 
-                if ($existing_user) {
-                    $upd = $pdo->prepare("UPDATE users SET
-                        first_name = :fn,
-                        middle_name = :mn,
-                        last_name = :ln,
-                        full_name = :full,
-                        email = :email,
-                        password = :pass,
-                        contact_number = :contact,
-                        id_number = :idnum,
-                        department = :dept,
-                        affiliation = :aff,
-                        requested_role = :reqrole,
-                        reason_for_access = :reason,
-                        role = NULL,
-                        status = 'pending',
-                        created_at = CURRENT_TIMESTAMP
-                        WHERE id = :existing_id");
-                    $registrationData[':existing_id'] = $existing_user['id'];
-                    $upd->execute($registrationData);
-                    $registeredUserId = (int)$existing_user['id'];
-                } else {
-                    $ins = $pdo->prepare("INSERT INTO users
-                        (first_name, middle_name, last_name, full_name, email, password, contact_number, id_number, department, affiliation, requested_role, reason_for_access, role, status)
-                        VALUES (:fn,:mn,:ln,:full,:email,:pass,:contact,:idnum,:dept,:aff,:reqrole,:reason,NULL,'pending')");
-                    $ins->execute($registrationData);
-                    $registeredUserId = (int)$pdo->lastInsertId();
-                }
-
+                $registeredUserId = (int)$pdo->lastInsertId();
                 $_SESSION['pending_registration_user_id'] = $registeredUserId;
                 $_SESSION['pending_registration_email'] = $email;
 
@@ -110,7 +102,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 exit;
             }
         } catch (PDOException $e) {
-            $error_message = "Error: " . $e->getMessage();
+            $error_message = "Database Error: " . $e->getMessage();
         }
     }
 }
@@ -124,99 +116,103 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     <link rel="stylesheet" href="css/login.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .login-container { max-width: 560px; }
-
-        /* Progress Steps */
-        .step-progress {
+        .login-container { max-width: 640px; }
+        
+        /* Progress Indicator Styles */
+        .progress-indicator {
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin-bottom: 1.75rem;
-            gap: 0;
+            justify-content: space-between;
+            margin-bottom: 2.25rem;
+            position: relative;
         }
-        .step-item {
+        .progress-step {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
-            flex: 1;
             position: relative;
+            z-index: 2;
+            flex: 1;
         }
-        .step-item:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            top: 18px;
-            left: 60%;
-            width: 80%;
-            height: 2px;
-            background: var(--light-gray);
-            z-index: 0;
-            transition: background 0.4s;
-        }
-        .step-item.completed:not(:last-child)::after,
-        .step-item.active:not(:last-child)::after {
-            background: var(--soft-green);
-        }
-        .step-circle {
+        .progress-step .step-num {
             width: 36px;
             height: 36px;
             border-radius: 50%;
+            background-color: var(--white);
+            border: 2px solid var(--light-gray);
+            color: var(--gray);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
             font-weight: 700;
-            border: 2px solid var(--light-gray);
-            background: var(--white);
-            color: var(--gray);
-            z-index: 1;
+            font-size: 0.9rem;
             transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
         }
-        .step-item.active .step-circle {
-            border-color: var(--dark-green);
-            background: var(--dark-green);
-            color: var(--white);
-            box-shadow: 0 0 0 4px rgba(47,79,58,0.15);
-        }
-        .step-item.completed .step-circle {
-            border-color: var(--soft-green);
-            background: var(--soft-green);
-            color: var(--white);
-        }
-        .step-label {
-            font-size: 0.7rem;
+        .progress-step .step-text {
+            font-size: 0.78rem;
             font-weight: 600;
             color: var(--gray);
             text-align: center;
+            transition: all 0.3s ease;
         }
-        .step-item.active .step-label { color: var(--dark-green); }
-        .step-item.completed .step-label { color: var(--soft-green); }
+        .progress-step.active .step-num {
+            border-color: var(--dark-green);
+            background-color: var(--dark-green);
+            color: var(--white);
+            box-shadow: 0 0 0 4px rgba(47, 79, 58, 0.15);
+        }
+        .progress-step.active .step-text {
+            color: var(--dark-green);
+            font-weight: 700;
+        }
+        .progress-step.completed .step-num {
+            border-color: var(--soft-green);
+            background-color: var(--soft-green);
+            color: var(--white);
+        }
+        .progress-step.completed .step-text {
+            color: var(--soft-green);
+        }
+        .progress-line {
+            position: absolute;
+            top: 18px;
+            left: 25%;
+            right: 25%;
+            height: 2px;
+            background-color: var(--light-gray);
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+        .progress-line.active {
+            background-color: var(--soft-green);
+        }
 
-        /* Form Steps */
+        /* Form Steps Transitions */
         .form-step { display: none; }
         .form-step.active { display: block; animation: fadeStep 0.35s ease; }
         @keyframes fadeStep {
-            from { opacity: 0; transform: translateX(16px); }
-            to   { opacity: 1; transform: translateX(0); }
-        }
-        .form-step.back-anim { animation: fadeStepBack 0.35s ease; }
-        @keyframes fadeStepBack {
-            from { opacity: 0; transform: translateX(-16px); }
-            to   { opacity: 1; transform: translateX(0); }
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Two-column grid */
-        .form-row {
+        /* Form Layout Grid */
+        .form-grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0 1rem;
+            gap: 0 1.25rem;
         }
-        @media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+        @media (max-width: 576px) {
+            .form-grid-2 {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+        }
 
         .form-control-plain {
             width: 100%;
             padding: 0.85rem 1rem;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-family: inherit;
             border: 1.5px solid var(--light-gray);
             border-radius: 12px;
@@ -227,32 +223,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         }
         .form-control-plain:focus {
             border-color: var(--soft-green);
-            box-shadow: 0 0 0 4px rgba(107,143,113,0.15);
+            box-shadow: 0 0 0 4px rgba(107, 143, 113, 0.15);
         }
         select.form-control-plain { cursor: pointer; }
 
-        .section-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--soft-green);
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.4rem;
-            border-bottom: 1px solid var(--mint-green);
+        .required-star { color: var(--error-red); margin-left: 2px; }
+        
+        .field-hint {
+            font-size: 0.76rem;
+            color: var(--gray);
+            margin-top: 0.35rem;
+            line-height: 1.4;
         }
 
-        /* Nav buttons */
+        /* Step Navigation Buttons */
         .form-nav {
             display: flex;
-            gap: 0.75rem;
-            margin-top: 1.25rem;
+            gap: 1rem;
+            margin-top: 1.75rem;
+            border-top: 1.5px solid var(--cream);
+            padding-top: 1.5rem;
         }
         .btn-next, .btn-back, .btn-cancel {
-            flex: 1;
             padding: 0.85rem;
             border-radius: 12px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: 700;
             cursor: pointer;
             border: none;
@@ -261,63 +256,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             align-items: center;
             justify-content: center;
             gap: 6px;
+            text-decoration: none;
         }
         .btn-next {
+            flex: 2;
             background: var(--dark-green);
             color: var(--white);
-            box-shadow: 0 4px 12px rgba(47,79,58,0.2);
+            box-shadow: 0 4px 12px rgba(47, 79, 58, 0.15);
         }
-        .btn-next:hover { background: var(--forest-green); transform: translateY(-1px); }
+        .btn-next:hover {
+            background: var(--forest-green);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(47, 79, 58, 0.25);
+        }
         .btn-back {
+            flex: 1;
             background: var(--white);
             color: var(--dark-green);
             border: 1.5px solid var(--mint-green);
         }
-        .btn-back:hover { background: var(--mint-green); }
+        .btn-back:hover {
+            background: var(--cream);
+        }
         .btn-cancel {
+            flex: 1;
             background: transparent;
             color: var(--gray);
             border: 1.5px solid var(--light-gray);
-            font-size: 0.82rem;
-            flex: 0 0 auto;
-            padding: 0.85rem 1rem;
         }
-        .btn-cancel:hover { background: #f5f5f5; }
-
-        .field-hint {
-            font-size: 0.74rem;
-            color: var(--soft-green);
-            margin-top: 0.3rem;
+        .btn-cancel:hover {
+            background: rgba(0, 0, 0, 0.03);
         }
-        .required-star { color: #c0392b; margin-left: 2px; }
-
-        .success-box {
-            text-align: center;
-            padding: 1.5rem 0 0.5rem;
-        }
-        .success-box .check-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: rgba(107,143,113,0.12);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            color: var(--soft-green);
-        }
-        .success-box h3 { color: var(--dark-green); font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .success-box p { font-size: 0.875rem; color: var(--gray); line-height: 1.55; }
     </style>
 </head>
 <body>
     <header>
         <h1>Green Forensics Evaluating System</h1>
-        <p>Request an authorized account to access the evaluating system</p>
+        <p>Innovative Sustainable Fingerprint Powder Using Chicken Eggshell Waste</p>
     </header>
 
     <main class="login-container">
-        <!-- Skeleton -->
+        <!-- Skeleton Loader -->
         <div class="login-card" id="skeletonCard">
             <div class="skeleton-loader">
                 <div class="skeleton-item skeleton-icon"></div>
@@ -327,45 +306,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 <div class="skeleton-item skeleton-input"></div>
                 <div class="skeleton-item skeleton-label"></div>
                 <div class="skeleton-item skeleton-input"></div>
-                <div class="skeleton-item skeleton-label"></div>
-                <div class="skeleton-item skeleton-input"></div>
                 <div class="skeleton-item skeleton-button"></div>
             </div>
         </div>
 
-        <!-- Real Register Card -->
+        <!-- Real Form Card -->
         <div class="login-card" id="realRegisterCard" style="display:none;opacity:0;">
             <div class="card-header">
-                <div class="card-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="8.5" cy="7" r="4"></circle>
-                        <line x1="20" y1="8" x2="20" y2="14"></line>
-                        <line x1="23" y1="11" x2="17" y2="11"></line>
-                    </svg>
-                </div>
                 <h2>Create Account</h2>
-                <p>Register as an authorized Green Forensics user</p>
+                <p>Register as an authorized user of the Evaluating System</p>
             </div>
 
-            <?php if (!empty($success_message)): ?>
-                <div class="success-box">
-                    <div class="check-icon">
-                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
-                    </div>
-                    <h3>Registration Submitted!</h3>
-                    <p><?php echo htmlspecialchars($success_message); ?></p>
-                    <div style="margin-top:1.5rem;">
-                        <a href="login.php" class="btn-primary" style="display:inline-flex;text-decoration:none;max-width:220px;margin:0 auto;">Go to Login</a>
-                    </div>
-                </div>
-            <?php else: ?>
+            <!-- Error Alerts -->
+            <div class="alert alert-danger" id="clientErrorBox" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span id="clientErrorMessage"></span>
+            </div>
 
             <?php if (!empty($error_message)): ?>
-                <div class="alert alert-danger">
+                <div class="alert alert-danger" id="serverErrorBox">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -375,87 +338,62 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 </div>
             <?php endif; ?>
 
-            <!-- Progress Indicator -->
-            <div class="step-progress" id="stepProgress">
-                <div class="step-item active" id="progressStep1">
-                    <div class="step-circle">1</div>
-                    <span class="step-label">Profile &amp; Identity</span>
+            <!-- Cleaner Progress Indicator -->
+            <div class="progress-indicator">
+                <div class="progress-step active" id="progStep1">
+                    <div class="step-num">1</div>
+                    <span class="step-text">Profile &amp; Identity</span>
                 </div>
-                <div class="step-item" id="progressStep2">
-                    <div class="step-circle">2</div>
-                    <span class="step-label">Access Request</span>
+                <div class="progress-line" id="progLine"></div>
+                <div class="progress-step" id="progStep2">
+                    <div class="step-num">2</div>
+                    <span class="step-text">Access Request</span>
                 </div>
             </div>
 
             <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" id="registerForm" autocomplete="off" novalidate>
-
                 <!-- ===== STEP 1: Profile & Identity ===== -->
                 <div class="form-step active" id="step1">
-                    <p class="section-label">Personal Information</p>
-
-                    <div class="form-row">
+                    <div class="form-grid-2">
                         <div class="form-group">
                             <label for="first_name">First Name <span class="required-star">*</span></label>
-                            <input type="text" id="first_name" name="first_name" class="form-control-plain"
-                                placeholder="e.g. Juan"
-                                value="<?php echo htmlspecialchars($form_data['first_name'] ?? ''); ?>">
+                            <input type="text" id="first_name" name="first_name" class="form-control-plain" placeholder="First Name" value="<?php echo htmlspecialchars($form_data['first_name'] ?? ''); ?>">
                         </div>
                         <div class="form-group">
                             <label for="middle_name">Middle Name</label>
-                            <input type="text" id="middle_name" name="middle_name" class="form-control-plain"
-                                placeholder="e.g. Santos"
-                                value="<?php echo htmlspecialchars($form_data['middle_name'] ?? ''); ?>">
+                            <input type="text" id="middle_name" name="middle_name" class="form-control-plain" placeholder="Middle Name" value="<?php echo htmlspecialchars($form_data['middle_name'] ?? ''); ?>">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="last_name">Last Name <span class="required-star">*</span></label>
-                        <input type="text" id="last_name" name="last_name" class="form-control-plain"
-                            placeholder="e.g. Dela Cruz"
-                            value="<?php echo htmlspecialchars($form_data['last_name'] ?? ''); ?>">
+                        <input type="text" id="last_name" name="last_name" class="form-control-plain" placeholder="Last Name" value="<?php echo htmlspecialchars($form_data['last_name'] ?? ''); ?>">
                     </div>
 
                     <div class="form-group">
                         <label for="id_number">Student / Employee / Partner ID Number <span class="required-star">*</span></label>
-                        <input type="text" id="id_number" name="id_number" class="form-control-plain"
-                            placeholder="e.g. 2024-CCJE-0001"
-                            value="<?php echo htmlspecialchars($form_data['id_number'] ?? ''); ?>">
+                        <input type="text" id="id_number" name="id_number" class="form-control-plain" placeholder="e.g. 2024-CCJE-0001" value="<?php echo htmlspecialchars($form_data['id_number'] ?? ''); ?>">
                     </div>
 
-
-
-                    <div class="form-row">
+                    <div class="form-grid-2">
                         <div class="form-group">
                             <label for="contact_number">Contact Number <span class="required-star">*</span></label>
-                            <input type="tel" id="contact_number" name="contact_number" class="form-control-plain"
-                                placeholder="09XXXXXXXXX"
-                                value="<?php echo htmlspecialchars($form_data['contact_number'] ?? ''); ?>">
-                            <p class="field-hint">Philippine mobile format</p>
+                            <input type="tel" id="contact_number" name="contact_number" class="form-control-plain" placeholder="e.g. 09XXXXXXXXX" value="<?php echo htmlspecialchars($form_data['contact_number'] ?? ''); ?>">
                         </div>
                         <div class="form-group">
                             <label for="email">Email Address <span class="required-star">*</span></label>
-                            <input type="email" id="email" name="email" class="form-control-plain"
-                                placeholder="you@example.com"
-                                value="<?php echo htmlspecialchars($form_data['email'] ?? ''); ?>">
+                            <input type="email" id="email" name="email" class="form-control-plain" placeholder="you@example.com" value="<?php echo htmlspecialchars($form_data['email'] ?? ''); ?>">
                         </div>
                     </div>
 
                     <div class="form-nav">
                         <a href="login.php" class="btn-cancel">Cancel</a>
-                        <button type="button" class="btn-next" id="nextBtn" onclick="goToStep2()">
-                            Next Step
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                                <polyline points="12 5 19 12 12 19"></polyline>
-                            </svg>
-                        </button>
+                        <button type="button" class="btn-next" id="nextBtn" onclick="goToStep2()">Next Step</button>
                     </div>
                 </div>
 
-                <!-- ===== STEP 2: Account & Access Request ===== -->
+                <!-- ===== STEP 2: Access Request ===== -->
                 <div class="form-step" id="step2">
-                    <p class="section-label">Account &amp; Access Request</p>
-
                     <div class="form-group">
                         <label for="requested_role">Requested Role <span class="required-star">*</span></label>
                         <select id="requested_role" name="requested_role" class="form-control-plain">
@@ -469,28 +407,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
                     <div class="form-group">
                         <label for="reason_for_access">Reason for Access <span class="required-star">*</span></label>
-                        <textarea id="reason_for_access" name="reason_for_access" class="form-control-plain"
-                            rows="3" placeholder="Briefly explain your purpose for accessing the Green Forensics system..."
-                            style="resize:vertical;"><?php echo htmlspecialchars($form_data['reason'] ?? ''); ?></textarea>
+                        <textarea id="reason_for_access" name="reason_for_access" class="form-control-plain" rows="3" placeholder="Briefly explain your purpose for accessing the Green Forensics system."><?php echo htmlspecialchars($form_data['reason'] ?? ''); ?></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="password">Password <span class="required-star">*</span></label>
                         <div class="password-wrapper">
-                            <input type="password" id="password" name="password" class="form-control-plain"
-                                placeholder="Minimum 6 characters">
-                            <button type="button" class="password-toggle" data-password-toggle="password"
-                                aria-label="Show password" aria-pressed="false">
+                            <input type="password" id="password" name="password" class="form-control-plain" placeholder="Minimum 6 characters">
+                            <button type="button" class="password-toggle" data-password-toggle="password" aria-label="Show password" aria-pressed="false">
                                 <span class="icon-eye">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
                                 </span>
                                 <span class="icon-eye-off">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"></path>
                                         <path d="M9.9 4.24A10.84 10.84 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"></path>
                                         <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"></path>
@@ -499,26 +431,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                                 </span>
                             </button>
                         </div>
-                        <p class="field-hint">At least 6 characters</p>
                     </div>
 
                     <div class="form-group">
                         <label for="confirm_password">Confirm Password <span class="required-star">*</span></label>
                         <div class="password-wrapper">
-                            <input type="password" id="confirm_password" name="confirm_password" class="form-control-plain"
-                                placeholder="Re-enter your password">
-                            <button type="button" class="password-toggle" data-password-toggle="confirm_password"
-                                aria-label="Show password" aria-pressed="false">
+                            <input type="password" id="confirm_password" name="confirm_password" class="form-control-plain" placeholder="Confirm your password">
+                            <button type="button" class="password-toggle" data-password-toggle="confirm_password" aria-label="Show password" aria-pressed="false">
                                 <span class="icon-eye">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
                                 </span>
                                 <span class="icon-eye-off">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"></path>
                                         <path d="M9.9 4.24A10.84 10.84 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"></path>
                                         <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"></path>
@@ -527,36 +454,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                                 </span>
                             </button>
                         </div>
-                        <p class="field-hint" id="passMatchHint" style="display:none;color:#c0392b;">Passwords do not match.</p>
                     </div>
 
                     <div class="form-nav">
-                        <button type="button" class="btn-back" onclick="goToStep1()">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="19" y1="12" x2="5" y2="12"></line>
-                                <polyline points="12 19 5 12 12 5"></polyline>
-                            </svg>
-                            Back
-                        </button>
-                        <button type="submit" name="submit_registration" class="btn-next" id="submitBtn">
-                            Submit Registration
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                            </svg>
-                        </button>
+                        <button type="button" class="btn-back" onclick="goToStep1()">Back</button>
+                        <button type="submit" name="submit_registration" class="btn-next" id="submitBtn" onclick="return validateStep2()">Submit Registration</button>
                     </div>
                 </div>
-
             </form>
 
-            <?php endif; ?>
-
-            <?php if (empty($success_message)): ?>
-            <div class="login-link-wrapper">
+            <div class="register-link-wrapper">
                 <span>Already have an account?</span>
-                <a href="login.php" class="login-link">Login here</a>
+                <a href="login.php" class="register-link">Login here</a>
             </div>
+
             <div class="back-link-wrapper">
                 <a href="index.php" class="back-link">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -566,7 +477,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     <span>Back to Homepage</span>
                 </a>
             </div>
-            <?php endif; ?>
         </div>
     </main>
 
@@ -575,10 +485,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     </footer>
 
     <script>
-        // Skeleton reveal
         document.addEventListener("DOMContentLoaded", () => {
             const skeleton = document.getElementById("skeletonCard");
             const realCard = document.getElementById("realRegisterCard");
+
+            // Smoothly reveal real form card
             setTimeout(() => {
                 skeleton.style.transition = "opacity 0.4s ease";
                 skeleton.style.opacity = "0";
@@ -589,27 +500,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                         realCard.style.transition = "opacity 0.5s ease";
                         realCard.style.opacity = "1";
                     });
-                    // If there was a server error on step 2 fields, go to step2
+
+                    // If server error occurred, check if we need to return to step 2
                     <?php if (!empty($error_message) && !empty($form_data['requested_role'])): ?>
                     goToStep2(true);
                     <?php endif; ?>
                 }, 400);
-            }, 1200);
+            }, 1000);
 
-            // Live password match check
-            const passInput = document.getElementById("password");
-            const confInput = document.getElementById("confirm_password");
-            const hint = document.getElementById("passMatchHint");
-            if (confInput && passInput) {
-                confInput.addEventListener("input", () => {
-                    if (confInput.value && passInput.value !== confInput.value) {
-                        hint.style.display = "block";
-                    } else {
-                        hint.style.display = "none";
-                    }
-                });
-            }
-
+            // Password field toggle visibility helper
             document.querySelectorAll("[data-password-toggle]").forEach((button) => {
                 const input = document.getElementById(button.dataset.passwordToggle);
                 if (!input) return;
@@ -619,47 +518,86 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     input.type = shouldShow ? "text" : "password";
                     button.classList.toggle("is-visible", shouldShow);
                     button.setAttribute("aria-pressed", shouldShow ? "true" : "false");
-                    button.setAttribute("aria-label", shouldShow ? "Hide password" : "Show password");
                 });
             });
         });
 
-        function goToStep2(fromError = false) {
-            // Validate step 1 fields
-            const fields = ['first_name','last_name','id_number','contact_number','email'];
-            let valid = true;
-            fields.forEach(f => {
-                const el = document.getElementById(f);
-                if (!el || !el.value.trim()) { valid = false; el && (el.style.borderColor = '#c0392b'); }
-                else el.style.borderColor = '';
-            });
-            // Email check
-            const emailEl = document.getElementById('email');
-            if (emailEl && emailEl.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value)) {
-                valid = false; emailEl.style.borderColor = '#c0392b';
-            }
-            if (!valid && !fromError) {
-                alert('Please fill in all required fields in Step 1 correctly.');
-                return;
+        const clientErrorBox = document.getElementById("clientErrorBox");
+        const clientErrorMessage = document.getElementById("clientErrorMessage");
+
+        function showClientError(msg) {
+            clientErrorMessage.textContent = msg;
+            clientErrorBox.style.display = "flex";
+            const serverError = document.getElementById("serverErrorBox");
+            if (serverError) serverError.style.display = "none";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function hideClientError() {
+            clientErrorBox.style.display = "none";
+        }
+
+        function goToStep2(bypassValidation = false) {
+            hideClientError();
+
+            if (!bypassValidation) {
+                const fn = document.getElementById("first_name").value.trim();
+                const ln = document.getElementById("last_name").value.trim();
+                const idNum = document.getElementById("id_number").value.trim();
+                const contact = document.getElementById("contact_number").value.trim();
+                const email = document.getElementById("email").value.trim();
+
+                if (!fn) { showClientError("First Name is required."); return; }
+                if (!ln) { showClientError("Last Name is required."); return; }
+                if (!idNum) { showClientError("ID Number is required."); return; }
+                if (!contact) { showClientError("Contact Number is required."); return; }
+                if (!email) { showClientError("Email Address is required."); return; }
+                
+                // Email format validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showClientError("Please enter a valid email address.");
+                    return;
+                }
             }
 
-            document.getElementById('step1').classList.remove('active');
-            const s2 = document.getElementById('step2');
-            s2.classList.add('active');
-            document.getElementById('progressStep1').classList.remove('active');
-            document.getElementById('progressStep1').classList.add('completed');
-            document.getElementById('progressStep2').classList.add('active');
+            document.getElementById("step1").classList.remove("active");
+            document.getElementById("step2").classList.add("active");
+
+            document.getElementById("progStep1").classList.remove("active");
+            document.getElementById("progStep1").classList.add("completed");
+            document.getElementById("progLine").classList.add("active");
+            document.getElementById("progStep2").classList.add("active");
         }
 
         function goToStep1() {
-            document.getElementById('step2').classList.remove('active');
-            const s1 = document.getElementById('step1');
-            s1.classList.add('back-anim');
-            s1.classList.add('active');
-            setTimeout(() => s1.classList.remove('back-anim'), 400);
-            document.getElementById('progressStep2').classList.remove('active');
-            document.getElementById('progressStep1').classList.remove('completed');
-            document.getElementById('progressStep1').classList.add('active');
+            hideClientError();
+
+            document.getElementById("step2").classList.remove("active");
+            document.getElementById("step1").classList.add("active");
+
+            document.getElementById("progStep2").classList.remove("active");
+            document.getElementById("progLine").classList.remove("active");
+            document.getElementById("progStep1").classList.remove("completed");
+            document.getElementById("progStep1").classList.add("active");
+        }
+
+        function validateStep2() {
+            hideClientError();
+            
+            const role = document.getElementById("requested_role").value;
+            const reason = document.getElementById("reason_for_access").value.trim();
+            const pass = document.getElementById("password").value;
+            const conf = document.getElementById("confirm_password").value;
+
+            if (!role) { showClientError("Requested Role is required."); return false; }
+            if (!reason) { showClientError("Reason for Access is required."); return false; }
+            if (!pass) { showClientError("Password is required."); return false; }
+            if (pass.length < 6) { showClientError("Password must be at least 6 characters."); return false; }
+            if (!conf) { showClientError("Confirm Password is required."); return false; }
+            if (pass !== conf) { showClientError("Password and Confirm Password must match."); return false; }
+
+            return true;
         }
     </script>
 </body>

@@ -177,10 +177,10 @@ function role_label($r) {
                     <table class="custom-table">
                         <thead>
                             <tr>
-                                <th>Name / ID Number</th>
+                                <th>Name / ID</th>
                                 <th>Email / Contact</th>
-                                <th>Department / Affiliation</th>
                                 <th>Requested Role</th>
+                                <th>Reason for Access</th>
                                 <th>Registration Date</th>
                                 <th>Status</th>
                                 <th style="text-align:right;">Actions</th>
@@ -200,8 +200,12 @@ function role_label($r) {
                                     <span style="display:block;"><?php echo htmlspecialchars($u['email']); ?></span>
                                     <span style="font-size:.75rem;color:#888;"><?php echo htmlspecialchars($u['contact_number'] ?? '—'); ?></span>
                                 </td>
-                                <td><?php echo htmlspecialchars($u['department'] ?? '—'); ?></td>
                                 <td><span style="font-size:.75rem;font-weight:700;color:#6B8F71;"><?php echo role_label($u['requested_role'] ?? ''); ?></span></td>
+                                <td>
+                                    <div style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($u['reason_for_access'] ?? ''); ?>">
+                                        <?php echo htmlspecialchars($u['reason_for_access'] ?? '—'); ?>
+                                    </div>
+                                </td>
                                 <td><?php echo date('M d, Y', strtotime($u['created_at'])); ?></td>
                                 <td><span class="badge-pending">Pending</span></td>
                                 <td style="text-align:right;">

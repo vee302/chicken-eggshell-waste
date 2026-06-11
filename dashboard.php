@@ -13,13 +13,16 @@ if (!isset($_SESSION["logged_in"]) || $_SESSION["logged_in"] !== true) {
 // Redirect to correct role-based dashboard
 $role = $_SESSION['user_role'] ?? '';
 if ($role === 'super_admin') {
-    header("Location: admin/admin_dashboard.php");
+    header("Location: admin/dashboard.php");
     exit;
 } elseif ($role === 'faculty_researcher') {
     header("Location: faculty/faculty_dashboard.php");
     exit;
 } elseif ($role === 'criminology_student') {
     header("Location: student/student_dashboard.php");
+    exit;
+} elseif ($role === 'alumni_police_partner') {
+    header("Location: partner/partner_dashboard.php");
     exit;
 }
 

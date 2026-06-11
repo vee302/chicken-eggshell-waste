@@ -21,13 +21,13 @@ function check_faculty_auth() {
         // Redirect to correct dashboard by role
         $role = $_SESSION['user_role'] ?? '';
         if ($role === 'super_admin') {
-            header('Location: ../admin/admin_dashboard.php');
+            header('Location: ../admin/dashboard.php');
             exit;
         } elseif ($role === 'criminology_student') {
             header('Location: ../student/student_dashboard.php');
             exit;
         } elseif ($role === 'alumni_police_partner') {
-            header('Location: ../dashboard.php');
+            header('Location: ../partner/partner_dashboard.php');
             exit;
         }
 

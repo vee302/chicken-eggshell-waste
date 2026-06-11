@@ -8,11 +8,13 @@ session_start();
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     $role = $_SESSION['user_role'] ?? '';
     if ($role === 'super_admin') {
-        header("Location: admin/admin_dashboard.php");
+        header("Location: admin/dashboard.php");
     } elseif ($role === 'faculty_researcher') {
         header("Location: faculty/faculty_dashboard.php");
     } elseif ($role === 'criminology_student') {
         header("Location: student/student_dashboard.php");
+    } elseif ($role === 'alumni_police_partner') {
+        header("Location: partner/partner_dashboard.php");
     } else {
         header("Location: dashboard.php");
     }
@@ -68,22 +70,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                                     // Redirect based on role
                                     if ($user_role === 'super_admin') {
-                                        header("Location: admin/admin_dashboard.php");
+                                        header("Location: admin/dashboard.php");
                                     } elseif ($user_role === 'faculty_researcher') {
                                         header("Location: faculty/faculty_dashboard.php");
                                     } elseif ($user_role === 'criminology_student') {
                                         header("Location: student/student_dashboard.php");
+                                    } elseif ($user_role === 'alumni_police_partner') {
+                                        header("Location: partner/partner_dashboard.php");
                                     } else {
                                         header("Location: dashboard.php");
                                     }
                                     exit;
-                                } elseif ($status === 'pending' || $status === 'rejected') {
-                                    $_SESSION['pending_registration_user_id'] = $id;
-                                    $_SESSION['pending_registration_email'] = $email;
-                                    header("Location: pending_approval.php");
-                                    exit;
+                                } elseif ($status === 'pending') {
+                                    $error_message = "Your account is still pending approval.";
+                                } elseif ($status === 'rejected') {
+                                    $error_message = "Your registration was not approved.";
                                 } elseif ($status === 'suspended') {
-                                    $error_message = "Your account has been suspended. Please contact the administrator.";
+                                    $error_message = "Your account has been suspended.";
                                 } else {
                                     $error_message = "Your account is currently inactive. Please contact the administrator.";
                                 }

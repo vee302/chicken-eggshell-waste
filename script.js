@@ -4,46 +4,7 @@
 // ===================================
 
 if (window.innerWidth <= 768) {
-    // Mobile viewport: keep desktop GSAP disabled, but allow desktop-page accordions to work.
-    document.addEventListener('DOMContentLoaded', () => {
-        const benefitCards = document.querySelectorAll('.benefits-grid .benefit-card');
-
-        benefitCards.forEach((card, index) => {
-            const description = card.querySelector('p');
-            if (!description) return;
-
-            if (!description.id) {
-                description.id = `benefit-description-${index + 1}`;
-            }
-
-            card.setAttribute('role', 'button');
-            card.setAttribute('tabindex', '0');
-            card.setAttribute('aria-controls', description.id);
-            card.setAttribute('aria-expanded', 'false');
-
-            const toggleCard = () => {
-                const isOpen = card.classList.contains('is-open');
-
-                benefitCards.forEach(openCard => {
-                    openCard.classList.remove('is-open');
-                    openCard.setAttribute('aria-expanded', 'false');
-                });
-
-                if (!isOpen) {
-                    card.classList.add('is-open');
-                    card.setAttribute('aria-expanded', 'true');
-                }
-            };
-
-            card.addEventListener('click', toggleCard);
-            card.addEventListener('keydown', event => {
-                if (event.key !== 'Enter' && event.key !== ' ') return;
-
-                event.preventDefault();
-                toggleCard();
-            });
-        });
-    });
+    // Mobile viewport: exit immediately to prevent conflicts
 } else {
     // Register GSAP ScrollTrigger and ScrollTo plugins
     gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);

@@ -19,6 +19,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Green Forensics - Sustainable Fingerprint Powder</title>
     <link rel="stylesheet" href="css/style.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="css/benefits-mobile-accordion.css?v=<?= time() ?>">
     <!-- GSAP, ScrollTrigger, and ScrollToPlugin CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
@@ -812,7 +813,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=<?= time() ?>"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const heroBtn = document.querySelector(".hero-btn");

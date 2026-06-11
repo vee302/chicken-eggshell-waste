@@ -11,28 +11,54 @@ $student_id   = $_SESSION['user_id']  ?? 0;
 $msg = $msg_type = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fingerprint_image'])) {
-    $file      = $_FILES['fingerprint_image'];
-    $allowed   = ['image/jpeg','image/png','image/webp'];
-    $max_bytes = 5 * 1024 * 1024; // 5 MB
+    $file         = $_FILES['fingerprint_image'];
+    $powder_type  = trim($_POST['powder_type'] ?? '');
+    $surface_type = trim($_POST['surface_type'] ?? '');
+    $label        = trim($_POST['image_label'] ?? '');
+    
+    $allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/pjpeg', 'image/x-png'];
+    $allowed_exts  = ['jpg', 'jpeg', 'png', 'webp'];
+    $max_bytes     = 5 * 1024 * 1024; // 5 MB
 
-    if ($file['error'] !== UPLOAD_ERR_OK) {
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+    if (!$powder_type || !$surface_type) {
+        $msg = 'Powder Type and Surface Type are required.'; $msg_type = 'error';
+    } elseif ($file['error'] !== UPLOAD_ERR_OK) {
         $msg = 'Upload error. Please try again.'; $msg_type = 'error';
-    } elseif (!in_array($file['type'], $allowed)) {
+    } elseif (!in_array($file['type'], $allowed_types) && !in_array($ext, $allowed_exts)) {
         $msg = 'Only JPG, PNG and WebP images are allowed.'; $msg_type = 'error';
     } elseif ($file['size'] > $max_bytes) {
         $msg = 'File size must not exceed 5 MB.'; $msg_type = 'error';
     } else {
-        $ext      = pathinfo($file['name'], PATHINFO_EXTENSION);
         $filename = 'fp_' . $student_id . '_' . time() . '.' . $ext;
-        $dest     = '../uploads/' . $filename;
+        $dest_dir = '../uploads/fingerprints/';
+        if (!is_dir($dest_dir)) {
+            mkdir($dest_dir, 0777, true);
+        }
+        $dest = $dest_dir . $filename;
 
         if (move_uploaded_file($file['tmp_name'], $dest)) {
-            $label = trim($_POST['image_label'] ?? '');
             try {
-                $pdo->prepare("INSERT INTO fingerprint_images (student_id, filename, label, uploaded_at) VALUES (?,?,?,NOW())")
-                    ->execute([$student_id, $filename, $label]);
-            } catch (PDOException $e) { /* table may not exist yet */ }
-            $msg = 'Image uploaded successfully!'; $msg_type = 'success';
+                // Generate a unique trial_id
+                $stmt = $pdo->query("SELECT MAX(id) FROM fingerprint_tests");
+                $max_id = $stmt->fetchColumn() ?: 0;
+                $next_id = $max_id + 1;
+                $trial_id = 'TR-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
+
+                // Insert trial record
+                $stmt = $pdo->prepare("
+                    INSERT INTO fingerprint_tests 
+                        (trial_id, student_id, image_path, image_label, powder_type, surface_type, 
+                         ridge_clarity_score, visibility_score, adhesion_score, accuracy_score, status, submitted_at)
+                    VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, 'pending_validation', NOW())
+                ");
+                $stmt->execute([$trial_id, $student_id, $filename, $label, $powder_type, $surface_type]);
+
+                $msg = 'Fingerprint image uploaded successfully and submitted for faculty validation.'; $msg_type = 'success';
+            } catch (PDOException $e) { 
+                $msg = 'Database error. Failed to save record.'; $msg_type = 'error';
+            }
         } else {
             $msg = 'Failed to save image. Check uploads directory permissions.'; $msg_type = 'error';
         }
@@ -42,7 +68,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fingerprint_image'])
 // Fetch my uploaded images
 $images = [];
 try {
-    $stmt = $pdo->prepare("SELECT * FROM fingerprint_images WHERE student_id = ? ORDER BY uploaded_at DESC LIMIT 20");
+    $stmt = $pdo->prepare("
+        SELECT id, trial_id, image_path, image_label, status, submitted_at, powder_type, surface_type 
+        FROM fingerprint_tests 
+        WHERE student_id = ? AND image_path IS NOT NULL AND image_path != '' 
+        ORDER BY submitted_at DESC LIMIT 20
+    ");
     $stmt->execute([$student_id]);
     $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {}
@@ -119,6 +150,30 @@ try {
                     <input type="file" name="fingerprint_image" id="fingerprint_image"
                            accept="image/jpeg,image/png,image/webp" style="display:none;" required>
 
+                    <div class="form-grid-2" style="margin-top: 1.25rem;">
+                        <div class="form-group">
+                            <label for="powder_type">Powder Type <span style="color:var(--danger)">*</span></label>
+                            <select name="powder_type" id="powder_type" class="form-control" required>
+                                <option value="">— Select Powder —</option>
+                                <option value="eggshell">Eggshell Powder</option>
+                                <option value="commercial">Commercial Powder</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="surface_type">Surface Type <span style="color:var(--danger)">*</span></label>
+                            <select name="surface_type" id="surface_type" class="form-control" required>
+                                <option value="">— Select Surface —</option>
+                                <option value="glass">Glass</option>
+                                <option value="plastic">Plastic</option>
+                                <option value="metal">Metal</option>
+                                <option value="paper">Paper</option>
+                                <option value="wood">Wood</option>
+                                <option value="ceramic">Ceramic</option>
+                                <option value="fabric">Fabric</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="form-group" style="margin-top:1.25rem;">
                         <label for="image_label">Image Label / Description</label>
                         <input type="text" name="image_label" id="image_label" class="form-control"
@@ -148,10 +203,23 @@ try {
                     <div class="image-gallery">
                         <?php foreach ($images as $img): ?>
                         <div class="image-thumb">
-                            <img src="../uploads/<?= htmlspecialchars($img['filename']) ?>" alt="Fingerprint image">
+                            <?php if ($img['image_path'] && file_exists('../uploads/fingerprints/' . $img['image_path'])): ?>
+                                <img src="../uploads/fingerprints/<?= htmlspecialchars($img['image_path']) ?>" alt="Fingerprint image">
+                            <?php else: ?>
+                                <div style="height:130px; background:#f4f6f0; display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:0.75rem; font-weight:600;">Image not found</div>
+                            <?php endif; ?>
                             <div class="image-thumb-info">
-                                <div class="image-thumb-label"><?= htmlspecialchars($img['label'] ?: $img['filename']) ?></div>
-                                <div class="image-thumb-date"><?= date('M d, Y', strtotime($img['uploaded_at'])) ?></div>
+                                <div class="image-thumb-label" style="font-size: 0.8rem; font-weight:700; color:var(--dark-green);"><?= htmlspecialchars($img['trial_id']) ?></div>
+                                <div class="image-thumb-label" title="<?= htmlspecialchars($img['image_label'] ?: 'No Label') ?>"><?= htmlspecialchars($img['image_label'] ?: 'Untitled') ?></div>
+                                <div style="font-size:0.7rem; color:var(--gray); text-transform:capitalize; margin-bottom: 2px;">
+                                    <?= htmlspecialchars($img['powder_type']) ?> | <?= htmlspecialchars($img['surface_type']) ?>
+                                </div>
+                                <div class="image-thumb-date" style="font-size:0.68rem;"><?= date('M d, Y', strtotime($img['submitted_at'])) ?></div>
+                                <div style="margin-top: 4px;">
+                                    <span class="badge badge-<?= $img['status'] ?>" style="font-size: 0.65rem; padding: 2px 6px;">
+                                        <?= $img['status'] === 'pending_validation' ? 'Pending Validation' : ($img['status'] === 'needs_revision' ? 'Needs Revision' : ucfirst($img['status'])) ?>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <?php endforeach; ?>

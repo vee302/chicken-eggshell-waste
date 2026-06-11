@@ -16,9 +16,11 @@ $filter_status = isset($_GET["status"]) ? trim($_GET["status"]) : "";
 $query_str = "
     SELECT 
         ft.id, 
+        ft.trial_id,
         ft.powder_type, 
         ft.surface_type, 
-        ft.fingerprint_image, 
+        ft.image_path, 
+        ft.image_label,
         ft.ridge_clarity_score,
         ft.visibility_score,
         ft.adhesion_score,
@@ -26,14 +28,17 @@ $query_str = "
         ft.notes,
         ft.status, 
         ft.submitted_at, 
+        ft.validated_at,
         u.full_name AS student_name,
         fac.full_name AS validator_name,
         frm.remarks AS validation_remarks,
         frm.created_at AS validation_date
     FROM fingerprint_tests ft
     JOIN users u ON ft.student_id = u.id
-    LEFT JOIN faculty_remarks frm ON ft.id = frm.test_id
-    LEFT JOIN users fac ON frm.faculty_id = fac.id
+    LEFT JOIN users fac ON ft.validated_by = fac.id
+    LEFT JOIN faculty_remarks frm ON ft.id = frm.test_id AND frm.id = (
+        SELECT MAX(frm2.id) FROM faculty_remarks frm2 WHERE frm2.test_id = ft.id
+    )
     WHERE 1=1
 ";
 
@@ -89,9 +94,10 @@ if (isset($_GET['view'])) {
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .badge-pending  { background:rgba(243,156,18,.15); color:#b7770d; border:1px solid rgba(243,156,18,.25); padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:700; }
-        .badge-approved { background:rgba(82,183,136,.15); color:#1e7e34; border:1px solid rgba(82,183,136,.25); padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:700; }
-        .badge-rejected { background:rgba(224,122,95,.15); color:var(--danger); border:1px solid rgba(224,122,95,.2); padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:700; }
+        .badge-pending_validation { background:rgba(244,162,97,.15); color:#c97d2a; border:1px solid rgba(244,162,97,.25); padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:700; display:inline-block; }
+        .badge-needs_revision { background:rgba(230,57,70,.12); color:#e63946; border:1px solid rgba(230,57,70,.2); padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:700; display:inline-block; }
+        .badge-approved { background:rgba(82,183,136,.15); color:#2d6a4f; border:1px solid rgba(82,183,136,.25); padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:700; display:inline-block; }
+        .badge-rejected { background:rgba(224,122,95,.15); color:#c0392b; border:1px solid rgba(224,122,95,.2); padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:700; display:inline-block; }
 
         /* Detail Modal */
         .detail-overlay { display:none; position:fixed; inset:0; background:rgba(27, 67, 50, 0.45); backdrop-filter: blur(4px); z-index:9999; align-items:center; justify-content:center; }
@@ -179,9 +185,10 @@ if (isset($_GET['view'])) {
 
                             <select name="status" class="form-control-inline">
                                 <option value="">All Statuses</option>
-                                <option value="pending" <?php echo $filter_status === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                <option value="approved" <?php echo $filter_status === 'approved' ? 'selected' : ''; ?>>Approved</option>
-                                <option value="rejected" <?php echo $filter_status === 'rejected' ? 'selected' : ''; ?>>Rejected</option>
+                                <option value="pending_validation" <?php echo $filter_status === 'pending_validation' ? 'selected' : ''; ?>>Pending Validation</option>
+                                <option value="approved"           <?php echo $filter_status === 'approved'           ? 'selected' : ''; ?>>Approved</option>
+                                <option value="rejected"           <?php echo $filter_status === 'rejected'           ? 'selected' : ''; ?>>Rejected</option>
+                                <option value="needs_revision"     <?php echo $filter_status === 'needs_revision'     ? 'selected' : ''; ?>>Needs Revision</option>
                             </select>
 
                             <button type="submit" class="btn btn-secondary">Filter Records</button>
@@ -214,8 +221,8 @@ if (isset($_GET['view'])) {
                                 <?php if (count($trial_records) > 0): ?>
                                     <?php foreach ($trial_records as $rec): ?>
                                         <tr>
-                                            <td style="font-weight: 700; color: var(--gray);">#<?php echo $rec['id']; ?></td>
-                                            <td style="font-weight: 600; color: var(--dark-green);"><?php echo htmlspecialchars($rec['student_name']); ?></td>
+                                            <td style="font-weight: 700; color: var(--dark-green);"><?php echo htmlspecialchars($rec['trial_id'] ?: 'TR-'.str_pad($rec['id'], 4, '0', STR_PAD_LEFT)); ?></td>
+                                            <td style="font-weight: 600;"><?php echo htmlspecialchars($rec['student_name']); ?></td>
                                             <td>
                                                 <span style="color: <?php echo ($rec['powder_type'] === 'eggshell') ? 'var(--medium-green)' : 'var(--gray)'; ?>; font-weight: 600; text-transform: capitalize;">
                                                     <?php echo $rec['powder_type']; ?>
@@ -225,8 +232,8 @@ if (isset($_GET['view'])) {
                                             <td>
                                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                                     <div style="width: 32px; height: 32px; border-radius: 4px; background: #e9ecef; border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                                        <?php if (!empty($rec['fingerprint_image'])): ?>
-                                                            <img src="../uploads/<?php echo htmlspecialchars($rec['fingerprint_image']); ?>" style="width: 100%; height: 100%; object-fit: cover;" alt="Fingerprint">
+                                                        <?php if (!empty($rec['image_path']) && file_exists('../uploads/fingerprints/' . $rec['image_path'])): ?>
+                                                            <img src="../uploads/fingerprints/<?php echo htmlspecialchars($rec['image_path']); ?>" style="width: 100%; height: 100%; object-fit: cover;" alt="Fingerprint">
                                                         <?php else: ?>
                                                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--medium-green);">
                                                                 <path d="M12 2a10 10 0 0 0-7.3 16.8"></path>
@@ -240,21 +247,33 @@ if (isset($_GET['view'])) {
                                                         <?php endif; ?>
                                                     </div>
                                                     <span style="font-family: monospace; font-size: 0.75rem; color: var(--gray);">
-                                                        <?php echo !empty($rec['fingerprint_image']) ? htmlspecialchars($rec['fingerprint_image']) : 'placeholder.jpg'; ?>
+                                                        <?php echo !empty($rec['image_path']) ? htmlspecialchars($rec['image_path']) : 'placeholder.jpg'; ?>
                                                     </span>
                                                 </div>
                                             </td>
                                             <td>
                                                 <div style="display:flex; align-items:center; gap:0.5rem;">
-                                                    <div style="width: 50px; background-color: var(--light-gray); height: 6px; border-radius: 3px; overflow:hidden;">
-                                                        <div style="width: <?php echo $rec['accuracy_score']; ?>%; height: 100%; background-color: <?php echo ($rec['accuracy_score'] >= 90) ? 'var(--medium-green)' : (($rec['accuracy_score'] >= 80) ? 'var(--accent-green)' : 'var(--warning)'); ?>;"></div>
-                                                    </div>
-                                                    <span style="font-weight: 700; color: var(--dark-green);"><?php echo number_format($rec['accuracy_score'], 1); ?>%</span>
+                                                    <?php if ($rec['accuracy_score'] !== null): ?>
+                                                        <div style="width: 50px; background-color: var(--light-gray); height: 6px; border-radius: 3px; overflow:hidden;">
+                                                            <div style="width: <?php echo $rec['accuracy_score']; ?>%; height: 100%; background-color: <?php echo ($rec['accuracy_score'] >= 90) ? 'var(--medium-green)' : (($rec['accuracy_score'] >= 80) ? 'var(--accent-green)' : 'var(--warning)'); ?>;"></div>
+                                                        </div>
+                                                        <span style="font-weight: 700; color: var(--dark-green);"><?php echo number_format($rec['accuracy_score'], 1); ?>%</span>
+                                                    <?php else: ?>
+                                                        <span style="font-size:0.75rem; color:var(--gray); font-style:italic;">Awaiting review</span>
+                                                    <?php endif; ?>
                                                 </div>
                                             </td>
                                             <td>
                                                 <span class="badge-<?php echo $rec['status']; ?>">
-                                                    <?php echo ucfirst($rec['status']); ?>
+                                                    <?php 
+                                                        if ($rec['status'] === 'pending_validation') {
+                                                            echo 'Pending Validation';
+                                                        } elseif ($rec['status'] === 'needs_revision') {
+                                                            echo 'Needs Revision';
+                                                        } else {
+                                                            echo ucfirst($rec['status']);
+                                                        }
+                                                    ?>
                                                 </span>
                                             </td>
                                             <td><?php echo date('M d, Y h:i A', strtotime($rec['submitted_at'])); ?></td>
@@ -293,7 +312,7 @@ if (isset($_GET['view'])) {
     <div class="detail-overlay open" id="recordOverlay">
         <div class="detail-modal">
             <div class="detail-modal-header">
-                <h3>Trial Record Details: ID #<?php echo $view_record['id']; ?></h3>
+                <h3>Trial Record Details: ID #<?php echo htmlspecialchars($view_record['trial_id'] ?: 'TR-'.str_pad($view_record['id'], 4, '0', STR_PAD_LEFT)); ?></h3>
                 <button class="modal-close-btn" onclick="document.getElementById('recordOverlay').classList.remove('open')">&times;</button>
             </div>
             <div class="detail-modal-body">
@@ -306,10 +325,11 @@ if (isset($_GET['view'])) {
                     <span>Read-Only Mode: Scientific accuracy scores and validation remarks are restricted to Faculty Researchers.</span>
                 </div>
 
-                <p class="section-divider">Forensic Submissions Details</p>
+                <p class="section-divider">Forensic Submission Details</p>
                 <div class="detail-row"><span class="detail-label">Student Submitter</span><span class="detail-value"><?php echo htmlspecialchars($view_record['student_name']); ?></span></div>
                 <div class="detail-row"><span class="detail-label">Powder Type Used</span><span class="detail-value" style="text-transform: capitalize; font-weight: 600;"><?php echo htmlspecialchars($view_record['powder_type']); ?></span></div>
                 <div class="detail-row"><span class="detail-label">Surface Material Type</span><span class="detail-value" style="text-transform: capitalize; font-weight: 600;"><?php echo htmlspecialchars($view_record['surface_type']); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Image Label</span><span class="detail-value"><?php echo htmlspecialchars($view_record['image_label'] ?: 'Untitled'); ?></span></div>
                 <div class="detail-row"><span class="detail-label">Notes from Submission</span><span class="detail-value"><?php echo nl2br(htmlspecialchars($view_record['notes'] ?: 'No notes provided.')); ?></span></div>
                 <div class="detail-row"><span class="detail-label">Date Submitted</span><span class="detail-value"><?php echo date('F d, Y g:i A', strtotime($view_record['submitted_at'])); ?></span></div>
 
@@ -318,26 +338,38 @@ if (isset($_GET['view'])) {
                     <div class="score-title">Individual Forensic Performance Metrics</div>
                     <div class="score-values">
                         <div>
-                            <div class="score-val"><?php echo number_format($view_record['ridge_clarity_score'], 1); ?>%</div>
+                            <div class="score-val"><?php echo $view_record['ridge_clarity_score'] !== null ? number_format($view_record['ridge_clarity_score'], 1) . '%' : '—'; ?></div>
                             <div class="score-lbl">Clarity</div>
                         </div>
                         <div>
-                            <div class="score-val"><?php echo number_format($view_record['visibility_score'], 1); ?>%</div>
+                            <div class="score-val"><?php echo $view_record['visibility_score'] !== null ? number_format($view_record['visibility_score'], 1) . '%' : '—'; ?></div>
                             <div class="score-lbl">Visibility</div>
                         </div>
                         <div>
-                            <div class="score-val"><?php echo number_format($view_record['adhesion_score'], 1); ?>%</div>
+                            <div class="score-val"><?php echo $view_record['adhesion_score'] !== null ? number_format($view_record['adhesion_score'], 1) . '%' : '—'; ?></div>
                             <div class="score-lbl">Adhesion</div>
                         </div>
                     </div>
                 </div>
                 <div class="detail-row" style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green);">
                     <span class="detail-label" style="font-weight: 700;">Composite Accuracy Score</span>
-                    <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;"><?php echo number_format($view_record['accuracy_score'], 1); ?>%</span>
+                    <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;"><?php echo $view_record['accuracy_score'] !== null ? number_format($view_record['accuracy_score'], 1) . '%' : 'Awaiting Review'; ?></span>
                 </div>
 
                 <p class="section-divider">Validation Details</p>
-                <div class="detail-row"><span class="detail-label">Validation Status</span><span class="detail-value"><span class="badge-<?php echo $view_record['status']; ?>"><?php echo ucfirst($view_record['status']); ?></span></span></div>
+                <div class="detail-row"><span class="detail-label">Validation Status</span><span class="detail-value">
+                    <span class="badge-<?php echo $view_record['status']; ?>">
+                        <?php 
+                            if ($view_record['status'] === 'pending_validation') {
+                                echo 'Pending Validation';
+                            } elseif ($view_record['status'] === 'needs_revision') {
+                                echo 'Needs Revision';
+                            } else {
+                                echo ucfirst($view_record['status']);
+                            }
+                        ?>
+                    </span>
+                </span></div>
                 <div class="detail-row"><span class="detail-label">Faculty Reviewer</span><span class="detail-value" style="font-weight: 600;"><?php echo htmlspecialchars($view_record['validator_name'] ?: 'Awaiting Review'); ?></span></div>
                 <div class="detail-row"><span class="detail-label">Review Date</span><span class="detail-value"><?php echo $view_record['validation_date'] ? date('F d, Y g:i A', strtotime($view_record['validation_date'])) : '—'; ?></span></div>
                 <div class="detail-row"><span class="detail-label">Remarks from Reviewer</span><span class="detail-value" style="font-style: italic;"><?php echo nl2br(htmlspecialchars($view_record['validation_remarks'] ?: 'No evaluation remarks submitted yet.')); ?></span></div>

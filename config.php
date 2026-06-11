@@ -113,17 +113,21 @@ try {
     // ============================================================
     $pdo->exec("CREATE TABLE IF NOT EXISTS `fingerprint_tests` (
         `id`                  INT AUTO_INCREMENT PRIMARY KEY,
+        `trial_id`            VARCHAR(50) DEFAULT NULL,
         `student_id`          INT NOT NULL,
         `powder_type`         ENUM('eggshell','commercial') NOT NULL DEFAULT 'eggshell',
         `surface_type`        ENUM('glass','paper','wood','plastic','metal','ceramic','fabric') NOT NULL,
-        `fingerprint_image`   VARCHAR(255) DEFAULT NULL,
-        `ridge_clarity_score` DECIMAL(5,2) DEFAULT 0.00,
-        `visibility_score`    DECIMAL(5,2) DEFAULT 0.00,
-        `adhesion_score`      DECIMAL(5,2) DEFAULT 0.00,
-        `accuracy_score`      DECIMAL(5,2) DEFAULT 0.00,
+        `image_path`          VARCHAR(255) DEFAULT NULL,
+        `image_label`         VARCHAR(255) DEFAULT NULL,
+        `ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL,
+        `visibility_score`    DECIMAL(5,2) DEFAULT NULL,
+        `adhesion_score`      DECIMAL(5,2) DEFAULT NULL,
+        `accuracy_score`      DECIMAL(5,2) DEFAULT NULL,
         `notes`               TEXT DEFAULT NULL,
-        `status`              ENUM('pending','approved','rejected') DEFAULT 'pending',
+        `status`              ENUM('pending_validation','approved','rejected','needs_revision') DEFAULT 'pending_validation',
         `submitted_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `validated_by`        INT DEFAULT NULL,
+        `validated_at`        TIMESTAMP DEFAULT NULL,
         FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
@@ -135,19 +139,39 @@ try {
         }
     };
 
-    $addTestColumn('fingerprint_image', "`fingerprint_image` VARCHAR(255) DEFAULT NULL AFTER `surface_type`");
-    $addTestColumn('ridge_clarity_score', "`ridge_clarity_score` DECIMAL(5,2) DEFAULT 0.00 AFTER `fingerprint_image`");
-    $addTestColumn('visibility_score', "`visibility_score` DECIMAL(5,2) DEFAULT 0.00 AFTER `ridge_clarity_score`");
-    $addTestColumn('adhesion_score', "`adhesion_score` DECIMAL(5,2) DEFAULT 0.00 AFTER `visibility_score`");
-    $addTestColumn('accuracy_score', "`accuracy_score` DECIMAL(5,2) DEFAULT 0.00 AFTER `adhesion_score`");
-    $addTestColumn('notes', "`notes` TEXT DEFAULT NULL AFTER `accuracy_score`");
-    $addTestColumn('status', "`status` ENUM('pending','approved','rejected') DEFAULT 'pending' AFTER `notes`");
-    $addTestColumn('submitted_at', "`submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER `status`");
+    $addTestColumn('trial_id', "`trial_id` VARCHAR(50) DEFAULT NULL AFTER `id`");
+    $addTestColumn('image_path', "`image_path` VARCHAR(255) DEFAULT NULL AFTER `surface_type`");
+    $addTestColumn('image_label', "`image_label` VARCHAR(255) DEFAULT NULL AFTER `image_path`");
+    $addTestColumn('validated_by', "`validated_by` INT DEFAULT NULL AFTER `submitted_at`");
+    $addTestColumn('validated_at', "`validated_at` TIMESTAMP DEFAULT NULL AFTER `validated_by`");
 
-    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `status`
-        ENUM('pending','approved','rejected') DEFAULT 'pending'");
+    // Copy legacy columns if they exist
+    if (in_array('fingerprint_image', $testCols, true)) {
+        $pdo->exec("UPDATE `fingerprint_tests` SET `image_path` = `fingerprint_image` WHERE `image_path` IS NULL AND `fingerprint_image` IS NOT NULL");
+    }
+
+    // Add validated_by foreign key if it does not exist
+    try {
+        $pdo->exec("ALTER TABLE `fingerprint_tests` ADD CONSTRAINT `fk_validated_by` FOREIGN KEY (`validated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL");
+    } catch (Exception $e) {}
+
+    // Make sure score columns allow NULL
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `visibility_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `adhesion_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `accuracy_score` DECIMAL(5,2) DEFAULT NULL");
+
+    // Safe migration of status column
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `status` VARCHAR(50) DEFAULT 'pending_validation'");
+    $pdo->exec("UPDATE `fingerprint_tests` SET `status` = 'pending_validation' WHERE `status` = 'pending'");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `status` 
+        ENUM('pending_validation','approved','rejected','needs_revision') DEFAULT 'pending_validation'");
+
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `surface_type`
         ENUM('glass','paper','wood','plastic','metal','ceramic','fabric') NOT NULL");
+
+    // Seed missing trial_ids for existing rows
+    $pdo->exec("UPDATE `fingerprint_tests` SET `trial_id` = CONCAT('TR-', LPAD(id, 4, '0')) WHERE `trial_id` IS NULL OR `trial_id` = ''");
 
     // ============================================================
     // 6. Create SAFETY_CLIMATE_LOG table
@@ -201,11 +225,16 @@ try {
         `test_id`    INT NOT NULL,
         `faculty_id` INT NOT NULL,
         `remarks`    TEXT NOT NULL,
-        `decision`   ENUM('approved','rejected') NOT NULL,
+        `decision`   ENUM('approved','rejected','needs_revision') NOT NULL,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (`test_id`)    REFERENCES `fingerprint_tests`(`id`) ON DELETE CASCADE,
         FOREIGN KEY (`faculty_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Safe migration of faculty_remarks decision column
+    $pdo->exec("ALTER TABLE `faculty_remarks` MODIFY COLUMN `decision` VARCHAR(50) NOT NULL");
+    $pdo->exec("ALTER TABLE `faculty_remarks` MODIFY COLUMN `decision` 
+        ENUM('approved','rejected','needs_revision') NOT NULL");
 
     // ============================================================
     // 10. Create REPORTS table

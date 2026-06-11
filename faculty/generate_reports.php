@@ -340,7 +340,7 @@ if (isset($_GET['log_report']) && $_GET['log_report'] === '1' && !empty($records
                         <?php else: ?>
                             <?php foreach ($records as $r): ?>
                                 <tr>
-                                    <td style="font-weight:600;">#<?= $r['id'] ?></td>
+                                    <td style="font-weight:600; color:var(--dark-green);"><?= htmlspecialchars($r['trial_id'] ?: 'TR-'.str_pad($r['id'], 4, '0', STR_PAD_LEFT)) ?></td>
                                     <td><?= htmlspecialchars($r['student_name']) ?></td>
                                     <td style="text-transform:capitalize;"><?= $r['powder_type'] ?></td>
                                     <td style="text-transform:capitalize;"><?= $r['surface_type'] ?></td>
@@ -383,14 +383,14 @@ if (isset($_GET['log_report']) && $_GET['log_report'] === '1' && !empty($records
         <div class="record-card">
             <div class="record-grid">
                 <div>
-                    <?php if ($r['fingerprint_image'] && file_exists('../uploads/fingerprints/'.$r['fingerprint_image'])): ?>
-                        <img src="../uploads/fingerprints/<?= htmlspecialchars($r['fingerprint_image']) ?>" class="record-img" alt="Fingerprint">
+                    <?php if ($r['image_path'] && file_exists('../uploads/fingerprints/'.$r['image_path'])): ?>
+                        <img src="../uploads/fingerprints/<?= htmlspecialchars($r['image_path']) ?>" class="record-img" alt="Fingerprint">
                     <?php else: ?>
                         <div class="record-placeholder">No Image Available</div>
                     <?php endif; ?>
                 </div>
                 <div class="record-details">
-                    <h3>Trial Record #<?= $r['id'] ?> - <?= htmlspecialchars($r['student_name']) ?></h3>
+                    <h3>Trial Record: <?= htmlspecialchars($r['trial_id'] ?: 'TR-'.str_pad($r['id'], 4, '0', STR_PAD_LEFT)) ?> - <?= htmlspecialchars($r['student_name']) ?></h3>
                     <table>
                         <tr>
                             <th>Powder Type:</th>

@@ -101,10 +101,10 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .badge-pending{background:rgba(244,162,97,.15);color:#c97d2a;}
-        .badge-approved{background:rgba(82,183,136,.15);color:#2d6a4f;}
-        .badge-rejected{background:rgba(224,122,95,.15);color:#c0392b;}
-        .badge-needs_revision{background:rgba(244,162,97,.2);color:#b36b00;}
+        .badge-pending_validation { background:rgba(244,162,97,.15); color:#c97d2a; border:1px solid rgba(244,162,97,.25); }
+        .badge-needs_revision { background:rgba(230,57,70,.12); color:#e63946; border:1px solid rgba(230,57,70,.2); }
+        .badge-approved { background:rgba(82,183,136,.15); color:#2d6a4f; border:1px solid rgba(82,183,136,.25); }
+        .badge-rejected { background:rgba(224,122,95,.15); color:#c0392b; border:1px solid rgba(224,122,95,.2); }
         
         .powder-eggshell{background:rgba(82,183,136,.12);color:#2d6a4f;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700;}
         .powder-commercial{background:rgba(108,117,125,.12);color:#495057;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700;}
@@ -291,10 +291,11 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                 <div>
                     <label>Status</label>
                     <select name="status">
-                        <option value="">All Status</option>
-                        <option value="pending"  <?= $f_status==='pending' ?'selected':'' ?>>Pending</option>
-                        <option value="approved" <?= $f_status==='approved'?'selected':'' ?>>Approved</option>
-                        <option value="rejected" <?= $f_status==='rejected'?'selected':'' ?>>Rejected</option>
+                        <option value="">All Statuses</option>
+                        <option value="pending_validation" <?= $f_status==='pending_validation' ?'selected':'' ?>>Pending Validation</option>
+                        <option value="approved"           <?= $f_status==='approved'?'selected':'' ?>>Approved</option>
+                        <option value="rejected"           <?= $f_status==='rejected'?'selected':'' ?>>Rejected</option>
+                        <option value="needs_revision"     <?= $f_status==='needs_revision'?'selected':'' ?>>Needs Revision</option>
                     </select>
                 </div>
                 <div>
@@ -343,8 +344,8 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                             <span class="powder-eggshell">Eggshell</span>
                         </h4>
                         <div class="img-placeholder">
-                            <?php if(!empty($selected_pair['eggshell']['fingerprint_image'])): ?>
-                                <img src="../uploads/<?= htmlspecialchars($selected_pair['eggshell']['fingerprint_image']) ?>" alt="Eggshell Print">
+                            <?php if(!empty($selected_pair['eggshell']['image_path']) && file_exists('../uploads/fingerprints/' . $selected_pair['eggshell']['image_path'])): ?>
+                                <img src="../uploads/fingerprints/<?= htmlspecialchars($selected_pair['eggshell']['image_path']) ?>" alt="Eggshell Print">
                             <?php else: ?>
                                 No Image Available
                             <?php endif; ?>
@@ -368,8 +369,8 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                             <span class="powder-commercial">Commercial</span>
                         </h4>
                         <div class="img-placeholder">
-                            <?php if(!empty($selected_pair['commercial']['fingerprint_image'])): ?>
-                                <img src="../uploads/<?= htmlspecialchars($selected_pair['commercial']['fingerprint_image']) ?>" alt="Commercial Print">
+                            <?php if(!empty($selected_pair['commercial']['image_path']) && file_exists('../uploads/fingerprints/' . $selected_pair['commercial']['image_path'])): ?>
+                                <img src="../uploads/fingerprints/<?= htmlspecialchars($selected_pair['commercial']['image_path']) ?>" alt="Commercial Print">
                             <?php else: ?>
                                 No Image Available
                             <?php endif; ?>
@@ -441,7 +442,11 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                                 <td><?= number_format($r['adhesion_score'],1) ?>%</td>
                                 <td><strong><?= number_format($r['accuracy_score'],1) ?>%</strong></td>
                                 <td><?= date('M d, Y', strtotime($r['submitted_at'])) ?></td>
-                                <td><span class="badge badge-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span></td>
+                                <td>
+                                    <span class="badge badge-<?= $r['status'] ?>">
+                                        <?= $r['status'] === 'pending_validation' ? 'Pending Validation' : ($r['status'] === 'needs_revision' ? 'Needs Revision' : ucfirst($r['status'])) ?>
+                                    </span>
+                                </td>
                                 <td style="text-align:right;">
                                     <button class="icon-btn-action" title="View Details"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                                     <button class="icon-btn-action" title="View Image"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>

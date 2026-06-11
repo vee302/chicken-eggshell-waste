@@ -14,15 +14,23 @@ $filter_powder  = $_GET['powder']  ?? '';
 $filter_surface = $_GET['surface'] ?? '';
 
 // Build query
-$where = ['student_id = ?'];
+$where = ['ft.student_id = ?'];
 $params = [$student_id];
-if ($filter_status)  { $where[] = 'status = ?';       $params[] = $filter_status; }
-if ($filter_powder)  { $where[] = 'powder_type = ?';  $params[] = $filter_powder; }
-if ($filter_surface) { $where[] = 'surface_type = ?'; $params[] = $filter_surface; }
+if ($filter_status)  { $where[] = 'ft.status = ?';       $params[] = $filter_status; }
+if ($filter_powder)  { $where[] = 'ft.powder_type = ?';  $params[] = $filter_powder; }
+if ($filter_surface) { $where[] = 'ft.surface_type = ?'; $params[] = $filter_surface; }
 
 $records = [];
 try {
-    $sql = "SELECT * FROM fingerprint_tests WHERE " . implode(' AND ', $where) . " ORDER BY submitted_at DESC";
+    $sql = "
+        SELECT ft.*, fr.remarks AS faculty_remarks 
+        FROM fingerprint_tests ft
+        LEFT JOIN faculty_remarks fr ON fr.test_id = ft.id AND fr.id = (
+            SELECT MAX(fr2.id) FROM faculty_remarks fr2 WHERE fr2.test_id = ft.id
+        )
+        WHERE " . implode(' AND ', $where) . " 
+        ORDER BY ft.submitted_at DESC
+    ";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -42,6 +50,10 @@ try {
         .filter-item label { font-size:.72rem; font-weight:700; color:var(--dark-green); text-transform:uppercase; letter-spacing:.4px; }
         .filter-item select { padding:.5rem .9rem; border:1px solid var(--light-gray); border-radius:8px; font-size:.85rem; color:var(--dark); background:var(--white); outline:none; transition:var(--transition); }
         .filter-item select:focus { border-color:var(--medium-green); box-shadow:0 0 0 3px rgba(45,106,79,.1); }
+        .badge-pending_validation { background:rgba(244,162,97,.15); color:#c97d2a; border:1px solid rgba(244,162,97,.25); }
+        .badge-needs_revision { background:rgba(230,57,70,.12); color:#e63946; border:1px solid rgba(230,57,70,.2); }
+        .badge-approved { background:rgba(82,183,136,.15); color:#2d6a4f; border:1px solid rgba(82,183,136,.25); }
+        .badge-rejected { background:rgba(224,122,95,.15); color:#c0392b; border:1px solid rgba(224,122,95,.2); }
         @media print {
             .student-sidebar, .student-header, .filter-bar, .btn, .no-print { display:none !important; }
             .student-main { margin-left:0 !important; }
@@ -93,9 +105,10 @@ try {
                     <label>Status</label>
                     <select name="status" id="filter-status" onchange="this.form.submit()">
                         <option value="">All Statuses</option>
-                        <option value="pending"  <?= $filter_status==='pending'  ? 'selected' : '' ?>>Pending</option>
-                        <option value="approved" <?= $filter_status==='approved' ? 'selected' : '' ?>>Approved</option>
-                        <option value="rejected" <?= $filter_status==='rejected' ? 'selected' : '' ?>>Rejected</option>
+                        <option value="pending_validation" <?= $filter_status==='pending_validation' ? 'selected' : '' ?>>Pending Validation</option>
+                        <option value="approved"           <?= $filter_status==='approved'           ? 'selected' : '' ?>>Approved</option>
+                        <option value="rejected"           <?= $filter_status==='rejected'           ? 'selected' : '' ?>>Rejected</option>
+                        <option value="needs_revision"     <?= $filter_status==='needs_revision'     ? 'selected' : '' ?>>Needs Revision</option>
                     </select>
                 </div>
                 <div class="filter-item">
@@ -139,45 +152,67 @@ try {
                     <table class="custom-table">
                         <thead>
                             <tr>
-                                <th>#</th>
+                                <th>Trial ID</th>
+                                <th>Fingerprint Image</th>
                                 <th>Powder Type</th>
                                 <th>Surface Type</th>
                                 <th>Accuracy Score</th>
                                 <th>Score Bar</th>
                                 <th>Status</th>
-                                <th>Notes</th>
                                 <th>Date Submitted</th>
+                                <th>Faculty Remarks</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php if (empty($records)): ?>
                             <tr>
-                                <td colspan="8" style="text-align:center;color:#6c757d;padding:2.5rem;">
+                                <td colspan="9" style="text-align:center;color:#6c757d;padding:2.5rem;">
                                     No records found.
                                     <?php if (!$filter_status && !$filter_powder && !$filter_surface): ?>
-                                        <a href="submit_trial.php" style="color:var(--medium-green);font-weight:600;">Submit your first trial →</a>
+                                        <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first image →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($records as $i => $r): ?>
                             <tr>
-                                <td><?= $i + 1 ?></td>
+                                <td style="font-weight: 700; color: var(--dark-green);"><?= htmlspecialchars($r['trial_id'] ?: 'TR-'.str_pad($r['id'], 4, '0', STR_PAD_LEFT)) ?></td>
+                                <td>
+                                    <?php if ($r['image_path']): ?>
+                                        <?php if (file_exists('../uploads/fingerprints/'.$r['image_path'])): ?>
+                                            <a href="../uploads/fingerprints/<?= htmlspecialchars($r['image_path']) ?>" target="_blank">
+                                                <img src="../uploads/fingerprints/<?= htmlspecialchars($r['image_path']) ?>" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
+                                            </a>
+                                        <?php else: ?>
+                                            <span style="font-size: 0.72rem; color: var(--danger); font-weight:600;">Image not found</span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span style="font-size: 0.72rem; color: var(--gray); font-style:italic;">No image</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($r['powder_type']) ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($r['surface_type']) ?></td>
-                                <td><strong><?= number_format($r['accuracy_score'], 1) ?>%</strong></td>
+                                <td>
+                                    <strong><?= $r['accuracy_score'] !== null ? number_format($r['accuracy_score'], 1) . '%' : 'Awaiting Validation' ?></strong>
+                                </td>
                                 <td style="min-width:120px;">
-                                    <div class="score-bar">
-                                        <div class="score-bar-track">
-                                            <div class="score-bar-fill" style="width:<?= min(100,$r['accuracy_score']) ?>%"></div>
+                                    <?php if ($r['accuracy_score'] !== null): ?>
+                                        <div class="score-bar">
+                                            <div class="score-bar-track">
+                                                <div class="score-bar-fill" style="width:<?= min(100,$r['accuracy_score']) ?>%"></div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    <?php else: ?>
+                                        <div style="font-size: 0.75rem; color: var(--gray); font-style:italic;">Awaiting review</div>
+                                    <?php endif; ?>
                                 </td>
-                                <td><span class="badge badge-<?= $r['status'] ?>"><?= ucfirst($r['status']) ?></span></td>
-                                <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.8rem;color:var(--gray);">
-                                    <?= htmlspecialchars($r['notes'] ?: '—') ?>
+                                <td>
+                                    <span class="badge badge-<?= $r['status'] ?>">
+                                        <?= $r['status'] === 'pending_validation' ? 'Pending Validation' : ($r['status'] === 'needs_revision' ? 'Needs Revision' : ucfirst($r['status'])) ?>
+                                    </span>
                                 </td>
-                                <td><?= date('M d, Y', strtotime($r['submitted_at'])) ?></td>
+                                <td><?= date('M d, Y h:i A', strtotime($r['submitted_at'])) ?></td>
+                                <td style="font-size:.82rem; color:#5f5f5f; max-width:180px;"><?= $r['faculty_remarks'] ? htmlspecialchars($r['faculty_remarks']) : '<em>No remarks yet</em>' ?></td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>

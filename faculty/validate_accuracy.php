@@ -8,46 +8,93 @@ $faculty_name = $_SESSION['user_name'] ?? 'Faculty Researcher';
 $faculty_id   = $_SESSION['user_id']  ?? 0;
 $message = $error = '';
 
-// Handle Approve / Reject POST
+// Handle Approve / Reject / Needs Revision POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['test_id'])) {
     $test_id  = (int) $_POST['test_id'];
     $action   = $_POST['action'];
     $remarks  = trim($_POST['remarks'] ?? '');
 
     if ($action === 'approve') {
-        try {
-            $pdo->prepare("UPDATE fingerprint_tests SET status='approved' WHERE id=?")->execute([$test_id]);
-            $pdo->prepare("INSERT INTO faculty_remarks (test_id, faculty_id, remarks, decision) VALUES (?,?,?,'approved')")
-                ->execute([$test_id, $faculty_id, $remarks ?: 'Approved by faculty researcher.']);
-            $message = 'Record approved successfully.';
-        } catch (PDOException $e) { $error = 'Database error: '.$e->getMessage(); }
-
-    } elseif ($action === 'reject') {
-        if (empty($remarks)) {
-            $error = 'Remarks are required when rejecting a submission.';
+        $clarity    = isset($_POST['ridge_clarity_score']) ? floatval($_POST['ridge_clarity_score']) : NULL;
+        $visibility = isset($_POST['visibility_score']) ? floatval($_POST['visibility_score']) : NULL;
+        $adhesion   = isset($_POST['adhesion_score']) ? floatval($_POST['adhesion_score']) : NULL;
+        
+        if ($clarity === NULL || $visibility === NULL || $adhesion === NULL || $clarity < 0 || $clarity > 100 || $visibility < 0 || $visibility > 100 || $adhesion < 0 || $adhesion > 100) {
+            $error = 'Please provide valid scores (0-100) for Clarity, Visibility, and Adhesion.';
         } else {
+            $accuracy = ($clarity + $visibility + $adhesion) / 3;
             try {
-                $pdo->prepare("UPDATE fingerprint_tests SET status='rejected' WHERE id=?")->execute([$test_id]);
-                $pdo->prepare("INSERT INTO faculty_remarks (test_id, faculty_id, remarks, decision) VALUES (?,?,?,'rejected')")
-                    ->execute([$test_id, $faculty_id, $remarks]);
-                $message = 'Record rejected and remarks saved.';
-            } catch (PDOException $e) { $error = 'Database error: '.$e->getMessage(); }
+                $pdo->beginTransaction();
+                
+                $stmt = $pdo->prepare("
+                    UPDATE fingerprint_tests 
+                    SET status = 'approved',
+                        ridge_clarity_score = ?,
+                        visibility_score = ?,
+                        adhesion_score = ?,
+                        accuracy_score = ?,
+                        validated_by = ?,
+                        validated_at = NOW()
+                    WHERE id = ?
+                ");
+                $stmt->execute([$clarity, $visibility, $adhesion, $accuracy, $faculty_id, $test_id]);
+                
+                $stmt = $pdo->prepare("
+                    INSERT INTO faculty_remarks (test_id, faculty_id, remarks, decision, created_at)
+                    VALUES (?, ?, ?, 'approved', NOW())
+                ");
+                $stmt->execute([$test_id, $faculty_id, $remarks ?: 'Approved by faculty researcher.']);
+                
+                $pdo->commit();
+                $message = 'Submission approved and scored successfully.';
+            } catch (PDOException $e) { 
+                $pdo->rollBack();
+                $error = 'Database error: ' . $e->getMessage(); 
+            }
+        }
+    } elseif ($action === 'reject' || $action === 'needs_revision') {
+        if (empty($remarks)) {
+            $error = 'Remarks are required when rejecting or requesting revision.';
+        } else {
+            $status = ($action === 'reject') ? 'rejected' : 'needs_revision';
+            $success_text = ($action === 'reject') ? 'Submission rejected and remarks saved.' : 'Submission marked as needs revision and remarks saved.';
+            try {
+                $pdo->beginTransaction();
+                
+                $stmt = $pdo->prepare("
+                    UPDATE fingerprint_tests 
+                    SET status = ?,
+                        validated_by = ?,
+                        validated_at = NOW()
+                    WHERE id = ?
+                ");
+                $stmt->execute([$status, $faculty_id, $test_id]);
+                
+                $stmt = $pdo->prepare("
+                    INSERT INTO faculty_remarks (test_id, faculty_id, remarks, decision, created_at)
+                    VALUES (?, ?, ?, ?, NOW())
+                ");
+                $stmt->execute([$test_id, $faculty_id, $remarks, $status]);
+                
+                $pdo->commit();
+                $message = $success_text;
+            } catch (PDOException $e) { 
+                $pdo->rollBack();
+                $error = 'Database error: ' . $e->getMessage(); 
+            }
         }
     }
 }
 
-// Fetch all submissions with student name & latest faculty remark
+// Fetch all pending_validation submissions with student name
 $submissions = [];
 try {
     $stmt = $pdo->query("
-        SELECT ft.*, u.full_name AS student_name,
-               fr.remarks AS faculty_remarks, fr.decision AS faculty_decision
+        SELECT ft.*, u.full_name AS student_name
         FROM fingerprint_tests ft
         JOIN users u ON u.id = ft.student_id
-        LEFT JOIN faculty_remarks fr ON fr.test_id = ft.id AND fr.id = (
-            SELECT MAX(fr2.id) FROM faculty_remarks fr2 WHERE fr2.test_id = ft.id
-        )
-        ORDER BY FIELD(ft.status,'pending','rejected','approved'), ft.submitted_at DESC
+        WHERE ft.status = 'pending_validation'
+        ORDER BY ft.submitted_at DESC
     ");
     $submissions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {}
@@ -125,32 +172,29 @@ try {
                     <table class="custom-table">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Student</th>
-                                <th>Image</th>
-                                <th>Powder</th>
-                                <th>Surface</th>
-                                <th>Ridge Clarity</th>
-                                <th>Visibility</th>
-                                <th>Adhesion</th>
-                                <th>Accuracy</th>
-                                <th>Date</th>
+                                <th>Trial ID</th>
+                                <th>Student Name</th>
+                                <th>Fingerprint Image</th>
+                                <th>Image Label</th>
+                                <th>Powder Type</th>
+                                <th>Surface Type</th>
+                                <th>Date Submitted</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th style="text-align: right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php if (empty($submissions)): ?>
-                            <tr><td colspan="12" style="text-align:center;padding:2rem;color:#6c757d;">No submissions found.</td></tr>
+                            <tr><td colspan="9" style="text-align:center;padding:2rem;color:#6c757d;">No pending validation trials found.</td></tr>
                         <?php else: ?>
-                            <?php foreach ($submissions as $i => $row): ?>
+                            <?php foreach ($submissions as $row): ?>
                             <tr>
-                                <td><?= $row['id'] ?></td>
+                                <td style="font-weight: 700; color: var(--dark-green);"><?= htmlspecialchars($row['trial_id'] ?: 'TR-'.str_pad($row['id'], 4, '0', STR_PAD_LEFT)) ?></td>
                                 <td><?= htmlspecialchars($row['student_name']) ?></td>
                                 <td>
-                                    <?php if ($row['fingerprint_image'] && file_exists('../uploads/fingerprints/'.$row['fingerprint_image'])): ?>
-                                        <a href="../uploads/fingerprints/<?= htmlspecialchars($row['fingerprint_image']) ?>" target="_blank">
-                                            <img src="../uploads/fingerprints/<?= htmlspecialchars($row['fingerprint_image']) ?>" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
+                                    <?php if ($row['image_path'] && file_exists('../uploads/fingerprints/'.$row['image_path'])): ?>
+                                        <a href="../uploads/fingerprints/<?= htmlspecialchars($row['image_path']) ?>" target="_blank">
+                                            <img src="../uploads/fingerprints/<?= htmlspecialchars($row['image_path']) ?>" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
                                         </a>
                                     <?php else: ?>
                                         <div style="width:50px;height:50px;border-radius:8px;background:#f4f6f0;display:flex;align-items:center;justify-content:center;">
@@ -158,27 +202,19 @@ try {
                                         </div>
                                     <?php endif; ?>
                                 </td>
-                                <td style="text-transform:capitalize;"><?= $row['powder_type'] ?></td>
-                                <td style="text-transform:capitalize;"><?= $row['surface_type'] ?></td>
-                                <td>
-                                    <div class="score-bar">
-                                        <div class="score-bar-track"><div class="score-bar-fill" style="width:<?= min($row['ridge_clarity_score'],100) ?>%"></div></div>
-                                        <span style="font-size:.8rem;font-weight:600;"><?= number_format($row['ridge_clarity_score'],1) ?>%</span>
-                                    </div>
-                                </td>
-                                <td><?= number_format($row['visibility_score'],1) ?>%</td>
-                                <td><?= number_format($row['adhesion_score'],1) ?>%</td>
-                                <td><strong><?= number_format($row['accuracy_score'],1) ?>%</strong></td>
-                                <td><?= date('M d, Y', strtotime($row['submitted_at'])) ?></td>
-                                <td><span class="badge badge-<?= $row['status'] ?>"><?= ucfirst($row['status']) ?></span></td>
-                                <td>
-                                    <div class="btn-group">
-                                        <?php if ($row['status'] === 'pending'): ?>
+                                <td><?= htmlspecialchars($row['image_label'] ?: 'Untitled') ?></td>
+                                <td style="text-transform:capitalize;"><?= htmlspecialchars($row['powder_type']) ?></td>
+                                <td style="text-transform:capitalize;"><?= htmlspecialchars($row['surface_type']) ?></td>
+                                <td><?= date('M d, Y h:i A', strtotime($row['submitted_at'])) ?></td>
+                                <td><span class="badge badge-<?= $row['status'] ?>">Pending Validation</span></td>
+                                <td style="text-align: right;">
+                                    <div class="btn-group" style="display:inline-flex; gap:6px;">
+                                        <?php if ($row['image_path']): ?>
+                                            <a href="../uploads/fingerprints/<?= htmlspecialchars($row['image_path']) ?>" target="_blank" class="btn btn-secondary btn-sm">View Image</a>
+                                        <?php endif; ?>
                                         <button class="btn btn-primary btn-sm" onclick="openModal(<?= $row['id'] ?>,'approve')">Approve</button>
                                         <button class="btn btn-danger btn-sm" onclick="openModal(<?= $row['id'] ?>,'reject')">Reject</button>
-                                        <?php else: ?>
-                                        <button class="btn btn-secondary btn-sm" onclick="openModal(<?= $row['id'] ?>,'remark')">Remark</button>
-                                        <?php endif; ?>
+                                        <button class="btn btn-secondary btn-sm" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick="openModal(<?= $row['id'] ?>,'needs_revision')">Needs Revision</button>
                                     </div>
                                 </td>
                             </tr>
@@ -194,21 +230,40 @@ try {
 
 <!-- ACTION MODAL -->
 <div class="action-modal-overlay" id="actionModal">
-    <div class="action-modal">
+    <div class="action-modal" style="max-width:550px;">
         <div class="modal-header">
             <h3 id="modalTitle">Validate Submission</h3>
             <button class="modal-close" onclick="closeModal()">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <form method="POST">
+        <form method="POST" id="validationForm">
             <div class="modal-body">
                 <input type="hidden" name="test_id" id="modalTestId">
                 <input type="hidden" name="action"  id="modalAction">
+                
+                <div id="scoreFields" style="display:none; margin-bottom: 1.25rem;">
+                    <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--dark-green); margin-bottom:8px; border-bottom:1px solid #D2E2D5; padding-bottom:4px;">Forensic Metric Scores</div>
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;">
+                        <div class="form-group">
+                            <label for="ridge_clarity">Ridge Clarity (%)</label>
+                            <input type="number" name="ridge_clarity_score" id="ridge_clarity" class="form-control" min="0" max="100" step="0.1" value="85.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="visibility">Visibility (%)</label>
+                            <input type="number" name="visibility_score" id="visibility" class="form-control" min="0" max="100" step="0.1" value="85.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="adhesion">Adhesion (%)</label>
+                            <input type="number" name="adhesion_score" id="adhesion" class="form-control" min="0" max="100" step="0.1" value="85.0">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
-                    <label for="remarksField">Faculty Remarks</label>
-                    <textarea name="remarks" id="remarksField" class="form-control" rows="4" placeholder="Enter your evaluation remarks..."></textarea>
-                    <p id="remarksRequired" style="display:none;color:#c0392b;font-size:.8rem;margin-top:.4rem;">Remarks are required when rejecting a submission.</p>
+                    <label for="remarksField">Faculty Remarks / Feedback</label>
+                    <textarea name="remarks" id="remarksField" class="form-control" rows="4" placeholder="Enter evaluation feedback..."></textarea>
+                    <p id="remarksRequired" style="display:none;color:#c0392b;font-size:.8rem;margin-top:.4rem;font-weight:600;">Remarks are required for this action.</p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -223,11 +278,42 @@ try {
 function openModal(id, action) {
     document.getElementById('modalTestId').value = id;
     document.getElementById('modalAction').value  = action;
-    const titles = { approve:'Approve Submission', reject:'Reject Submission', remark:'Add Remarks' };
+    const titles = { approve:'Approve Submission & Set Scores', reject:'Reject Submission', needs_revision:'Request Revision (Needs Revision)' };
     document.getElementById('modalTitle').textContent = titles[action] || 'Validate';
+    
     const btn = document.getElementById('submitBtn');
-    btn.className = 'btn ' + (action === 'reject' ? 'btn-danger' : 'btn-primary');
-    btn.textContent = action === 'approve' ? 'Confirm Approval' : action === 'reject' ? 'Confirm Rejection' : 'Save Remarks';
+    const scoreFields = document.getElementById('scoreFields');
+    const remarksRequired = document.getElementById('remarksRequired');
+    const remarksField = document.getElementById('remarksField');
+    
+    const clarityInp = document.getElementById('ridge_clarity');
+    const visibilityInp = document.getElementById('visibility');
+    const adhesionInp = document.getElementById('adhesion');
+    
+    if (action === 'approve') {
+        btn.className = 'btn btn-primary';
+        btn.textContent = 'Confirm Approval';
+        scoreFields.style.display = 'block';
+        remarksRequired.style.display = 'none';
+        remarksField.required = false;
+        remarksField.placeholder = 'Enter approval remarks (optional)...';
+        
+        clarityInp.required = true;
+        visibilityInp.required = true;
+        adhesionInp.required = true;
+    } else {
+        btn.className = 'btn btn-danger';
+        btn.textContent = action === 'reject' ? 'Confirm Rejection' : 'Confirm Revision Request';
+        scoreFields.style.display = 'none';
+        remarksRequired.style.display = 'block';
+        remarksField.required = true;
+        remarksField.placeholder = 'Explain feedback / reason (required)...';
+        
+        clarityInp.required = false;
+        visibilityInp.required = false;
+        adhesionInp.required = false;
+    }
+    
     document.getElementById('actionModal').classList.add('active');
 }
 function closeModal() { document.getElementById('actionModal').classList.remove('active'); }

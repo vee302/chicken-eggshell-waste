@@ -38,7 +38,7 @@ try {
     $total_trials = (int)$stmt->fetchColumn();
 
     // 6. Uploaded images
-    $stmt = $pdo->query("SELECT COUNT(*) FROM fingerprint_images");
+    $stmt = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE image_path IS NOT NULL AND image_path != ''");
     $total_images = (int)$stmt->fetchColumn();
 
     // 7. Reports generated

@@ -36,18 +36,23 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `fingerprint_tests` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `trial_id` VARCHAR(50) DEFAULT NULL,
     `student_id` INT NOT NULL,
     `powder_type` ENUM('eggshell','commercial') NOT NULL DEFAULT 'eggshell',
     `surface_type` ENUM('glass','paper','wood','plastic','metal','ceramic','fabric') NOT NULL,
-    `fingerprint_image` VARCHAR(255) DEFAULT NULL,
-    `ridge_clarity_score` DECIMAL(5,2) DEFAULT 0.00,
-    `visibility_score` DECIMAL(5,2) DEFAULT 0.00,
-    `adhesion_score` DECIMAL(5,2) DEFAULT 0.00,
-    `accuracy_score` DECIMAL(5,2) DEFAULT 0.00,
+    `image_path` VARCHAR(255) DEFAULT NULL,
+    `image_label` VARCHAR(255) DEFAULT NULL,
+    `ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL,
+    `visibility_score` DECIMAL(5,2) DEFAULT NULL,
+    `adhesion_score` DECIMAL(5,2) DEFAULT NULL,
+    `accuracy_score` DECIMAL(5,2) DEFAULT NULL,
     `notes` TEXT DEFAULT NULL,
-    `status` ENUM('pending','approved','rejected') DEFAULT 'pending',
+    `status` ENUM('pending_validation','approved','rejected','needs_revision') DEFAULT 'pending_validation',
     `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+    `validated_by` INT DEFAULT NULL,
+    `validated_at` TIMESTAMP DEFAULT NULL,
+    FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`validated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -104,9 +109,9 @@ CREATE TABLE IF NOT EXISTS `faculty_remarks` (
     `test_id` INT NOT NULL,
     `faculty_id` INT NOT NULL,
     `remarks` TEXT NOT NULL,
-    `decision` ENUM('approved','rejected') NOT NULL,
+    `decision` ENUM('approved','rejected','needs_revision') NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`test_id`) REFERENCES `fingerprint_tests`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`test_id`)    REFERENCES `fingerprint_tests`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`faculty_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -137,13 +142,13 @@ ON DUPLICATE KEY UPDATE `id`=`id`;
 -- ============================================================
 -- SEED: Sample fingerprint test submissions
 -- ============================================================
-INSERT INTO `fingerprint_tests` (`id`, `student_id`, `powder_type`, `surface_type`, `fingerprint_image`, `ridge_clarity_score`, `visibility_score`, `adhesion_score`, `accuracy_score`, `status`, `submitted_at`) VALUES
-(1, 4, 'eggshell', 'glass', NULL, 88.50, 91.00, 85.00, 88.17, 'pending', '2026-05-28 08:30:00'),
-(2, 4, 'commercial', 'glass', NULL, 90.00, 92.50, 88.00, 90.17, 'approved', '2026-05-28 09:00:00'),
-(3, 4, 'eggshell', 'paper', NULL, 82.00, 79.50, 80.00, 80.50, 'pending', '2026-05-29 10:00:00'),
-(4, 4, 'eggshell', 'wood', NULL, 75.00, 77.00, 73.00, 75.00, 'rejected', '2026-05-29 11:00:00'),
-(5, 4, 'commercial', 'plastic', NULL, 93.00, 94.00, 92.00, 93.00, 'approved', '2026-05-30 09:30:00'),
-(6, 4, 'eggshell', 'metal', NULL, 86.00, 88.00, 84.00, 86.00, 'pending', '2026-05-30 10:30:00')
+INSERT INTO `fingerprint_tests` (`id`, `trial_id`, `student_id`, `powder_type`, `surface_type`, `image_path`, `ridge_clarity_score`, `visibility_score`, `adhesion_score`, `accuracy_score`, `status`, `submitted_at`, `validated_by`, `validated_at`) VALUES
+(1, 'TR-0001', 4, 'eggshell', 'glass', NULL, 88.50, 91.00, 85.00, 88.17, 'pending_validation', '2026-05-28 08:30:00', NULL, NULL),
+(2, 'TR-0002', 4, 'commercial', 'glass', NULL, 90.00, 92.50, 88.00, 90.17, 'approved', '2026-05-28 09:00:00', 3, '2026-05-28 10:00:00'),
+(3, 'TR-0003', 4, 'eggshell', 'paper', NULL, 82.00, 79.50, 80.00, 80.50, 'pending_validation', '2026-05-29 10:00:00', NULL, NULL),
+(4, 'TR-0004', 4, 'eggshell', 'wood', NULL, 75.00, 77.00, 73.00, 75.00, 'rejected', '2026-05-29 11:00:00', 3, '2026-05-29 12:00:00'),
+(5, 'TR-0005', 4, 'commercial', 'plastic', NULL, 93.00, 94.00, 92.00, 93.00, 'approved', '2026-05-30 09:30:00', 3, '2026-05-30 10:00:00'),
+(6, 'TR-0006', 4, 'eggshell', 'metal', NULL, 86.00, 88.00, 84.00, 86.00, 'pending_validation', '2026-05-30 10:30:00', NULL, NULL)
 ON DUPLICATE KEY UPDATE `id`=`id`;
 
 -- ============================================================

@@ -596,7 +596,7 @@ if ($accountStatus === 'active') {
                 </div>
                 <div class="status-item">
                     <span class="status-label">Review Status</span>
-                    <span class="status-value <?php 
+                    <span id="revStatus" class="status-value <?php 
                         if ($accountStatus === 'pending') echo 'pending-text';
                         elseif ($accountStatus === 'active') echo 'approved-text';
                         else echo 'rejected-text';
@@ -604,7 +604,7 @@ if ($accountStatus === 'active') {
                 </div>
                 <div class="status-item">
                     <span class="status-label">Account Access</span>
-                    <span class="status-value <?php 
+                    <span id="accStatus" class="status-value <?php 
                         if ($accountStatus === 'pending') echo 'pending-text';
                         elseif ($accountStatus === 'active') echo 'approved-text';
                         else echo 'rejected-text';
@@ -618,9 +618,11 @@ if ($accountStatus === 'active') {
             </div>
 
             <!-- Page Actions -->
-            <div class="actions">
-                <a href="pending_approval.php" class="btn btn-secondary">Refresh Status</a>
-                <a href="login.php" class="btn btn-primary">Go to Login</a>
+            <div class="actions" id="pageActions">
+                <?php if ($accountStatus === 'pending'): ?>
+                <button type="button" class="btn btn-secondary" id="btnRefresh">Refresh Status</button>
+                <?php endif; ?>
+                <a href="login.php" class="btn btn-primary" id="btnLogin">Go to Login</a>
                 <a href="desktop.php" class="btn btn-secondary">Back to Homepage</a>
             </div>
         </section>
@@ -642,21 +644,195 @@ if ($accountStatus === 'active') {
     <?php endif; ?>
 
     <script>
-        // Auto-refresh page every 30 seconds if registration status is pending
-        <?php if ($accountStatus === 'pending'): ?>
-        window.setTimeout(() => {
-            window.location.reload();
-        }, 30000);
-        <?php endif; ?>
+    (function () {
+        // ─── Initial state passed from PHP ───────────────────────────────────────
+        let currentStatus = <?php echo json_encode($accountStatus); ?>;
+        let pollTimer     = null;
 
-        // Close approval modal handler
-        const closeApprovalModal = document.getElementById('closeApprovalModal');
-        const approvalModal = document.getElementById('approvalModal');
-        if (closeApprovalModal && approvalModal) {
-            closeApprovalModal.addEventListener('click', () => {
+        // ─── DOM References ──────────────────────────────────────────────────────
+        const badge          = document.querySelector('.status-badge');
+        const cardTitle      = document.getElementById('statusTitle');
+        const mainMsg        = document.querySelector('.main-message');
+        const secondaryMsg   = document.querySelector('.secondary-message');
+        const scannerPad     = document.querySelector('.scanner-pad');
+        const scannerSvg     = document.querySelector('.scanner-fingerprint');
+        const scannerText    = document.querySelector('.scanner-status-text');
+        const revStatusEl    = document.getElementById('revStatus');
+        const accStatusEl    = document.getElementById('accStatus');
+        const infoNote       = document.querySelector('.info-note');
+        const pageActions    = document.getElementById('pageActions');
+        const btnRefresh     = document.getElementById('btnRefresh');
+        const approvalModal  = document.getElementById('approvalModal');
+        const closeModal     = document.getElementById('closeApprovalModal');
+
+        // ─── Close approval modal ────────────────────────────────────────────────
+        if (closeModal && approvalModal) {
+            closeModal.addEventListener('click', () => {
                 approvalModal.style.display = 'none';
             });
         }
+
+        // ─── Apply Approved UI ───────────────────────────────────────────────────
+        function applyApprovedUI() {
+            // Badge
+            badge.textContent = 'Approved';
+            badge.className   = 'status-badge active';
+
+            // Card title & messages
+            cardTitle.textContent   = 'Account Approved';
+            mainMsg.textContent     = 'Your account has been approved. You may now log in.';
+            secondaryMsg.textContent = 'Access is now available through the login page.';
+
+            // Scanner pad
+            scannerPad.className = 'scanner-pad active';
+            const scanLine = scannerPad.querySelector('.scan-line');
+            if (scanLine) scanLine.remove();
+
+            // Badge overlay (checkmark)
+            if (!scannerPad.querySelector('.badge-overlay')) {
+                const ov = document.createElement('div');
+                ov.className = 'badge-overlay success';
+                ov.title = 'Verification Approved';
+                ov.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                scannerPad.appendChild(ov);
+            }
+
+            // Scanner status text
+            scannerText.innerHTML = '<h4>Approval confirmed. You may now log in.</h4><p>Your identity has been successfully verified.</p>';
+
+            // Status panel
+            revStatusEl.textContent = 'Approved';
+            revStatusEl.className   = 'status-value approved-text';
+            accStatusEl.textContent = 'Login access enabled';
+            accStatusEl.className   = 'status-value approved-text';
+
+            // Info note
+            if (infoNote) infoNote.style.display = 'none';
+
+            // Buttons — remove Refresh, highlight Login
+            if (btnRefresh) btnRefresh.remove();
+
+            // Show approval modal popup
+            if (approvalModal) {
+                approvalModal.style.display = 'flex';
+            } else {
+                // Build it dynamically if PHP didn't render it (edge case)
+                const ov = document.createElement('div');
+                ov.id = 'approvalModal';
+                ov.className = 'approval-overlay';
+                ov.setAttribute('role', 'dialog');
+                ov.setAttribute('aria-modal', 'true');
+                ov.innerHTML = `
+                    <section class="approval-modal">
+                        <div class="modal-status">Account Approved</div>
+                        <h2>Account Approval Successful</h2>
+                        <p>Your account has been approved by the Super Administrator. You may now proceed to the login page.</p>
+                        <div class="modal-actions">
+                            <a href="login.php" class="btn btn-primary">Go to Login</a>
+                            <button type="button" class="btn btn-secondary" onclick="this.closest('.approval-overlay').style.display='none'">Stay on Page</button>
+                        </div>
+                    </section>`;
+                document.body.appendChild(ov);
+            }
+        }
+
+        // ─── Apply Rejected UI ───────────────────────────────────────────────────
+        function applyRejectedUI() {
+            badge.textContent = 'Not Approved';
+            badge.className   = 'status-badge rejected';
+
+            cardTitle.textContent    = 'Account Not Approved';
+            mainMsg.textContent      = 'Your registration was not approved. Please contact the system administrator.';
+            secondaryMsg.textContent = 'For additional guidance, please contact the Super Administrator or return to the homepage.';
+
+            scannerPad.className = 'scanner-pad rejected';
+            const scanLine = scannerPad.querySelector('.scan-line');
+            if (scanLine) scanLine.remove();
+
+            if (!scannerPad.querySelector('.badge-overlay')) {
+                const ov = document.createElement('div');
+                ov.className = 'badge-overlay error';
+                ov.title = 'Verification Denied';
+                ov.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                scannerPad.appendChild(ov);
+            }
+
+            scannerText.innerHTML = '<h4>Account request rejected.</h4><p>The registration request did not meet security review criteria.</p>';
+
+            revStatusEl.textContent = 'Rejected';
+            revStatusEl.className   = 'status-value rejected-text';
+            accStatusEl.textContent = 'Not available';
+            accStatusEl.className   = 'status-value rejected-text';
+
+            if (btnRefresh) btnRefresh.remove();
+        }
+
+        // ─── Main status check via AJAX ──────────────────────────────────────────
+        function checkStatus(isManual) {
+            if (btnRefresh && isManual) {
+                btnRefresh.textContent = 'Checking...';
+                btnRefresh.disabled = true;
+            }
+
+            fetch('check_registration_status.php', { cache: 'no-store' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === currentStatus) {
+                        // No change — re-enable button
+                        if (btnRefresh && isManual) {
+                            btnRefresh.textContent = 'Refresh Status';
+                            btnRefresh.disabled = false;
+                        }
+                        return;
+                    }
+
+                    // Status changed
+                    currentStatus = data.status;
+
+                    if (data.status === 'active') {
+                        stopPolling();
+                        applyApprovedUI();
+                    } else if (data.status === 'rejected') {
+                        stopPolling();
+                        applyRejectedUI();
+                    }
+                    // If somehow still pending, keep polling
+                    if (btnRefresh && isManual) {
+                        btnRefresh.textContent = 'Refresh Status';
+                        btnRefresh.disabled = false;
+                    }
+                })
+                .catch(() => {
+                    if (btnRefresh && isManual) {
+                        btnRefresh.textContent = 'Refresh Status';
+                        btnRefresh.disabled = false;
+                    }
+                });
+        }
+
+        // ─── Polling control ─────────────────────────────────────────────────────
+        function startPolling() {
+            if (pollTimer) return;
+            pollTimer = setInterval(() => checkStatus(false), 5000);
+        }
+
+        function stopPolling() {
+            if (pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+        }
+
+        // ─── Boot ────────────────────────────────────────────────────────────────
+        if (currentStatus === 'pending') {
+            startPolling();
+        }
+
+        // Refresh Status button
+        if (btnRefresh) {
+            btnRefresh.addEventListener('click', () => checkStatus(true));
+        }
+    })();
     </script>
 </body>
 </html>

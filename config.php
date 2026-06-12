@@ -254,6 +254,22 @@ try {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // ============================================================
+    // 10e. Create FIELD_FEEDBACK table
+    // ============================================================
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `field_feedback` (
+        `id`                    INT AUTO_INCREMENT PRIMARY KEY,
+        `partner_id`            INT NOT NULL,
+        `feedback_type`         VARCHAR(100) NOT NULL,
+        `surface_type`          VARCHAR(50) DEFAULT NULL,
+        `powder_type`           VARCHAR(50) DEFAULT NULL,
+        `observation`           TEXT NOT NULL,
+        `usability_rating`      INT NOT NULL,
+        `suggested_improvement` TEXT DEFAULT NULL,
+        `created_at`            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (`partner_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // ============================================================
     // 10b. Create ACTIVITY_LOGS table
     // ============================================================
     $pdo->exec("CREATE TABLE IF NOT EXISTS `activity_logs` (

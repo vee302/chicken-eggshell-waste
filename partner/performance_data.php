@@ -1,71 +1,48 @@
 <?php
-// partner/partner_dashboard.php — Alumni / Police Partner Main Dashboard
+// partner/performance_data.php — Alumni / Police Partner Performance Data Analysis
 require_once '../config.php';
 require_once 'auth.php';
 check_partner_auth();
 
-$active_page = 'dashboard';
+$active_page = 'performance_data';
 $partner_name = $_SESSION['user_name'] ?? 'Partner';
 $partner_id = $_SESSION['user_id'] ?? 0;
 
-// Metrics Calculations
-$total_approved_reports = 0;
-$total_trials = 0;
-$approved_trials = 0;
-$success_rate = 0;
-$best_surface = 'N/A';
-$eggshell_avg = 0;
-$commercial_avg = 0;
+// Filters
+$filter_powder = $_GET['powder'] ?? '';
+$filter_surface = $_GET['surface'] ?? '';
+$filter_from = $_GET['from'] ?? '';
+$filter_to = $_GET['to'] ?? '';
+
+// Build Query
+$where = ["ft.status = 'approved'"];
+$params = [];
+
+if (!empty($filter_powder)) {
+    $where[] = "ft.powder_type = ?";
+    $params[] = $filter_powder;
+}
+if (!empty($filter_surface)) {
+    $where[] = "ft.surface_type = ?";
+    $params[] = $filter_surface;
+}
+if (!empty($filter_from)) {
+    $where[] = "DATE(ft.validated_at) >= ?";
+    $params[] = $filter_from;
+}
+if (!empty($filter_to)) {
+    $where[] = "DATE(ft.validated_at) <= ?";
+    $params[] = $filter_to;
+}
+
+$trials = [];
+$avg_accuracy = 0;
+$avg_clarity = 0;
+$avg_visibility = 0;
+$avg_adhesion = 0;
 
 try {
-    // 1. Total Approved Reports
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM reports");
-    $stmt->execute();
-    $total_approved_reports = (int)$stmt->fetchColumn();
-
-    // 2. Total fingerprint trials (all trials)
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM fingerprint_tests");
-    $stmt->execute();
-    $total_trials = (int)$stmt->fetchColumn();
-
-    // 3. Approved trials
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM fingerprint_tests WHERE status='approved'");
-    $stmt->execute();
-    $approved_trials = (int)$stmt->fetchColumn();
-
-    // 4. Overall Success Rate
-    $success_rate = $total_trials ? round(($approved_trials / $total_trials) * 100, 1) : 0;
-
-    // 5. Best Performing Surface (among approved trials)
-    $stmt = $pdo->prepare("
-        SELECT surface_type, AVG(accuracy_score) as avg_acc 
-        FROM fingerprint_tests 
-        WHERE status='approved' AND accuracy_score IS NOT NULL
-        GROUP BY surface_type 
-        ORDER BY avg_acc DESC LIMIT 1
-    ");
-    $stmt->execute();
-    $best_surface_row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($best_surface_row) {
-        $best_surface = ucfirst($best_surface_row['surface_type']);
-    }
-
-    // 6. Eggshell Powder Average Accuracy
-    $stmt = $pdo->prepare("SELECT ROUND(AVG(accuracy_score),1) FROM fingerprint_tests WHERE powder_type='eggshell' AND status='approved'");
-    $stmt->execute();
-    $eggshell_avg = $stmt->fetchColumn() ?? 0;
-
-    // 7. Commercial Powder Average Accuracy
-    $stmt = $pdo->prepare("SELECT ROUND(AVG(accuracy_score),1) FROM fingerprint_tests WHERE powder_type='commercial' AND status='approved'");
-    $stmt->execute();
-    $commercial_avg = $stmt->fetchColumn() ?? 0;
-
-} catch (PDOException $e) {}
-
-// Fetch 5 most recent approved trials with joins for student name and validator name
-$recent_tests = [];
-try {
-    $stmt = $pdo->prepare("
+    $sql = "
         SELECT 
             ft.*, 
             student.full_name AS student_name, 
@@ -75,45 +52,105 @@ try {
         LEFT JOIN users student ON ft.student_id = student.id
         LEFT JOIN users faculty ON ft.validated_by = faculty.id
         LEFT JOIN faculty_remarks fr ON fr.test_id = ft.id AND fr.decision = 'approved'
-        WHERE ft.status = 'approved' 
-        ORDER BY ft.validated_at DESC, ft.id DESC 
-        LIMIT 5
-    ");
-    $stmt->execute();
-    $recent_tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {}
+        WHERE " . implode(" AND ", $where) . "
+        ORDER BY ft.validated_at DESC, ft.id DESC
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $trials = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Calculations
+    $total_count = count($trials);
+    if ($total_count > 0) {
+        $sum_accuracy = 0;
+        $sum_clarity = 0;
+        $sum_visibility = 0;
+        $sum_adhesion = 0;
+        
+        $count_accuracy = 0;
+        $count_clarity = 0;
+        $count_visibility = 0;
+        $count_adhesion = 0;
+        
+        foreach ($trials as $t) {
+            if ($t['accuracy_score'] !== null) {
+                $sum_accuracy += $t['accuracy_score'];
+                $count_accuracy++;
+            }
+            if ($t['ridge_clarity_score'] !== null) {
+                $sum_clarity += $t['ridge_clarity_score'];
+                $count_clarity++;
+            }
+            if ($t['visibility_score'] !== null) {
+                $sum_visibility += $t['visibility_score'];
+                $count_visibility++;
+            }
+            if ($t['adhesion_score'] !== null) {
+                $sum_adhesion += $t['adhesion_score'];
+                $count_adhesion++;
+            }
+        }
+        
+        $avg_accuracy = $count_accuracy ? ($sum_accuracy / $count_accuracy) : 0;
+        $avg_clarity = $count_clarity ? ($sum_clarity / $count_clarity) : 0;
+        $avg_visibility = $count_visibility ? ($sum_visibility / $count_visibility) : 0;
+        $avg_adhesion = $count_adhesion ? ($sum_adhesion / $count_adhesion) : 0;
+    }
+} catch (PDOException $e) {
+    $error = "Database error: " . $e->getMessage();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Dashboard — Green Forensics</title>
+    <title>Performance Data — Green Forensics</title>
     <link rel="stylesheet" href="../css/student_style.css?v=1.2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .role-badge-partner {
-            background: rgba(107, 143, 113, 0.12);
-            color: var(--dark-green);
-            border: 1px solid rgba(107, 143, 113, 0.25);
-        }
-        .partner-description-card {
-            border-left: 4px solid var(--soft-green);
-            background: rgba(210, 226, 213, 0.15);
+        .filter-card {
+            background: #fff;
             padding: 1.5rem;
-            border-radius: 12px;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(27,67,50,.04);
             margin-bottom: 2rem;
+            border: 1px solid rgba(27,67,50,0.05);
         }
-        .partner-description-card h3 {
-            color: var(--dark-green);
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        .filter-item label {
+            font-size: .75rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
+            color: #1b4332;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            display: block;
+            margin-bottom: .3rem;
         }
-        .partner-description-card p {
-            font-size: 0.92rem;
-            line-height: 1.6;
-            color: #555;
+        .filter-item select, .filter-item input {
+            width: 100%;
+            padding: .55rem 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            font-size: .85rem;
+            background: #fff;
+            color: #212529;
+            outline: none;
+        }
+        .filter-item select:focus, .filter-item input:focus {
+            border-color: #2d6a4f;
+            box-shadow: 0 0 0 3px rgba(45, 106, 79, .12);
+        }
+        .filter-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
         }
         .notice-banner {
             background-color: rgba(45, 106, 79, 0.08);
@@ -232,17 +269,17 @@ try {
         }
         .score-values {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
             text-align: center;
         }
         .score-val {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--dark-green);
         }
         .score-lbl {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             color: var(--gray);
             font-weight: 600;
             text-transform: uppercase;
@@ -272,17 +309,7 @@ try {
                     </svg>
                 </button>
                 <div class="header-title">
-                    <h2>Alumni / Police Partner Dashboard</h2>
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="header-role-chip role-badge-partner">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
-                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                    </svg>
-                    Alumni / Police Partner
+                    <h2>Alumni / Police Partner Portal</h2>
                 </div>
             </div>
         </header>
@@ -290,8 +317,8 @@ try {
         <div class="student-content">
             <div class="page-header-wrap">
                 <div class="page-title">
-                    <h1>Dashboard Overview</h1>
-                    <p>Approved Performance Data, Reports, and Field Feedback</p>
+                    <h1>Performance Data</h1>
+                    <p>Analyze the granular clarity, visibility, and adhesion levels of approved trials.</p>
                 </div>
             </div>
 
@@ -305,104 +332,94 @@ try {
                 <span>Only faculty-approved records are visible in this portal.</span>
             </div>
 
-            <!-- Partner Role Introduction -->
-            <div class="partner-description-card">
-                <h3>Stakeholder Monitoring Portal</h3>
-                <p>Welcome, <?= htmlspecialchars($partner_name) ?>. This portal provides secure, read-only monitoring access to approved fingerprint powder development reports, comparative evaluation statistics, and surface compatibility trials. Use this interface to evaluate research data and log observations directly from active field usage.</p>
+            <!-- FILTER CARD -->
+            <div class="filter-card">
+                <form method="GET" action="performance_data.php">
+                    <div class="filter-grid">
+                        <div class="filter-item">
+                            <label for="powder">Powder Type</label>
+                            <select name="powder" id="powder">
+                                <option value="">All Powders</option>
+                                <option value="eggshell" <?= $filter_powder === 'eggshell' ? 'selected' : '' ?>>Eggshell-Based Powder</option>
+                                <option value="commercial" <?= $filter_powder === 'commercial' ? 'selected' : '' ?>>Commercial Powder</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label for="surface">Surface Material</label>
+                            <select name="surface" id="surface">
+                                <option value="">All Surfaces</option>
+                                <?php foreach (['glass','paper','wood','plastic','metal','ceramic','fabric'] as $s): ?>
+                                    <option value="<?= $s ?>" <?= $filter_surface === $s ? 'selected' : '' ?>><?= ucfirst($s) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label for="from">Validated Date From</label>
+                            <input type="date" name="from" id="from" value="<?= htmlspecialchars($filter_from) ?>">
+                        </div>
+                        <div class="filter-item">
+                            <label for="to">Validated Date To</label>
+                            <input type="date" name="to" id="to" value="<?= htmlspecialchars($filter_to) ?>">
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <?php if (!empty($filter_powder) || !empty($filter_surface) || !empty($filter_from) || !empty($filter_to)): ?>
+                            <a href="performance_data.php" class="btn btn-secondary" style="border:none; line-height: 2.2;">Clear Filters</a>
+                        <?php endif; ?>
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    </div>
+                </form>
             </div>
 
-            <!-- STATS GRID -->
+            <!-- OVERALL AVERAGES SECTION -->
             <div class="stats-grid" style="margin-bottom: 2rem;">
                 <div class="stat-card">
                     <div class="stat-header">
-                        <span class="stat-title">Approved Reports</span>
-                        <div class="stat-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                            </svg>
-                        </div>
+                        <span class="stat-title">Matching Records</span>
                     </div>
-                    <div class="stat-value"><?= $total_approved_reports ?></div>
-                    <div class="stat-desc">Faculty validated report sheets</div>
+                    <div class="stat-value"><?= count($trials) ?></div>
+                    <div class="stat-desc">Approved trials found</div>
                 </div>
-
                 <div class="stat-card">
                     <div class="stat-header">
-                        <span class="stat-title">Approved Trials</span>
-                        <div class="stat-icon" style="background:rgba(82,183,136,.12);color:#2d6a4f;">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                        </div>
+                        <span class="stat-title">Average Ridge Clarity</span>
                     </div>
-                    <div class="stat-value" style="color:#2d6a4f;"><?= $approved_trials ?></div>
-                    <div class="stat-desc">Approved forensic tests logged</div>
+                    <div class="stat-value" style="color: var(--dark-green);"><?= number_format($avg_clarity, 1) ?>%</div>
+                    <div class="stat-desc">Biometric detail distinction</div>
                 </div>
-
                 <div class="stat-card">
                     <div class="stat-header">
-                        <span class="stat-title">Overall Success Rate</span>
-                        <div class="stat-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-                            </svg>
-                        </div>
+                        <span class="stat-title">Average Visibility</span>
                     </div>
-                    <div class="stat-value"><?= $success_rate ?>%</div>
-                    <div class="stat-desc">Approved out of total trials</div>
+                    <div class="stat-value" style="color: var(--dark-green);"><?= number_format($avg_visibility, 1) ?>%</div>
+                    <div class="stat-desc">Contrast against surface</div>
                 </div>
-
                 <div class="stat-card">
                     <div class="stat-header">
-                        <span class="stat-title">Best Surface</span>
-                        <div class="stat-icon" style="background:rgba(42,111,151,.1);color:#2a6f97;">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                            </svg>
-                        </div>
+                        <span class="stat-title">Average Adhesion</span>
                     </div>
-                    <div class="stat-value" style="color:#2a6f97;"><?= htmlspecialchars($best_surface) ?></div>
-                    <div class="stat-desc">Highest average accuracy</div>
+                    <div class="stat-value" style="color: var(--dark-green);"><?= number_format($avg_adhesion, 1) ?>%</div>
+                    <div class="stat-desc">Powder stickiness quality</div>
                 </div>
-
-                <div class="stat-card">
+                <div class="stat-card" style="grid-column: span 2; background: var(--cream); border: 1px solid rgba(45,106,79,0.15);">
                     <div class="stat-header">
-                        <span class="stat-title">Eggshell Avg Accuracy</span>
-                        <div class="stat-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <circle cx="12" cy="11" r="3"></circle>
-                            </svg>
-                        </div>
+                        <span class="stat-title" style="color: var(--dark-green); font-weight: 700;">Overall Composite Accuracy Average</span>
                     </div>
-                    <div class="stat-value"><?= $eggshell_avg ?>%</div>
-                    <div class="stat-desc">Eggshell-Based Powder trials</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title">Commercial Avg Accuracy</span>
-                        <div class="stat-icon" style="color:var(--gray);">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <circle cx="12" cy="11" r="3"></circle>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="stat-value" style="color:var(--gray);"><?= $commercial_avg ?>%</div>
-                    <div class="stat-desc">Commercial Powder trials</div>
+                    <div class="stat-value" style="color: #2d6a4f; font-size: 1.8rem; margin-top: 4px;"><?= number_format($avg_accuracy, 1) ?>%</div>
+                    <div class="stat-desc">Combined trial score calculation</div>
                 </div>
             </div>
 
-            <!-- RECENT SUBMISSIONS REFERENCE -->
+            <!-- TABLE OF TRIALS -->
             <div class="dashboard-card">
                 <div class="card-title-wrap">
                     <h3>
-                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
-                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="3" y1="9" x2="21" y2="9"/>
+                            <line x1="9" y1="21" x2="9" y2="9"/>
                         </svg>
-                        Recent Approved Trials
+                        Performance Metrics Reference
                     </h3>
                 </div>
                 <div class="table-responsive">
@@ -410,32 +427,34 @@ try {
                         <thead>
                             <tr>
                                 <th>Trial ID</th>
-                                <th>Student Submitter</th>
                                 <th>Powder Type</th>
                                 <th>Surface</th>
+                                <th>Clarity</th>
+                                <th>Visibility</th>
+                                <th>Adhesion</th>
                                 <th>Accuracy</th>
-                                <th>Status</th>
-                                <th>Faculty Reviewer</th>
+                                <th>Validated Date</th>
                                 <th style="text-align: right;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                        <?php if (empty($recent_tests)): ?>
+                        <?php if (empty($trials)): ?>
                             <tr>
-                                <td colspan="8" style="text-align:center;color:#6c757d;padding:2rem;">
-                                    No approved trials found in system.
+                                <td colspan="9" style="text-align:center;color:#6c757d;padding:2rem;">
+                                    No approved trials match the selected filter parameters.
                                 </td>
                             </tr>
                         <?php else: ?>
-                            <?php foreach ($recent_tests as $row): ?>
+                            <?php foreach ($trials as $row): ?>
                             <tr>
                                 <td style="font-weight:700; color:var(--dark-green);"><?= htmlspecialchars($row['trial_id'] ?: 'TR-'.str_pad($row['id'], 4, '0', STR_PAD_LEFT)) ?></td>
-                                <td><?= htmlspecialchars($row['student_name']) ?></td>
                                 <td style="text-transform:capitalize;"><?= $row['powder_type'] === 'eggshell' ? 'Eggshell-Based' : 'Commercial' ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($row['surface_type']) ?></td>
+                                <td><?= $row['ridge_clarity_score'] !== null ? number_format($row['ridge_clarity_score'], 1).'%' : '—' ?></td>
+                                <td><?= $row['visibility_score'] !== null ? number_format($row['visibility_score'], 1).'%' : '—' ?></td>
+                                <td><?= $row['adhesion_score'] !== null ? number_format($row['adhesion_score'], 1).'%' : '—' ?></td>
                                 <td><strong><?= number_format($row['accuracy_score'], 1) ?>%</strong></td>
-                                <td><span class="badge-approved">Approved</span></td>
-                                <td><?= htmlspecialchars($row['faculty_validator'] ?: 'Faculty Validator') ?></td>
+                                <td><?= $row['validated_at'] ? date('M d, Y', strtotime($row['validated_at'])) : '—' ?></td>
                                 <td style="text-align: right;">
                                     <button class="btn btn-secondary btn-sm" onclick="openDetailsModal(<?= htmlspecialchars(json_encode($row)) ?>)">View Details</button>
                                 </td>

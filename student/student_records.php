@@ -154,6 +154,7 @@ try {
                             <tr>
                                 <th>Trial ID</th>
                                 <th>Fingerprint Image</th>
+                                <th>Image Label</th>
                                 <th>Powder Type</th>
                                 <th>Surface Type</th>
                                 <th>Accuracy Score</th>
@@ -166,7 +167,7 @@ try {
                         <tbody>
                         <?php if (empty($records)): ?>
                             <tr>
-                                <td colspan="9" style="text-align:center;color:#6c757d;padding:2.5rem;">
+                                <td colspan="10" style="text-align:center;color:#6c757d;padding:2.5rem;">
                                     No records found.
                                     <?php if (!$filter_status && !$filter_powder && !$filter_surface): ?>
                                         <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first image →</a>
@@ -190,6 +191,7 @@ try {
                                         <span style="font-size: 0.72rem; color: var(--gray); font-style:italic;">No image</span>
                                     <?php endif; ?>
                                 </td>
+                                <td><?= htmlspecialchars($r['image_label'] ?: 'Untitled') ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($r['powder_type']) ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($r['surface_type']) ?></td>
                                 <td>

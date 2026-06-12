@@ -16,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fingerprint_image'])
     $surface_type = trim($_POST['surface_type'] ?? '');
     $label        = trim($_POST['image_label'] ?? '');
     
-    $allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/pjpeg', 'image/x-png'];
     $allowed_exts  = ['jpg', 'jpeg', 'png', 'webp'];
     $max_bytes     = 5 * 1024 * 1024; // 5 MB
 
@@ -26,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fingerprint_image'])
         $msg = 'Powder Type and Surface Type are required.'; $msg_type = 'error';
     } elseif ($file['error'] !== UPLOAD_ERR_OK) {
         $msg = 'Upload error. Please try again.'; $msg_type = 'error';
-    } elseif (!in_array($file['type'], $allowed_types) && !in_array($ext, $allowed_exts)) {
-        $msg = 'Only JPG, PNG and WebP images are allowed.'; $msg_type = 'error';
+    } elseif (!in_array($ext, $allowed_exts)) {
+        $msg = 'Only JPG, JPEG, PNG and WebP images are allowed.'; $msg_type = 'error';
     } elseif ($file['size'] > $max_bytes) {
         $msg = 'File size must not exceed 5 MB.'; $msg_type = 'error';
     } else {
@@ -155,7 +154,7 @@ try {
                             <label for="powder_type">Powder Type <span style="color:var(--danger)">*</span></label>
                             <select name="powder_type" id="powder_type" class="form-control" required>
                                 <option value="">— Select Powder —</option>
-                                <option value="eggshell">Eggshell Powder</option>
+                                <option value="eggshell">Eggshell-Based Powder</option>
                                 <option value="commercial">Commercial Powder</option>
                             </select>
                         </div>
@@ -164,12 +163,10 @@ try {
                             <select name="surface_type" id="surface_type" class="form-control" required>
                                 <option value="">— Select Surface —</option>
                                 <option value="glass">Glass</option>
-                                <option value="plastic">Plastic</option>
-                                <option value="metal">Metal</option>
                                 <option value="paper">Paper</option>
                                 <option value="wood">Wood</option>
-                                <option value="ceramic">Ceramic</option>
-                                <option value="fabric">Fabric</option>
+                                <option value="plastic">Plastic</option>
+                                <option value="metal">Metal</option>
                             </select>
                         </div>
                     </div>

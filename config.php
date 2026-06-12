@@ -142,6 +142,11 @@ try {
     $addTestColumn('trial_id', "`trial_id` VARCHAR(50) DEFAULT NULL AFTER `id`");
     $addTestColumn('image_path', "`image_path` VARCHAR(255) DEFAULT NULL AFTER `surface_type`");
     $addTestColumn('image_label', "`image_label` VARCHAR(255) DEFAULT NULL AFTER `image_path`");
+    $addTestColumn('ridge_clarity_score', "`ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('visibility_score', "`visibility_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('adhesion_score', "`adhesion_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('accuracy_score', "`accuracy_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('status', "`status` VARCHAR(50) DEFAULT 'pending_validation'");
     $addTestColumn('validated_by', "`validated_by` INT DEFAULT NULL AFTER `submitted_at`");
     $addTestColumn('validated_at', "`validated_at` TIMESTAMP DEFAULT NULL AFTER `validated_by`");
 

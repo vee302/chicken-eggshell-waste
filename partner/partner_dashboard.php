@@ -21,7 +21,7 @@ $pending_trials = 0;
 $approved_trials = 0;
 try {
     $total_trials = (int)$pdo->query("SELECT COUNT(*) FROM fingerprint_tests")->fetchColumn();
-    $pending_trials = (int)$pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='pending'")->fetchColumn();
+    $pending_trials = (int)$pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='pending_validation'")->fetchColumn();
     $approved_trials = (int)$pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='approved'")->fetchColumn();
 } catch (PDOException $e) {}
 
@@ -261,7 +261,11 @@ try {
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($row['powder_type']) ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($row['surface_type']) ?></td>
                                 <td><?= number_format($row['accuracy_score'], 1) ?>%</td>
-                                <td><span class="badge badge-<?= $row['status'] ?>"><?= ucfirst($row['status']) ?></span></td>
+                                <td>
+                                    <span class="badge badge-<?= $row['status'] ?>">
+                                        <?= $row['status'] === 'pending_validation' ? 'Pending Validation' : ($row['status'] === 'needs_revision' ? 'Needs Revision' : ucfirst($row['status'])) ?>
+                                    </span>
+                                </td>
                                 <td><?= date('M d, Y', strtotime($row['submitted_at'])) ?></td>
                             </tr>
                             <?php endforeach; ?>

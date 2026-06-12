@@ -11,7 +11,7 @@ $faculty_id   = $_SESSION['user_id']  ?? 0;
 $total_submissions = $pending = $approved = $rejected = $avg_accuracy = $report_count = 0;
 try {
     $total_submissions = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests")->fetchColumn();
-    $pending           = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='pending'")->fetchColumn();
+    $pending           = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='pending_validation'")->fetchColumn();
     $approved          = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='approved'")->fetchColumn();
     $rejected          = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='rejected'")->fetchColumn();
     $avg_accuracy      = $pdo->query("SELECT ROUND(AVG(accuracy_score),1) FROM fingerprint_tests")->fetchColumn() ?? 0;
@@ -221,7 +221,11 @@ try {
                                 <td><span style="text-transform:capitalize;"><?= $row['powder_type'] ?></span></td>
                                 <td style="text-transform:capitalize;"><?= $row['surface_type'] ?></td>
                                 <td><?= number_format($row['accuracy_score'], 1) ?>%</td>
-                                <td><span class="badge badge-<?= $row['status'] ?>"><?= ucfirst($row['status']) ?></span></td>
+                                <td>
+                                    <span class="badge badge-<?= $row['status'] ?>">
+                                        <?= $row['status'] === 'pending_validation' ? 'Pending Validation' : ($row['status'] === 'needs_revision' ? 'Needs Revision' : ucfirst($row['status'])) ?>
+                                    </span>
+                                </td>
                                 <td><?= date('M d, Y', strtotime($row['submitted_at'])) ?></td>
                                 <td>
                                     <a href="validate_accuracy.php?id=<?= $row['id'] ?>" class="btn btn-primary btn-sm">Review</a>

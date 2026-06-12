@@ -20,15 +20,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg = 'Please fill in all required fields with valid values.';
         $msg_type = 'error';
     } else {
-        try {
-            $stmt = $pdo->prepare("
-                INSERT INTO fingerprint_tests (student_id, powder_type, surface_type, accuracy_score, notes, status, submitted_at)
-                VALUES (?, ?, ?, ?, ?, 'pending', NOW())
-            ");
-            $stmt->execute([$student_id, $powder_type, $surface_type, $accuracy_score, $notes]);
-            $msg = 'Trial data submitted successfully! It is now pending faculty review.';
-            $msg_type = 'success';
-        } catch (PDOException $e) {
+            try {
+                // Generate a unique trial_id
+                $stmt = $pdo->query("SELECT MAX(id) FROM fingerprint_tests");
+                $max_id = $stmt->fetchColumn() ?: 0;
+                $next_id = $max_id + 1;
+                $trial_id = 'TR-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
+
+                $stmt = $pdo->prepare("
+                    INSERT INTO fingerprint_tests (trial_id, student_id, powder_type, surface_type, accuracy_score, notes, status, submitted_at)
+                    VALUES (?, ?, ?, ?, ?, ?, 'pending_validation', NOW())
+                ");
+                $stmt->execute([$trial_id, $student_id, $powder_type, $surface_type, $accuracy_score, $notes]);
+                $msg = 'Trial data submitted successfully! It is now pending faculty review.';
+                $msg_type = 'success';
+            } catch (PDOException $e) {
             $msg = 'Database error. Please try again.';
             $msg_type = 'error';
         }

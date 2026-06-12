@@ -15,27 +15,15 @@ $filter_status = isset($_GET["status"]) ? trim($_GET["status"]) : "";
 // Build SQL Query
 $query_str = "
     SELECT 
-        ft.id, 
-        ft.trial_id,
-        ft.powder_type, 
-        ft.surface_type, 
-        ft.image_path, 
-        ft.image_label,
-        ft.ridge_clarity_score,
-        ft.visibility_score,
-        ft.adhesion_score,
-        ft.accuracy_score, 
-        ft.notes,
-        ft.status, 
-        ft.submitted_at, 
-        ft.validated_at,
-        u.full_name AS student_name,
-        fac.full_name AS validator_name,
+        ft.*,
+        student.full_name AS student_name,
+        faculty.full_name AS faculty_validator,
+        faculty.full_name AS validator_name,
         frm.remarks AS validation_remarks,
         frm.created_at AS validation_date
     FROM fingerprint_tests ft
-    JOIN users u ON ft.student_id = u.id
-    LEFT JOIN users fac ON ft.validated_by = fac.id
+    LEFT JOIN users student ON ft.student_id = student.id
+    LEFT JOIN users faculty ON ft.validated_by = faculty.id
     LEFT JOIN faculty_remarks frm ON ft.id = frm.test_id AND frm.id = (
         SELECT MAX(frm2.id) FROM faculty_remarks frm2 WHERE frm2.test_id = ft.id
     )
@@ -45,7 +33,7 @@ $query_str = "
 $params = [];
 
 if (!empty($search_student)) {
-    $query_str .= " AND u.full_name LIKE :student";
+    $query_str .= " AND student.full_name LIKE :student";
     $params[':student'] = '%' . $search_student . '%';
 }
 
@@ -279,7 +267,7 @@ if (isset($_GET['view'])) {
                                             <td><?php echo date('M d, Y h:i A', strtotime($rec['submitted_at'])); ?></td>
                                             <td>
                                                 <span style="font-weight: 600; color: #5f5f5f;">
-                                                    <?php echo htmlspecialchars($rec['validator_name'] ?: '—'); ?>
+                                                    <?php echo htmlspecialchars($rec['validator_name'] ?: 'Not yet validated'); ?>
                                                 </span>
                                             </td>
                                             <td style="text-align: right;">

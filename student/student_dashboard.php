@@ -13,7 +13,7 @@ $total = $pending = $approved = $rejected = 0;
 $avg_score = 0;
 try {
     $total    = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id")->fetchColumn();
-    $pending  = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id AND status='pending'")->fetchColumn();
+    $pending  = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id AND status='pending_validation'")->fetchColumn();
     $approved = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id AND status='approved'")->fetchColumn();
     $rejected = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id AND status='rejected'")->fetchColumn();
     $avg_score = $pdo->query("SELECT ROUND(AVG(accuracy_score),1) FROM fingerprint_tests WHERE student_id = $student_id")->fetchColumn() ?? 0;

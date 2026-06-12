@@ -125,8 +125,8 @@ if (isset($_GET['view'])) {
                     <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search by student name..." class="form-control-inline" style="width:240px;">
                     <select name="powder" class="form-control-inline">
                         <option value="">All Powder Types</option>
-                        <option value="eggshell"   <?= $f_pwd==='eggshell'  ?'selected':'' ?>>Eggshell</option>
-                        <option value="commercial" <?= $f_pwd==='commercial'?'selected':'' ?>>Commercial</option>
+                        <option value="eggshell"   <?= $f_pwd==='eggshell'  ?'selected':'' ?>>Eggshell-Based Powder</option>
+                        <option value="commercial" <?= $f_pwd==='commercial'?'selected':'' ?>>Commercial Powder</option>
                     </select>
                     <select name="surface" class="form-control-inline">
                         <option value="">All Surfaces</option>

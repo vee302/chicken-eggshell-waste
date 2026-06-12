@@ -86,13 +86,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['tes
     }
 }
 
-// Fetch all pending_validation submissions with student name
 $submissions = [];
 try {
     $stmt = $pdo->query("
-        SELECT ft.*, u.full_name AS student_name
+        SELECT 
+          ft.*,
+          student.full_name AS student_name
         FROM fingerprint_tests ft
-        JOIN users u ON u.id = ft.student_id
+        LEFT JOIN users student ON ft.student_id = student.id
         WHERE ft.status = 'pending_validation'
         ORDER BY ft.submitted_at DESC
     ");

@@ -26,6 +26,11 @@ require_once "config.php";
 
 $email = $password = "";
 $error_message = "";
+$info_message = "";
+
+if (isset($_GET['idle']) && $_GET['idle'] === '1') {
+    $info_message = "You have been logged out due to 5 minutes of inactivity.";
+}
 
 // Process form data when post request is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -169,6 +174,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <h2>System Authentication</h2>
                 <p>Please enter your credentials below</p>
             </div>
+
+            <!-- Info Alert -->
+            <?php if (!empty($info_message)): ?>
+                <div class="alert alert-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span><?php echo htmlspecialchars($info_message); ?></span>
+                </div>
+            <?php endif; ?>
 
             <!-- Error Alert -->
             <?php if (!empty($error_message)): ?>

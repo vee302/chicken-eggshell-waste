@@ -390,4 +390,55 @@ try {
 } catch (PDOException $e) {
     die("DATABASE ERROR: " . $e->getMessage());
 }
+
+// Global Inactivity Auto-Logout Tracker (5 Minutes)
+register_shutdown_function(function() {
+    if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+        $is_json = false;
+        foreach (headers_list() as $header) {
+            if (stripos($header, 'Content-Type:') !== false && stripos($header, 'application/json') !== false) {
+                $is_json = true;
+                break;
+            }
+        }
+        
+        $is_ajax = (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+                   strpos($_SERVER['SCRIPT_NAME'], 'ajax_') !== false ||
+                   strpos($_SERVER['SCRIPT_NAME'], 'check_registration_status.php') !== false ||
+                   $is_json;
+
+        if (!$is_ajax) {
+            $is_subdir = (strpos($_SERVER['SCRIPT_NAME'], '/admin/') !== false || 
+                          strpos($_SERVER['SCRIPT_NAME'], '/faculty/') !== false || 
+                          strpos($_SERVER['SCRIPT_NAME'], '/student/') !== false || 
+                          strpos($_SERVER['SCRIPT_NAME'], '/partner/') !== false);
+            $logout_url = $is_subdir ? '../logout.php?idle=1' : 'logout.php?idle=1';
+            ?>
+            <script>
+            (function() {
+                let idleTime = 0;
+                const idleLimit = 5 * 60; // 5 minutes
+
+                function resetTimer() {
+                    idleTime = 0;
+                }
+
+                const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+                events.forEach(name => {
+                    document.addEventListener(name, resetTimer, true);
+                });
+
+                const idleInterval = setInterval(() => {
+                    idleTime++;
+                    if (idleTime >= idleLimit) {
+                        clearInterval(idleInterval);
+                        window.location.href = "<?php echo $logout_url; ?>";
+                    }
+                }, 1000);
+            })();
+            </script>
+            <?php
+        }
+    }
+});
 ?>

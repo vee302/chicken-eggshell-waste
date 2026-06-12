@@ -1,7 +1,5 @@
 <?php
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
+require_once 'config.php';
 $target_link = "login.php";
 if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
     if (isset($_SESSION["user_email"]) && ($_SESSION["user_email"] === 'admin@greenforensics.com' || $_SESSION["user_email"] === 'admin@greenforensics.edu.ph')) {

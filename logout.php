@@ -20,6 +20,10 @@ if (ini_get("session.use_cookies")) {
 session_destroy();
 
 // Redirect to login page
-header("Location: login.php");
+$redirect_url = "login.php";
+if (isset($_GET['idle']) && $_GET['idle'] === '1') {
+    $redirect_url .= "?idle=1";
+}
+header("Location: " . $redirect_url);
 exit;
 ?>

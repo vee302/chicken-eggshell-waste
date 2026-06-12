@@ -411,7 +411,7 @@ register_shutdown_function(function() {
             $is_subdir = (strpos($_SERVER['SCRIPT_NAME'], '/admin/') !== false || 
                           strpos($_SERVER['SCRIPT_NAME'], '/faculty/') !== false || 
                           strpos($_SERVER['SCRIPT_NAME'], '/student/') !== false || 
-                          strpos($_SERVER['SCRIPT_NAME'], '/partner/') !== false);
+                          strpos($_SERVER['SCRIPT_NAME'], '/police-partner/') !== false);
             $logout_url = $is_subdir ? '../logout.php?idle=1' : 'logout.php?idle=1';
             ?>
             <script>

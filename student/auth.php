@@ -28,7 +28,7 @@ function check_student_auth() {
             header('Location: ../faculty/faculty_dashboard.php');
             exit;
         } elseif ($role === 'alumni_police_partner') {
-            header('Location: ../partner/partner_dashboard.php');
+            header('Location: ../police-partner/partner_dashboard.php');
             exit;
         }
 

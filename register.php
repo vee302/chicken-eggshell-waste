@@ -11,7 +11,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     } elseif ($role === 'criminology_student') {
         header("Location: student/student_dashboard.php");
     } elseif ($role === 'alumni_police_partner') {
-        header("Location: partner/partner_dashboard.php");
+        header("Location: police-partner/partner_dashboard.php");
     } else {
         header("Location: dashboard.php");
     }

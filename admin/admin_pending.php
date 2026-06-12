@@ -91,6 +91,7 @@ function role_label($r) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pending Approvals - Green Forensics Admin</title>
+    <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
     <link rel="stylesheet" href="../css/admin_style.css?v=1.6">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -149,18 +150,13 @@ function role_label($r) {
                 </div>
             </div>
 
-            <?php if (!empty($error)): ?>
-                <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
-            <?php endif; ?>
-            <?php if (!empty($success)): ?>
-                <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
-            <?php endif; ?>
+            <div id="alertContainer"></div>
 
             <!-- Search -->
             <div class="dashboard-card" style="margin-bottom:1.5rem;padding:1.25rem;">
-                <form method="GET" action="admin_pending.php" class="search-filter-bar">
+                <form method="GET" action="admin_pending.php" class="search-filter-bar" id="searchForm">
                     <div class="bar-left">
-                        <input type="text" name="search" class="form-control-inline"
+                        <input type="text" name="search" id="searchInput" class="form-control-inline"
                             placeholder="Search pending users by name, email, or ID..."
                             value="<?php echo htmlspecialchars($search); ?>" style="min-width:320px;">
                         <button type="submit" class="btn btn-secondary">Search</button>
@@ -174,7 +170,7 @@ function role_label($r) {
             <!-- Pending Table -->
             <div class="dashboard-card">
                 <div class="table-responsive">
-                    <table class="custom-table">
+                    <table class="custom-table" id="pendingTable">
                         <thead>
                             <tr>
                                 <th>Name / ID</th>
@@ -186,23 +182,23 @@ function role_label($r) {
                                 <th style="text-align:right;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="pendingTableBody">
                         <?php if (count($pending_users) > 0): ?>
                             <?php foreach ($pending_users as $u): ?>
-                            <tr>
+                            <tr data-user-id="<?php echo $u['id']; ?>">
                                 <td>
-                                    <strong style="color:var(--dark-green);display:block;">
+                                    <strong class="user-full-name" style="color:var(--dark-green);display:block;">
                                         <?php echo htmlspecialchars($u['full_name'] ?: trim($u['first_name'].' '.$u['last_name'])); ?>
                                     </strong>
-                                    <span style="font-size:.75rem;color:#888;"><?php echo htmlspecialchars($u['id_number'] ?? '—'); ?></span>
+                                    <span class="user-id-number" style="font-size:.75rem;color:#888;"><?php echo htmlspecialchars($u['id_number'] ?? '—'); ?></span>
                                 </td>
                                 <td>
-                                    <span style="display:block;"><?php echo htmlspecialchars($u['email']); ?></span>
-                                    <span style="font-size:.75rem;color:#888;"><?php echo htmlspecialchars($u['contact_number'] ?? '—'); ?></span>
+                                    <span class="user-email" style="display:block;"><?php echo htmlspecialchars($u['email']); ?></span>
+                                    <span class="user-contact" style="font-size:.75rem;color:#888;"><?php echo htmlspecialchars($u['contact_number'] ?? '—'); ?></span>
                                 </td>
-                                <td><span style="font-size:.75rem;font-weight:700;color:#6B8F71;"><?php echo role_label($u['requested_role'] ?? ''); ?></span></td>
+                                <td><span class="user-requested-role" style="font-size:.75rem;font-weight:700;color:#6B8F71;" data-role="<?php echo htmlspecialchars($u['requested_role'] ?? ''); ?>"><?php echo role_label($u['requested_role'] ?? ''); ?></span></td>
                                 <td>
-                                    <div style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($u['reason_for_access'] ?? ''); ?>">
+                                    <div class="user-reason" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($u['reason_for_access'] ?? ''); ?>">
                                         <?php echo htmlspecialchars($u['reason_for_access'] ?? '—'); ?>
                                     </div>
                                 </td>
@@ -210,13 +206,8 @@ function role_label($r) {
                                 <td><span class="badge-pending">Pending</span></td>
                                 <td style="text-align:right;">
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;">
-                                        <!-- View Details -->
-                                        <a href="admin_pending.php?view=<?php echo $u['id']; ?><?php echo !empty($search) ? '&search='.urlencode($search) : ''; ?>" class="btn-view">View Details</a>
-
-                                        <!-- Approve Form -->
-                                        <form method="POST" action="admin_pending.php" class="approve-form">
-                                            <input type="hidden" name="action" value="approve">
-                                            <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
+                                        <button type="button" class="btn-view" onclick='showUserDetails(<?php echo json_encode($u, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)'>View Details</button>
+                                        <form class="approve-form" onsubmit="handleApprove(event, <?php echo $u['id']; ?>)">
                                             <select name="approved_role" class="role-select-sm" required>
                                                 <option value="">Edit Assigned Role...</option>
                                                 <option value="criminology_student" <?php echo ($u['requested_role'] === 'criminology_student') ? 'selected' : ''; ?>>Criminology Student</option>
@@ -226,20 +217,13 @@ function role_label($r) {
                                             </select>
                                             <button type="submit" class="btn-approve">Approve</button>
                                         </form>
-
-                                        <!-- Reject Form -->
-                                        <form method="POST" action="admin_pending.php" style="display:inline;"
-                                            onsubmit="return confirm('Are you sure you want to REJECT this registration request?');">
-                                            <input type="hidden" name="action" value="reject">
-                                            <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
-                                            <button type="submit" class="btn-reject">Reject</button>
-                                        </form>
+                                        <button type="button" class="btn-reject" onclick="handleReject(<?php echo $u['id']; ?>)">Reject</button>
                                     </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr>
+                            <tr class="no-data-row">
                                 <td colspan="7" style="text-align:center;color:var(--gray);padding:3rem 2rem;">
                                     <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#D2E2D5;display:block;margin:0 auto 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     No pending registrations at this time.
@@ -255,64 +239,349 @@ function role_label($r) {
 </div>
 
 <!-- VIEW DETAIL MODAL -->
-<?php if ($view_user): ?>
-<div class="detail-overlay open" id="detailOverlay">
+<div class="detail-overlay" id="detailOverlay">
     <div class="detail-modal">
         <div class="detail-modal-header">
             <h3>Registration Details</h3>
-            <button class="modal-close-btn" onclick="document.getElementById('detailOverlay').classList.remove('open')">&times;</button>
+            <button class="modal-close-btn" onclick="closeDetailModal()">&times;</button>
         </div>
-        <div class="detail-modal-body">
-            <p class="section-divider">Personal Information</p>
-            <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value"><?php echo htmlspecialchars($view_user['full_name'] ?: trim($view_user['first_name'].' '.($view_user['middle_name'] ?? '').' '.$view_user['last_name'])); ?></span></div>
-            <div class="detail-row"><span class="detail-label">ID Number</span><span class="detail-value"><?php echo htmlspecialchars($view_user['id_number'] ?? '—'); ?></span></div>
-            <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value"><?php echo htmlspecialchars($view_user['email']); ?></span></div>
-            <div class="detail-row"><span class="detail-label">Contact Number</span><span class="detail-value"><?php echo htmlspecialchars($view_user['contact_number'] ?? '—'); ?></span></div>
-            <div class="detail-row"><span class="detail-label">Department</span><span class="detail-value"><?php echo htmlspecialchars($view_user['department'] ?? '—'); ?></span></div>
-            
-            <p class="section-divider">Access Request</p>
-            <div class="detail-row"><span class="detail-label">Requested Role</span><span class="detail-value"><?php echo role_label($view_user['requested_role'] ?? ''); ?></span></div>
-            <div class="detail-row"><span class="detail-label">Reason for Access</span><span class="detail-value"><?php echo nl2br(htmlspecialchars($view_user['reason_for_access'] ?? '—')); ?></span></div>
-            <div class="detail-row"><span class="detail-label">Registered On</span><span class="detail-value"><?php echo date('F d, Y g:i A', strtotime($view_user['created_at'])); ?></span></div>
-            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge-pending"><?php echo ucfirst($view_user['status']); ?></span></span></div>
-
-            <?php if ($view_user['status'] === 'pending'): ?>
-            <div style="display:flex;gap:.75rem;margin-top:1.5rem;border-top:1px solid #eee;padding-top:1.25rem;">
-                <form method="POST" action="admin_pending.php" class="approve-form" style="flex:1;display:flex;gap:6px;">
-                    <input type="hidden" name="action" value="approve">
-                    <input type="hidden" name="user_id" value="<?php echo $view_user['id']; ?>">
-                    <select name="approved_role" class="role-select-sm" required style="flex:1;padding:8px;">
-                        <option value="criminology_student" <?php echo $view_user['requested_role']==='criminology_student'?'selected':''; ?>>Criminology Student</option>
-                        <option value="faculty_researcher" <?php echo $view_user['requested_role']==='faculty_researcher'?'selected':''; ?>>Faculty Researcher</option>
-                        <option value="alumni_police_partner" <?php echo $view_user['requested_role']==='alumni_police_partner'?'selected':''; ?>>Alumni / Police Partner</option>
-                        <option value="super_admin">Super Administrator</option>
-                    </select>
-                    <button type="submit" class="btn-approve" style="padding:8px 16px;">Approve Access</button>
-                </form>
-                <form method="POST" action="admin_pending.php" onsubmit="return confirm('Reject this registration?');">
-                    <input type="hidden" name="action" value="reject">
-                    <input type="hidden" name="user_id" value="<?php echo $view_user['id']; ?>">
-                    <button type="submit" class="btn-reject" style="padding:8px 14px;">Reject</button>
-                </form>
-            </div>
-            <?php endif; ?>
+        <div class="detail-modal-body" id="detailModalBody">
+            <!-- Dynamically populated in JavaScript -->
         </div>
     </div>
 </div>
-<?php endif; ?>
 
 <script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    let isSubmitting = false;
+
+    // Helper: Role Label mapping
+    function roleLabel(r) {
+        const map = {
+            'criminology_student': 'Criminology Student',
+            'faculty_researcher': 'Faculty Researcher',
+            'alumni_police_partner': 'Alumni / Police Partner',
+            'super_admin': 'Super Administrator'
+        };
+        return map[r] || r.replace(/_/g, ' ');
+    }
+
+    // Toggle Sidebar
     document.addEventListener("DOMContentLoaded", () => {
         const sidebar = document.getElementById("sidebar");
         const toggleBtn = document.getElementById("sidebarCollapse");
         if (toggleBtn && sidebar) {
             toggleBtn.addEventListener("click", e => { e.stopPropagation(); sidebar.classList.toggle("active"); });
             document.addEventListener("click", e => {
-                if (window.innerWidth <= 768 && sidebar.classList.contains("active"))
+                if (window.innerWidth <= 768 && sidebar.classList.contains("active")) {
                     if (!sidebar.contains(e.target) && e.target !== toggleBtn) sidebar.classList.remove("active");
+                }
             });
         }
+        
+        // Auto-refresh interval (10s)
+        setInterval(autoRefreshPendingUsers, 10000);
     });
+
+    // Check if auto-refresh should be paused
+    function isAutoRefreshPaused() {
+        const isModalOpen = document.getElementById('detailOverlay').classList.contains('open');
+        const isUserTyping = document.activeElement && (
+            document.activeElement.tagName === 'INPUT' || 
+            document.activeElement.tagName === 'TEXTAREA' || 
+            document.activeElement.tagName === 'SELECT'
+        );
+        return isModalOpen || isUserTyping || isSubmitting;
+    }
+
+    // Display Toast/Alert Notification
+    function showNotification(type, message) {
+        const container = document.getElementById('alertContainer');
+        container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        setTimeout(() => {
+            container.innerHTML = '';
+        }, 5000);
+    }
+
+    // Show Details Modal
+    function showUserDetails(user) {
+        const modal = document.getElementById('detailOverlay');
+        const body = document.getElementById('detailModalBody');
+        
+        let actionsHtml = '';
+        if (user.status === 'pending') {
+            actionsHtml = `
+            <div style="display:flex;gap:.75rem;margin-top:1.5rem;border-top:1px solid #eee;padding-top:1.25rem;">
+                <form class="approve-form" onsubmit="handleApprove(event, ${user.id}, true)" style="flex:1;display:flex;gap:6px;">
+                    <select name="approved_role" class="role-select-sm" required style="flex:1;padding:8px;">
+                        <option value="criminology_student" ${user.requested_role==='criminology_student'?'selected':''}>Criminology Student</option>
+                        <option value="faculty_researcher" ${user.requested_role==='faculty_researcher'?'selected':''}>Faculty Researcher</option>
+                        <option value="alumni_police_partner" ${user.requested_role==='alumni_police_partner'?'selected':''}>Alumni / Police Partner</option>
+                        <option value="super_admin">Super Administrator</option>
+                    </select>
+                    <button type="submit" class="btn-approve" style="padding:8px 16px;">Approve Access</button>
+                </form>
+                <button type="button" class="btn-reject" onclick="handleReject(${user.id}, true)" style="padding:8px 14px;">Reject</button>
+            </div>`;
+        }
+
+        body.innerHTML = `
+            <p class="section-divider">Personal Information</p>
+            <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value">${user.full_name || (user.first_name + ' ' + (user.middle_name || '') + ' ' + user.last_name)}</span></div>
+            <div class="detail-row"><span class="detail-label">ID Number</span><span class="detail-value">${user.id_number || '—'}</span></div>
+            <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${user.email}</span></div>
+            <div class="detail-row"><span class="detail-label">Contact Number</span><span class="detail-value">${user.contact_number || '—'}</span></div>
+            <div class="detail-row"><span class="detail-label">Department</span><span class="detail-value">${user.department || '—'}</span></div>
+            
+            <p class="section-divider">Access Request</p>
+            <div class="detail-row"><span class="detail-label">Requested Role</span><span class="detail-value">${roleLabel(user.requested_role)}</span></div>
+            <div class="detail-row"><span class="detail-label">Reason for Access</span><span class="detail-value">${(user.reason_for_access || '—').replace(/\n/g, '<br>')}</span></div>
+            <div class="detail-row"><span class="detail-label">Registered On</span><span class="detail-value">${user.created_at}</span></div>
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge-pending">${user.status}</span></span></div>
+            ${actionsHtml}
+        `;
+        
+        modal.classList.add('open');
+    }
+
+    function closeDetailModal() {
+        document.getElementById('detailOverlay').classList.remove('open');
+    }
+
+    // Approve user via AJAX
+    function handleApprove(event, userId, fromModal = false) {
+        event.preventDefault();
+        if (isSubmitting) return;
+        
+        const form = event.target;
+        const select = form.querySelector('select[name="approved_role"]');
+        const role = select.value;
+        if (!role) {
+            showNotification('danger', 'Please select a role.');
+            return;
+        }
+
+        const btn = form.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
+        
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+        isSubmitting = true;
+
+        const formData = new FormData();
+        formData.append('user_id', userId);
+        formData.append('approved_role', role);
+        formData.append('csrf_token', csrfToken);
+
+        fetch('ajax_approve_user.php', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-Token': csrfToken
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            isSubmitting = false;
+            btn.textContent = originalText;
+            btn.disabled = false;
+            if (data.success) {
+                showNotification('success', data.message);
+                removeUserRow(userId);
+                if (fromModal) closeDetailModal();
+                updateDashboardCounts();
+            } else {
+                showNotification('danger', data.message);
+            }
+        })
+        .catch(err => {
+            isSubmitting = false;
+            btn.textContent = originalText;
+            btn.disabled = false;
+            showNotification('danger', 'An error occurred. Please try again.');
+        });
+    }
+
+    // Reject user via AJAX
+    function handleReject(userId, fromModal = false) {
+        if (isSubmitting) return;
+        if (!confirm('Are you sure you want to REJECT this registration request?')) return;
+
+        isSubmitting = true;
+        const formData = new FormData();
+        formData.append('user_id', userId);
+        formData.append('csrf_token', csrfToken);
+
+        fetch('ajax_reject_user.php', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-Token': csrfToken
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            isSubmitting = false;
+            if (data.success) {
+                showNotification('success', data.message);
+                removeUserRow(userId);
+                if (fromModal) closeDetailModal();
+                updateDashboardCounts();
+            } else {
+                showNotification('danger', data.message);
+            }
+        })
+        .catch(err => {
+            isSubmitting = false;
+            showNotification('danger', 'An error occurred. Please try again.');
+        });
+    }
+
+    function removeUserRow(userId) {
+        const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+        if (row) {
+            row.remove();
+        }
+        
+        // Update counts
+        const tbody = document.getElementById('pendingTableBody');
+        const rows = tbody.querySelectorAll('tr[data-user-id]');
+        const countBadge = document.querySelector('.count-badge');
+        if (countBadge) {
+            countBadge.textContent = `${rows.length} pending`;
+        }
+        
+        if (rows.length === 0) {
+            tbody.innerHTML = `
+                <tr class="no-data-row">
+                    <td colspan="7" style="text-align:center;color:var(--gray);padding:3rem 2rem;">
+                        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#D2E2D5;display:block;margin:0 auto 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        No pending registrations at this time.
+                    </td>
+                </tr>`;
+        }
+    }
+
+    function updateDashboardCounts() {
+        fetch('ajax_get_dashboard_stats.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Update user counts on dashboard if present
+                    const activeCountEl = document.getElementById('activeUsersCount');
+                    const pendingCountEl = document.getElementById('pendingApprovalsCount');
+                    if (activeCountEl) activeCountEl.textContent = data.data.active_users;
+                    if (pendingCountEl) pendingCountEl.textContent = data.data.pending_count;
+                }
+            });
+    }
+
+    // Auto refresh pending users
+    function autoRefreshPendingUsers() {
+        if (isAutoRefreshPaused()) return;
+        
+        const searchInput = document.getElementById('searchInput');
+        const searchVal = searchInput ? searchInput.value : '';
+
+        fetch(`ajax_get_pending_users.php?search=${encodeURIComponent(searchVal)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('pendingTableBody');
+                    const users = data.data.pending_users;
+                    
+                    const existingRows = Array.from(tbody.querySelectorAll('tr[data-user-id]'));
+                    const existingIds = existingRows.map(row => parseInt(row.getAttribute('data-user-id')));
+                    const newIds = users.map(u => parseInt(u.id));
+
+                    // Remove users no longer pending
+                    existingRows.forEach(row => {
+                        const id = parseInt(row.getAttribute('data-user-id'));
+                        if (!newIds.includes(id)) {
+                            row.remove();
+                        }
+                    });
+
+                    // Update or Add users
+                    users.forEach(u => {
+                        let row = tbody.querySelector(`tr[data-user-id="${u.id}"]`);
+                        if (row) {
+                            // Update details if any change
+                            const nameEl = row.querySelector('.user-full-name');
+                            nameEl.textContent = u.full_name || (u.first_name + ' ' + u.last_name);
+                            const roleEl = row.querySelector('.user-requested-role');
+                            if (roleEl.getAttribute('data-role') !== u.requested_role) {
+                                roleEl.setAttribute('data-role', u.requested_role);
+                                roleEl.textContent = roleLabel(u.requested_role);
+                            }
+                        } else {
+                            // Insert row
+                            const tr = document.createElement('tr');
+                            tr.setAttribute('data-user-id', u.id);
+                            
+                            const escU = JSON.stringify(u).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                            
+                            tr.innerHTML = `
+                                <td>
+                                    <strong class="user-full-name" style="color:var(--dark-green);display:block;">
+                                        \${u.full_name || (u.first_name + ' ' + u.last_name)}
+                                    </strong>
+                                    <span class="user-id-number" style="font-size:.75rem;color:#888;">\${u.id_number || '—'}</span>
+                                </td>
+                                <td>
+                                    <span class="user-email" style="display:block;">\${u.email}</span>
+                                    <span class="user-contact" style="font-size:.75rem;color:#888;">\${u.contact_number || '—'}</span>
+                                </td>
+                                <td><span class="user-requested-role" style="font-size:.75rem;font-weight:700;color:#6B8F71;" data-role="\${u.requested_role}">\${roleLabel(u.requested_role)}</span></td>
+                                <td>
+                                    <div class="user-reason" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="\${u.reason_for_access || ''}">
+                                        \${u.reason_for_access || '—'}
+                                    </div>
+                                </td>
+                                <td>\${new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                                <td><span class="badge-pending">Pending</span></td>
+                                <td style="text-align:right;">
+                                    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;">
+                                        <button type="button" class="btn-view" onclick='showUserDetails(\${escU})'>View Details</button>
+                                        <form class="approve-form" onsubmit="handleApprove(event, \${u.id})">
+                                            <select name="approved_role" class="role-select-sm" required>
+                                                <option value="">Edit Assigned Role...</option>
+                                                <option value="criminology_student" \${u.requested_role === 'criminology_student' ? 'selected' : ''}>Criminology Student</option>
+                                                <option value="faculty_researcher" \${u.requested_role === 'faculty_researcher' ? 'selected' : ''}>Faculty Researcher</option>
+                                                <option value="alumni_police_partner" \${u.requested_role === 'alumni_police_partner' ? 'selected' : ''}>Alumni / Police Partner</option>
+                                                <option value="super_admin">Super Administrator</option>
+                                            </select>
+                                            <button type="submit" class="btn-approve">Approve</button>
+                                        </form>
+                                        <button type="button" class="btn-reject" onclick="handleReject(\${u.id})">Reject</button>
+                                    </div>
+                                </td>
+                            `;
+                            // Prepend row to table body
+                            const noData = tbody.querySelector('.no-data-row');
+                            if (noData) noData.remove();
+                            tbody.insertBefore(tr, tbody.firstChild);
+                        }
+                    });
+
+                    // Update count badge
+                    const countBadge = document.querySelector('.count-badge');
+                    if (countBadge) {
+                        countBadge.textContent = `\${users.length} pending`;
+                    }
+                    if (users.length === 0 && !tbody.querySelector('.no-data-row')) {
+                        tbody.innerHTML = `
+                            <tr class="no-data-row">
+                                <td colspan="7" style="text-align:center;color:var(--gray);padding:3rem 2rem;">
+                                    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#D2E2D5;display:block;margin:0 auto 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    No pending registrations at this time.
+                                </td>
+                            </tr>`;
+                    }
+                }
+            });
+    }
 </script>
 </body>
 </html>
+

@@ -10,26 +10,6 @@ $student_id   = $_SESSION['user_id']  ?? 0;
 
 $msg = $msg_type = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $temperature = floatval($_POST['temperature'] ?? 0);
-    $humidity    = floatval($_POST['humidity']    ?? 0);
-    $ppe_worn    = trim($_POST['ppe_worn']    ?? '');
-    $conditions  = trim($_POST['conditions']  ?? '');
-    $notes       = trim($_POST['notes']       ?? '');
-
-    try {
-        $pdo->prepare("
-            INSERT INTO safety_logs (student_id, temperature, humidity, ppe_worn, lab_conditions, notes, logged_at)
-            VALUES (?, ?, ?, ?, ?, ?, NOW())
-        ")->execute([$student_id, $temperature, $humidity, $ppe_worn, $conditions, $notes]);
-        $msg = 'Safety and climate log submitted successfully.';
-        $msg_type = 'success';
-    } catch (PDOException $e) {
-        $msg = 'Could not save log. The safety_logs table may need to be created.';
-        $msg_type = 'error';
-    }
-}
-
 // Fetch logs
 $logs = [];
 try {
@@ -46,6 +26,7 @@ try {
     <meta name="description" content="Safety and Climate Log — Green Forensics">
     <title>Safety &amp; Climate Log — Green Forensics</title>
     <link rel="stylesheet" href="../css/student_style.css?v=1.0">
+    <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
     <style>
         .temp-pill  { background:rgba(116,198,157,.15); color:var(--dark-green); padding:2px 10px; border-radius:20px; font-size:.8rem; font-weight:600; }
         .humid-pill { background:rgba(45,106,79,.1); color:var(--medium-green); padding:2px 10px; border-radius:20px; font-size:.8rem; font-weight:600; }
@@ -79,9 +60,7 @@ try {
                 </div>
             </div>
 
-            <?php if ($msg): ?>
-                <div class="alert-msg alert-<?= $msg_type ?>"><?= htmlspecialchars($msg) ?></div>
-            <?php endif; ?>
+            <div id="alertContainer"></div>
 
             <!-- Log Form -->
             <div class="dashboard-card" style="max-width:720px;">
@@ -93,7 +72,7 @@ try {
                         New Log Entry
                     </h3>
                 </div>
-                <form method="POST" id="form-safety-log">
+                <form id="form-safety-log">
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label for="temperature">Temperature (°C)</label>
@@ -180,5 +159,104 @@ try {
     </main>
 </div>
 <?php require_once '_sidebar_js.php'; ?>
+<script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+let isSubmitting = false;
+
+function showNotification(type, message) {
+    const container = document.getElementById('alertContainer');
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+    container.innerHTML = `<div class="alert-msg ${alertClass}">${message}</div>`;
+    setTimeout(() => {
+        container.innerHTML = '';
+    }, 5000);
+}
+
+function escapeHtml(text) {
+    if (!text) return '—';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+document.getElementById('form-safety-log').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    const btn = document.getElementById('btn-save-log');
+    const originalText = btn.innerHTML;
+    
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    isSubmitting = true;
+
+    const formData = new FormData(this);
+    formData.append('csrf_token', csrfToken);
+
+    fetch('ajax_submit_climate_log.php', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-Token': csrfToken
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        isSubmitting = false;
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        if (data.success) {
+            showNotification('success', data.message);
+            appendLogHistoryRow(data.data);
+            document.getElementById('form-safety-log').reset();
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(err => {
+        isSubmitting = false;
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        showNotification('error', 'An error occurred. Please try again.');
+    });
+});
+
+function appendLogHistoryRow(data) {
+    const tbody = document.querySelector('.custom-table tbody');
+    const noLogsRow = tbody.querySelector('tr td[colspan="6"]');
+    if (noLogsRow) {
+        noLogsRow.parentElement.remove();
+    }
+
+    const tr = document.createElement('tr');
+    
+    const loggedAtStr = new Date(data.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + 
+                       new Date(data.logged_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    tr.innerHTML = `
+        <td>${loggedAtStr}</td>
+        <td><span class="temp-pill">${data.temperature}°C</span></td>
+        <td><span class="humid-pill">${data.humidity}%</span></td>
+        <td>${escapeHtml(data.ppe_worn)}</td>
+        <td>${escapeHtml(data.lab_conditions)}</td>
+        <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(data.notes)}</td>
+    `;
+    
+    tbody.insertBefore(tr, tbody.firstChild);
+
+    // Update count span
+    const countSpan = document.querySelector('.card-title-wrap span');
+    if (countSpan) {
+        const count = tbody.querySelectorAll('tr').length;
+        countSpan.textContent = `${count} entr${count !== 1 ? 'ies' : 'y'}`;
+    }
+}
+</script>
 </body>
 </html>

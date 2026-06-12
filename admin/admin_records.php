@@ -79,6 +79,7 @@ if (isset($_GET['view'])) {
     <title>Trial Records Monitoring - Green Forensics</title>
     <!-- CSS Stylesheet -->
     <link rel="stylesheet" href="../css/admin_style.css?v=1.6">
+    <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -148,19 +149,19 @@ if (isset($_GET['view'])) {
 
                 <!-- SEARCH AND FILTERS -->
                 <div class="dashboard-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-                    <form method="GET" action="admin_records.php" class="search-filter-bar">
+                    <form id="filterForm" class="search-filter-bar" onsubmit="event.preventDefault(); fetchFilteredRecords();">
                         <div class="bar-left">
-                            <input type="text" name="student" class="form-control-inline"
+                            <input type="text" name="student" id="filter-student" class="form-control-inline"
                                 placeholder="Filter by Student Name..."
                                 value="<?php echo htmlspecialchars($search_student); ?>" style="min-width: 200px;">
                             
-                            <select name="powder" class="form-control-inline">
+                            <select name="powder" id="filter-powder" class="form-control-inline">
                                 <option value="">All Powder Types</option>
                                 <option value="eggshell" <?php echo $filter_powder === 'eggshell' ? 'selected' : ''; ?>>Eggshell Powder</option>
                                 <option value="commercial" <?php echo $filter_powder === 'commercial' ? 'selected' : ''; ?>>Commercial Carbon</option>
                             </select>
 
-                            <select name="surface" class="form-control-inline">
+                            <select name="surface" id="filter-surface" class="form-control-inline">
                                 <option value="">All Surface Types</option>
                                 <option value="glass" <?php echo $filter_surface === 'glass' ? 'selected' : ''; ?>>Glass</option>
                                 <option value="paper" <?php echo $filter_surface === 'paper' ? 'selected' : ''; ?>>Paper</option>
@@ -171,7 +172,7 @@ if (isset($_GET['view'])) {
                                 <option value="fabric" <?php echo $filter_surface === 'fabric' ? 'selected' : ''; ?>>Fabric</option>
                             </select>
 
-                            <select name="status" class="form-control-inline">
+                            <select name="status" id="filter-status" class="form-control-inline">
                                 <option value="">All Statuses</option>
                                 <option value="pending_validation" <?php echo $filter_status === 'pending_validation' ? 'selected' : ''; ?>>Pending Validation</option>
                                 <option value="approved"           <?php echo $filter_status === 'approved'           ? 'selected' : ''; ?>>Approved</option>
@@ -180,9 +181,7 @@ if (isset($_GET['view'])) {
                             </select>
 
                             <button type="submit" class="btn btn-secondary">Filter Records</button>
-                            <?php if (!empty($search_student) || !empty($filter_powder) || !empty($filter_surface) || !empty($filter_status)): ?>
-                                <a href="admin_records.php" class="btn btn-secondary btn-sm" style="border: none;">Clear Filters</a>
-                            <?php endif; ?>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnClearFilters" style="border: none; display: <?php echo (!empty($search_student) || !empty($filter_powder) || !empty($filter_surface) || !empty($filter_status)) ? 'inline-block' : 'none'; ?>;">Clear Filters</button>
                         </div>
                     </form>
                 </div>

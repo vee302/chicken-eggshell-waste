@@ -10,60 +10,6 @@ $student_id   = $_SESSION['user_id']  ?? 0;
 
 $msg = $msg_type = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fingerprint_image'])) {
-    $file         = $_FILES['fingerprint_image'];
-    $powder_type  = trim($_POST['powder_type'] ?? '');
-    $surface_type = trim($_POST['surface_type'] ?? '');
-    $label        = trim($_POST['image_label'] ?? '');
-    
-    $allowed_exts  = ['jpg', 'jpeg', 'png', 'webp'];
-    $max_bytes     = 5 * 1024 * 1024; // 5 MB
-
-    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-    if (!$powder_type || !$surface_type) {
-        $msg = 'Powder Type and Surface Type are required.'; $msg_type = 'error';
-    } elseif ($file['error'] !== UPLOAD_ERR_OK) {
-        $msg = 'Upload error. Please try again.'; $msg_type = 'error';
-    } elseif (!in_array($ext, $allowed_exts)) {
-        $msg = 'Only JPG, JPEG, PNG and WebP images are allowed.'; $msg_type = 'error';
-    } elseif ($file['size'] > $max_bytes) {
-        $msg = 'File size must not exceed 5 MB.'; $msg_type = 'error';
-    } else {
-        $filename = 'fp_' . $student_id . '_' . time() . '.' . $ext;
-        $dest_dir = '../uploads/fingerprints/';
-        if (!is_dir($dest_dir)) {
-            mkdir($dest_dir, 0777, true);
-        }
-        $dest = $dest_dir . $filename;
-
-        if (move_uploaded_file($file['tmp_name'], $dest)) {
-            try {
-                // Generate a unique trial_id
-                $stmt = $pdo->query("SELECT MAX(id) FROM fingerprint_tests");
-                $max_id = $stmt->fetchColumn() ?: 0;
-                $next_id = $max_id + 1;
-                $trial_id = 'TR-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
-
-                // Insert trial record
-                $stmt = $pdo->prepare("
-                    INSERT INTO fingerprint_tests 
-                        (trial_id, student_id, image_path, image_label, powder_type, surface_type, 
-                         ridge_clarity_score, visibility_score, adhesion_score, accuracy_score, status, submitted_at)
-                    VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, 'pending_validation', NOW())
-                ");
-                $stmt->execute([$trial_id, $student_id, $filename, $label, $powder_type, $surface_type]);
-
-                $msg = 'Fingerprint image uploaded successfully and submitted for faculty validation.'; $msg_type = 'success';
-            } catch (PDOException $e) { 
-                $msg = 'Database error. Failed to save record.'; $msg_type = 'error';
-            }
-        } else {
-            $msg = 'Failed to save image. Check uploads directory permissions.'; $msg_type = 'error';
-        }
-    }
-}
-
 // Fetch my uploaded images
 $images = [];
 try {
@@ -85,6 +31,7 @@ try {
     <meta name="description" content="Upload Fingerprint Images — Green Forensics">
     <title>Upload Fingerprint Images — Green Forensics</title>
     <link rel="stylesheet" href="../css/student_style.css?v=1.0">
+    <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
     <style>
         .image-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-top: 1rem; }
         .image-thumb { background: var(--cream); border-radius: 10px; overflow: hidden; border: 1px solid var(--light-gray); }
@@ -124,16 +71,14 @@ try {
                 </div>
             </div>
 
-            <?php if ($msg): ?>
-                <div class="alert-msg alert-<?= $msg_type ?>"><?= htmlspecialchars($msg) ?></div>
-            <?php endif; ?>
+            <div id="alertContainer"></div>
 
             <!-- Upload Form -->
             <div class="dashboard-card" style="max-width:680px;">
                 <div class="card-title-wrap">
                     <h3>Upload New Image</h3>
                 </div>
-                <form method="POST" enctype="multipart/form-data" id="form-upload-fingerprint">
+                <form id="form-upload-fingerprint">
                     <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fingerprint_image').click()">
                         <div class="upload-zone-icon">
                             <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -183,7 +128,7 @@ try {
                             <line x1="12" y1="12" x2="12" y2="21"/>
                             <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
                         </svg>
-                        Upload Image
+                        <span id="btnText">Upload Image</span>
                     </button>
                 </form>
             </div>
@@ -195,7 +140,7 @@ try {
                     <span style="font-size:.82rem;color:var(--gray);"><?= count($images) ?> image<?= count($images) !== 1 ? 's' : '' ?></span>
                 </div>
                 <?php if (empty($images)): ?>
-                    <p style="color:var(--gray);font-size:.88rem;text-align:center;padding:1.5rem 0;">No images uploaded yet.</p>
+                    <p id="noImagesText" style="color:var(--gray);font-size:.88rem;text-align:center;padding:1.5rem 0;">No images uploaded yet.</p>
                 <?php else: ?>
                     <div class="image-gallery">
                         <?php foreach ($images as $img): ?>
@@ -230,8 +175,8 @@ try {
 <?php require_once '_sidebar_js.php'; ?>
 <script>
 const inp = document.getElementById('fingerprint_image');
+const chosen = document.getElementById('file-chosen');
 inp.addEventListener('change', () => {
-    const chosen = document.getElementById('file-chosen');
     chosen.textContent = inp.files[0] ? inp.files[0].name : '';
 });
 const zone = document.getElementById('uploadZone');
@@ -241,9 +186,118 @@ zone.addEventListener('drop', e => {
     e.preventDefault(); zone.classList.remove('drag-over');
     if (e.dataTransfer.files.length) {
         inp.files = e.dataTransfer.files;
-        document.getElementById('file-chosen').textContent = inp.files[0].name;
+        chosen.textContent = inp.files[0].name;
     }
 });
+
+// AJAX file upload logic
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+let isUploading = false;
+
+function showNotification(type, message) {
+    const container = document.getElementById('alertContainer');
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+    container.innerHTML = `<div class="alert-msg ${alertClass}">${message}</div>`;
+    setTimeout(() => {
+        container.innerHTML = '';
+    }, 6000);
+}
+
+document.getElementById('form-upload-fingerprint').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (isUploading) return;
+
+    if (!inp.files.length) {
+        showNotification('error', 'Please select a fingerprint image file to upload.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-upload-image');
+    const btnText = document.getElementById('btnText');
+    const originalText = btnText.textContent;
+    
+    btnText.textContent = 'Uploading...';
+    btn.disabled = true;
+    isUploading = true;
+
+    const formData = new FormData(this);
+    formData.append('csrf_token', csrfToken);
+
+    fetch('ajax_upload_fingerprint.php', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-Token': csrfToken
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        isUploading = false;
+        btnText.textContent = originalText;
+        btn.disabled = false;
+        
+        if (data.success) {
+            showNotification('success', data.message);
+            appendGalleryCard(data.data);
+            
+            // Reset form
+            document.getElementById('form-upload-fingerprint').reset();
+            chosen.textContent = '';
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(err => {
+        isUploading = false;
+        btnText.textContent = originalText;
+        btn.disabled = false;
+        showNotification('error', 'An error occurred during upload. Please try again.');
+    });
+});
+
+function appendGalleryCard(data) {
+    const noImagesText = document.getElementById('noImagesText');
+    if (noImagesText) {
+        noImagesText.remove();
+    }
+
+    let gallery = document.querySelector('.image-gallery');
+    if (!gallery) {
+        gallery = document.createElement('div');
+        gallery.className = 'image-gallery';
+        const cardBody = document.querySelector('.dashboard-card:nth-of-type(2)');
+        cardBody.appendChild(gallery);
+    }
+
+    const card = document.createElement('div');
+    card.className = 'image-thumb';
+    
+    card.innerHTML = `
+        <img src="../uploads/fingerprints/${data.image_path}" alt="Fingerprint image">
+        <div class="image-thumb-info">
+            <div class="image-thumb-label" style="font-size: 0.8rem; font-weight:700; color:var(--dark-green);">${data.trial_id}</div>
+            <div class="image-thumb-label" title="${data.image_label || 'Untitled'}">${data.image_label || 'Untitled'}</div>
+            <div style="font-size:0.7rem; color:var(--gray); text-transform:capitalize; margin-bottom: 2px;">
+                ${data.powder_type} | ${data.surface_type}
+            </div>
+            <div class="image-thumb-date" style="font-size:0.68rem;">Just now</div>
+            <div style="margin-top: 4px;">
+                <span class="badge badge-pending" style="font-size: 0.65rem; padding: 2px 6px;">
+                    Pending Validation
+                </span>
+            </div>
+        </div>
+    `;
+    
+    gallery.insertBefore(card, gallery.firstChild);
+
+    // Update count span
+    const countSpan = document.querySelector('.card-title-wrap span');
+    if (countSpan) {
+        const count = gallery.querySelectorAll('.image-thumb').length;
+        countSpan.textContent = `${count} image${count !== 1 ? 's' : ''}`;
+    }
+}
 </script>
 </body>
 </html>

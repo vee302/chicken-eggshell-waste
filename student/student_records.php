@@ -44,6 +44,7 @@ try {
     <meta name="description" content="My Records &amp; Reports — Green Forensics">
     <title>Records &amp; Reports — Green Forensics</title>
     <link rel="stylesheet" href="../css/student_style.css?v=1.0">
+    <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
     <style>
         .filter-bar { display:flex; gap:.75rem; flex-wrap:wrap; margin-bottom:1.5rem; align-items:flex-end; }
         .filter-item { display:flex; flex-direction:column; gap:.3rem; }
@@ -100,10 +101,10 @@ try {
             </div>
 
             <!-- Filters -->
-            <form method="GET" class="filter-bar no-print">
+            <form id="filterForm" class="filter-bar no-print">
                 <div class="filter-item">
                     <label>Status</label>
-                    <select name="status" id="filter-status" onchange="this.form.submit()">
+                    <select name="status" id="filter-status">
                         <option value="">All Statuses</option>
                         <option value="pending_validation" <?= $filter_status==='pending_validation' ? 'selected' : '' ?>>Pending Validation</option>
                         <option value="approved"           <?= $filter_status==='approved'           ? 'selected' : '' ?>>Approved</option>
@@ -113,7 +114,7 @@ try {
                 </div>
                 <div class="filter-item">
                     <label>Powder Type</label>
-                    <select name="powder" id="filter-powder" onchange="this.form.submit()">
+                    <select name="powder" id="filter-powder">
                         <option value="">All Powders</option>
                         <option value="eggshell"   <?= $filter_powder==='eggshell'   ? 'selected' : '' ?>>Eggshell</option>
                         <option value="commercial" <?= $filter_powder==='commercial' ? 'selected' : '' ?>>Commercial</option>
@@ -121,19 +122,17 @@ try {
                 </div>
                 <div class="filter-item">
                     <label>Surface</label>
-                    <select name="surface" id="filter-surface" onchange="this.form.submit()">
+                    <select name="surface" id="filter-surface">
                         <option value="">All Surfaces</option>
                         <?php foreach (['glass','plastic','metal','paper','wood','ceramic','fabric'] as $s): ?>
                         <option value="<?= $s ?>" <?= $filter_surface===$s ? 'selected' : '' ?>><?= ucfirst($s) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <?php if ($filter_status || $filter_powder || $filter_surface): ?>
-                    <div class="filter-item" style="justify-content:flex-end;">
-                        <label>&nbsp;</label>
-                        <a href="student_records.php" class="btn btn-secondary btn-sm">Clear Filters</a>
-                    </div>
-                <?php endif; ?>
+                <div class="filter-item" style="justify-content:flex-end;">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btnClearFilters" style="display: <?= ($filter_status || $filter_powder || $filter_surface) ? 'inline-block' : 'none' ?>;">Clear Filters</button>
+                </div>
             </form>
 
             <!-- Records Table -->
@@ -146,7 +145,7 @@ try {
                         </svg>
                         All Submissions
                     </h3>
-                    <span style="font-size:.82rem;color:var(--gray);"><?= count($records) ?> record<?= count($records) !== 1 ? 's' : '' ?></span>
+                    <span id="recordCount" style="font-size:.82rem;color:var(--gray);"><?= count($records) ?> record<?= count($records) !== 1 ? 's' : '' ?></span>
                 </div>
                 <div class="table-responsive">
                     <table class="custom-table">
@@ -164,9 +163,9 @@ try {
                                 <th>Faculty Remarks</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="recordsTableBody">
                         <?php if (empty($records)): ?>
-                            <tr>
+                            <tr class="no-data-row">
                                 <td colspan="10" style="text-align:center;color:#6c757d;padding:2.5rem;">
                                     No records found.
                                     <?php if (!$filter_status && !$filter_powder && !$filter_surface): ?>
@@ -176,7 +175,7 @@ try {
                             </tr>
                         <?php else: ?>
                             <?php foreach ($records as $i => $r): ?>
-                            <tr>
+                            <tr data-trial-db-id="<?= $r['id'] ?>">
                                 <td style="font-weight: 700; color: var(--dark-green);"><?= htmlspecialchars($r['trial_id'] ?: 'TR-'.str_pad($r['id'], 4, '0', STR_PAD_LEFT)) ?></td>
                                 <td>
                                     <?php if ($r['image_path']): ?>
@@ -226,5 +225,207 @@ try {
     </main>
 </div>
 <?php require_once '_sidebar_js.php'; ?>
+<script>
+let isFetching = false;
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+function getBadgeClass(status) {
+    if (status === 'pending_validation') return 'badge-pending_validation';
+    if (status === 'needs_revision') return 'badge-needs_revision';
+    if (status === 'approved') return 'badge-approved';
+    if (status === 'rejected') return 'badge-rejected';
+    return 'badge-' + status;
+}
+
+function getStatusLabel(status) {
+    if (status === 'pending_validation') return 'Pending Validation';
+    if (status === 'needs_revision') return 'Needs Revision';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function fetchFilteredRecords() {
+    if (isFetching) return;
+    
+    const status = document.getElementById('filter-status').value;
+    const powder = document.getElementById('filter-powder').value;
+    const surface = document.getElementById('filter-surface').value;
+    
+    // Toggle Clear Filters button visibility
+    const clearBtn = document.getElementById('btnClearFilters');
+    if (status || powder || surface) {
+        clearBtn.style.display = 'inline-block';
+    } else {
+        clearBtn.style.display = 'none';
+    }
+
+    isFetching = true;
+    
+    // Update Address Bar Query Params
+    const url = new URL(window.location);
+    if (status) url.searchParams.set('status', status); else url.searchParams.delete('status');
+    if (powder) url.searchParams.set('powder', powder); else url.searchParams.delete('powder');
+    if (surface) url.searchParams.set('surface', surface); else url.searchParams.delete('surface');
+    window.history.pushState({}, '', url);
+
+    fetch(`ajax_get_student_records.php?status=${encodeURIComponent(status)}&powder=${encodeURIComponent(powder)}&surface=${encodeURIComponent(surface)}`)
+        .then(res => res.json())
+        .then(data => {
+            isFetching = false;
+            if (data.success) {
+                renderRecordsTable(data.data.records);
+            }
+        })
+        .catch(err => {
+            isFetching = false;
+        });
+}
+
+function renderRecordsTable(records) {
+    const tbody = document.getElementById('recordsTableBody');
+    const countSpan = document.getElementById('recordCount');
+    
+    countSpan.textContent = `${records.length} record${records.length !== 1 ? 's' : ''}`;
+    
+    if (records.length === 0) {
+        const status = document.getElementById('filter-status').value;
+        const powder = document.getElementById('filter-powder').value;
+        const surface = document.getElementById('filter-surface').value;
+        
+        let linkHtml = '';
+        if (!status && !powder && !surface) {
+            linkHtml = '<br><a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first image →</a>';
+        }
+        
+        tbody.innerHTML = `
+            <tr class="no-data-row">
+                <td colspan="10" style="text-align:center;color:#6c757d;padding:2.5rem;">
+                    No records found.${linkHtml}
+                </td>
+            </tr>`;
+        return;
+    }
+
+    const existingRows = Array.from(tbody.querySelectorAll('tr[data-trial-db-id]'));
+    const existingIds = existingRows.map(row => parseInt(row.getAttribute('data-trial-db-id')));
+    const newIds = records.map(r => parseInt(r.id));
+
+    // Remove rows no longer matching
+    existingRows.forEach(row => {
+        const id = parseInt(row.getAttribute('data-trial-db-id'));
+        if (!newIds.includes(id)) {
+            row.remove();
+        }
+    });
+
+    // Add or update rows
+    records.forEach(r => {
+        let row = tbody.querySelector(`tr[data-trial-db-id="${r.id}"]`);
+        
+        let imageHtml = '<span style="font-size: 0.72rem; color: var(--gray); font-style:italic;">No image</span>';
+        if (r.image_path) {
+            imageHtml = `
+                <a href="../uploads/fingerprints/${r.image_path}" target="_blank">
+                    <img src="../uploads/fingerprints/${r.image_path}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
+                </a>`;
+        }
+
+        const scoreText = r.accuracy_score !== null ? parseFloat(r.accuracy_score).toFixed(1) + '%' : 'Awaiting Validation';
+        const scoreBarHtml = r.accuracy_score !== null ? `
+            <div class="score-bar">
+                <div class="score-bar-track">
+                    <div class="score-bar-fill" style="width:${Math.min(100, r.accuracy_score)}%"></div>
+                </div>
+            </div>` : '<div style="font-size: 0.75rem; color: var(--gray); font-style:italic;">Awaiting review</div>';
+
+        const remarksHtml = r.faculty_remarks ? escapeHtml(r.faculty_remarks) : '<em>No remarks yet</em>';
+
+        if (row) {
+            // Update row fields
+            row.children[2].textContent = r.image_label || 'Untitled';
+            row.children[3].textContent = r.powder_type || '';
+            row.children[4].textContent = r.surface_type || '';
+            row.children[5].innerHTML = `<strong>${scoreText}</strong>`;
+            row.children[6].innerHTML = scoreBarHtml;
+            row.children[7].innerHTML = `<span class="badge ${getBadgeClass(r.status)}">${getStatusLabel(r.status)}</span>`;
+            row.children[9].innerHTML = remarksHtml;
+        } else {
+            // Prepend new row
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-trial-db-id', r.id);
+            
+            tr.innerHTML = `
+                <td style="font-weight: 700; color: var(--dark-green);">${r.trial_id || 'TR-' + String(r.id).padStart(4, '0')}</td>
+                <td>${imageHtml}</td>
+                <td>${escapeHtml(r.image_label || 'Untitled')}</td>
+                <td style="text-transform:capitalize;">${r.powder_type || ''}</td>
+                <td style="text-transform:capitalize;">${r.surface_type || ''}</td>
+                <td><strong>${scoreText}</strong></td>
+                <td style="min-width:120px;">${scoreBarHtml}</td>
+                <td><span class="badge ${getBadgeClass(r.status)}">${getStatusLabel(r.status)}</span></td>
+                <td>${new Date(r.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(r.submitted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
+                <td style="font-size:.82rem; color:#5f5f5f; max-width:180px;">${remarksHtml}</td>
+            `;
+            const noData = tbody.querySelector('.no-data-row');
+            if (noData) noData.remove();
+            tbody.insertBefore(tr, tbody.firstChild);
+        }
+    });
+}
+
+function isAutoRefreshPaused() {
+    // Pause if user is interacting with filters
+    const isUserTyping = document.activeElement && (
+        document.activeElement.tagName === 'INPUT' || 
+        document.activeElement.tagName === 'TEXTAREA' || 
+        document.activeElement.tagName === 'SELECT'
+    );
+    return isUserTyping || isFetching;
+}
+
+function autoRefreshStudentRecords() {
+    if (isAutoRefreshPaused()) return;
+    
+    const status = document.getElementById('filter-status').value;
+    const powder = document.getElementById('filter-powder').value;
+    const surface = document.getElementById('filter-surface').value;
+
+    fetch(`ajax_get_student_records.php?status=${encodeURIComponent(status)}&powder=${encodeURIComponent(powder)}&surface=${encodeURIComponent(surface)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderRecordsTable(data.data.records);
+            }
+        });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Hook Filter elements changes
+    document.getElementById('filter-status').addEventListener('change', fetchFilteredRecords);
+    document.getElementById('filter-powder').addEventListener('change', fetchFilteredRecords);
+    document.getElementById('filter-surface').addEventListener('change', fetchFilteredRecords);
+    
+    // Clear Filters button
+    document.getElementById('btnClearFilters').addEventListener('click', () => {
+        document.getElementById('filter-status').value = '';
+        document.getElementById('filter-powder').value = '';
+        document.getElementById('filter-surface').value = '';
+        fetchFilteredRecords();
+    });
+
+    // 10s auto-refresh
+    setInterval(autoRefreshStudentRecords, 10000);
+});
+</script>
 </body>
 </html>

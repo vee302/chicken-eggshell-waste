@@ -107,6 +107,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Validate Accuracy Scores - Green Forensics</title>
     <link rel="stylesheet" href="../css/admin_style.css?v=2.0">
+    <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .badge-pending  { background:rgba(244,162,97,.15);  color:#c97d2a; }
@@ -165,12 +166,11 @@ try {
                 </div>
             </div>
 
-            <?php if ($message): ?><div class="alert-msg alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
-            <?php if ($error):   ?><div class="alert-msg alert-error"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+            <div id="alertContainer"></div>
 
             <div class="dashboard-card">
                 <div class="table-responsive">
-                    <table class="custom-table">
+                    <table class="custom-table" id="trialsTable">
                         <thead>
                             <tr>
                                 <th>Trial ID</th>
@@ -184,17 +184,17 @@ try {
                                 <th style="text-align: right;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="trialsTableBody">
                         <?php if (empty($submissions)): ?>
-                            <tr><td colspan="9" style="text-align:center;padding:2rem;color:#6c757d;">No pending validation trials found.</td></tr>
+                            <tr class="no-data-row"><td colspan="9" style="text-align:center;padding:2rem;color:#6c757d;">No pending validation trials found.</td></tr>
                         <?php else: ?>
                             <?php foreach ($submissions as $row): ?>
-                            <tr>
+                            <tr data-trial-db-id="<?= $row['id'] ?>">
                                 <td style="font-weight: 700; color: var(--dark-green);"><?= htmlspecialchars($row['trial_id'] ?: 'TR-'.str_pad($row['id'], 4, '0', STR_PAD_LEFT)) ?></td>
                                 <td><?= htmlspecialchars($row['student_name']) ?></td>
                                 <td>
                                     <?php if ($row['image_path'] && file_exists('../uploads/fingerprints/'.$row['image_path'])): ?>
-                                        <a href="../uploads/fingerprints/<?= htmlspecialchars($row['image_path']) ?>" target="_blank">
+                                        <a href="../uploads/fingerprints/<?= htmlspecialchars($row['image_path']) ?>" target="_blank" class="fp-image-link">
                                             <img src="../uploads/fingerprints/<?= htmlspecialchars($row['image_path']) ?>" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
                                         </a>
                                     <?php else: ?>
@@ -207,7 +207,7 @@ try {
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($row['powder_type']) ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($row['surface_type']) ?></td>
                                 <td><?= date('M d, Y h:i A', strtotime($row['submitted_at'])) ?></td>
-                                <td><span class="badge badge-<?= $row['status'] ?>">Pending Validation</span></td>
+                                <td><span class="badge badge-pending">Pending Validation</span></td>
                                 <td style="text-align: right;">
                                     <div class="btn-group" style="display:inline-flex; gap:6px;">
                                         <?php if ($row['image_path']): ?>
@@ -276,6 +276,9 @@ try {
 </div>
 
 <script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+let isSubmitting = false;
+
 function openModal(id, action) {
     document.getElementById('modalTestId').value = id;
     document.getElementById('modalAction').value  = action;
@@ -317,12 +320,198 @@ function openModal(id, action) {
     
     document.getElementById('actionModal').classList.add('active');
 }
-function closeModal() { document.getElementById('actionModal').classList.remove('active'); }
-document.getElementById('actionModal').addEventListener('click', e => { if (e.target === document.getElementById('actionModal')) closeModal(); });
+
+function closeModal() { 
+    document.getElementById('actionModal').classList.remove('active'); 
+}
+
+document.getElementById('actionModal').addEventListener('click', e => { 
+    if (e.target === document.getElementById('actionModal')) closeModal(); 
+});
+
+// Display Toast/Alert Notification
+function showNotification(type, message) {
+    const container = document.getElementById('alertContainer');
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+    container.innerHTML = `<div class="alert-msg ${alertClass}">${message}</div>`;
+    setTimeout(() => {
+        container.innerHTML = '';
+    }, 5000);
+}
+
+// Handle dynamic validation form submit
+document.getElementById('validationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    const action = document.getElementById('modalAction').value;
+    const testId = document.getElementById('modalTestId').value;
+    const remarks = document.getElementById('remarksField').value;
+    const btn = document.getElementById('submitBtn');
+    
+    let endpoint = '';
+    const formData = new FormData();
+    formData.append('test_id', testId);
+    formData.append('remarks', remarks);
+    formData.append('csrf_token', csrfToken);
+
+    if (action === 'approve') {
+        endpoint = 'ajax_approve_trial.php';
+        formData.append('ridge_clarity_score', document.getElementById('ridge_clarity').value);
+        formData.append('visibility_score', document.getElementById('visibility').value);
+        formData.append('adhesion_score', document.getElementById('adhesion').value);
+    } else if (action === 'reject') {
+        endpoint = 'ajax_reject_trial.php';
+    } else if (action === 'needs_revision') {
+        endpoint = 'ajax_needs_revision.php';
+    }
+
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    isSubmitting = true;
+
+    fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-Token': csrfToken
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        isSubmitting = false;
+        btn.textContent = originalText;
+        btn.disabled = false;
+        if (data.success) {
+            showNotification('success', data.message);
+            closeModal();
+            removeTrialRow(testId);
+        } else {
+            showNotification('danger', data.message);
+        }
+    })
+    .catch(err => {
+        isSubmitting = false;
+        btn.textContent = originalText;
+        btn.disabled = false;
+        showNotification('danger', 'An error occurred during submission.');
+    });
+});
+
+function removeTrialRow(testId) {
+    const row = document.querySelector(`tr[data-trial-db-id="${testId}"]`);
+    if (row) {
+        row.remove();
+    }
+    
+    // Check if table is empty
+    const tbody = document.getElementById('trialsTableBody');
+    const rows = tbody.querySelectorAll('tr[data-trial-db-id]');
+    if (rows.length === 0) {
+        tbody.innerHTML = '<tr class="no-data-row"><td colspan="9" style="text-align:center;padding:2rem;color:#6c757d;">No pending validation trials found.</td></tr>';
+    }
+}
+
+// Auto-refresh control (10s)
+function isAutoRefreshPaused() {
+    const isModalActive = document.getElementById('actionModal').classList.contains('active');
+    const isUserTyping = document.activeElement && (
+        document.activeElement.tagName === 'INPUT' || 
+        document.activeElement.tagName === 'TEXTAREA' || 
+        document.activeElement.tagName === 'SELECT'
+    );
+    return isModalActive || isUserTyping || isSubmitting;
+}
+
+function autoRefreshTrials() {
+    if (isAutoRefreshPaused()) return;
+
+    fetch('ajax_get_pending_trials.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const tbody = document.getElementById('trialsTableBody');
+                const submissions = data.data.submissions;
+                
+                const existingRows = Array.from(tbody.querySelectorAll('tr[data-trial-db-id]'));
+                const existingIds = existingRows.map(row => parseInt(row.getAttribute('data-trial-db-id')));
+                const newIds = submissions.map(s => parseInt(s.id));
+
+                // Remove rows no longer pending
+                existingRows.forEach(row => {
+                    const id = parseInt(row.getAttribute('data-trial-db-id'));
+                    if (!newIds.includes(id)) {
+                        row.remove();
+                    }
+                });
+
+                // Add or update rows
+                submissions.forEach(s => {
+                    let row = tbody.querySelector(`tr[data-trial-db-id="${s.id}"]`);
+                    if (row) {
+                        // Row exists: update label, powder, surface
+                        row.children[1].textContent = s.student_name || '—';
+                        row.children[3].textContent = s.image_label || 'Untitled';
+                        row.children[4].textContent = s.powder_type || '';
+                        row.children[5].textContent = s.surface_type || '';
+                    } else {
+                        // Insert new row
+                        const tr = document.createElement('tr');
+                        tr.setAttribute('data-trial-db-id', s.id);
+                        
+                        let imageHtml = `
+                            <div style="width:50px;height:50px;border-radius:8px;background:#f4f6f0;display:flex;align-items:center;justify-content:center;">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#adb5bd" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            </div>`;
+                        let viewImageBtn = '';
+                        if (s.image_path) {
+                            imageHtml = `
+                                <a href="../uploads/fingerprints/${s.image_path}" target="_blank" class="fp-image-link">
+                                    <img src="../uploads/fingerprints/${s.image_path}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
+                                </a>`;
+                            viewImageBtn = `<a href="../uploads/fingerprints/${s.image_path}" target="_blank" class="btn btn-secondary btn-sm">View Image</a>`;
+                        }
+
+                        tr.innerHTML = `
+                            <td style="font-weight: 700; color: var(--dark-green);">${s.trial_id || 'TR-' + String(s.id).padStart(4, '0')}</td>
+                            <td>${s.student_name || '—'}</td>
+                            <td>${imageHtml}</td>
+                            <td>${s.image_label || 'Untitled'}</td>
+                            <td style="text-transform:capitalize;">${s.powder_type || ''}</td>
+                            <td style="text-transform:capitalize;">${s.surface_type || ''}</td>
+                            <td>${new Date(s.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(s.submitted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
+                            <td><span class="badge badge-pending">Pending Validation</span></td>
+                            <td style="text-align: right;">
+                                <div class="btn-group" style="display:inline-flex; gap:6px;">
+                                    ${viewImageBtn}
+                                    <button class="btn btn-primary btn-sm" onclick="openModal(${s.id},'approve')">Approve</button>
+                                    <button class="btn btn-danger btn-sm" onclick="openModal(${s.id},'reject')">Reject</button>
+                                    <button class="btn btn-secondary btn-sm" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick="openModal(${s.id},'needs_revision')">Needs Revision</button>
+                                </div>
+                            </td>
+                        `;
+                        // Prepend
+                        const noData = tbody.querySelector('.no-data-row');
+                        if (noData) noData.remove();
+                        tbody.insertBefore(tr, tbody.firstChild);
+                    }
+                });
+
+                if (submissions.length === 0 && !tbody.querySelector('.no-data-row')) {
+                    tbody.innerHTML = '<tr class="no-data-row"><td colspan="9" style="text-align:center;padding:2rem;color:#6c757d;">No pending validation trials found.</td></tr>';
+                }
+            }
+        });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
     const toggle  = document.getElementById('sidebarCollapse');
     if (toggle && sidebar) toggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+    
+    // Start auto-refresh
+    setInterval(autoRefreshTrials, 10000);
 });
 </script>
 </body>

@@ -1,6 +1,13 @@
 <?php
 // config.php - Database Configuration & Connection with Auto-Setup
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 define('DB_SERVER', getenv('MYSQLHOST') ?: 'localhost');
 define('DB_USERNAME', getenv('MYSQLUSER') ?: 'root');
 http://localhost/waste-eggshell/

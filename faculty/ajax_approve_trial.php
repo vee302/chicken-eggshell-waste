@@ -1,0 +1,81 @@
+<?php
+// faculty/ajax_approve_trial.php — Faculty AJAX Approve Fingerprint Trial
+require_once '../config.php';
+require_once 'auth.php';
+
+header('Content-Type: application/json');
+
+// Session Role check
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'faculty_researcher') {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access.']);
+    exit;
+}
+
+// CSRF Token validation
+$headers = getallheaders();
+$csrf_token = $_POST['csrf_token'] ?? $headers['X-CSRF-Token'] ?? '';
+if (empty($csrf_token) || !hash_equals($_SESSION['csrf_token'] ?? '', $csrf_token)) {
+    echo json_encode(['success' => false, 'message' => 'Invalid CSRF token.']);
+    exit;
+}
+
+$test_id  = isset($_POST['test_id']) ? (int)$_POST['test_id'] : 0;
+$remarks  = trim($_POST['remarks'] ?? '');
+$clarity  = isset($_POST['ridge_clarity_score']) ? floatval($_POST['ridge_clarity_score']) : null;
+$visibility = isset($_POST['visibility_score']) ? floatval($_POST['visibility_score']) : null;
+$adhesion   = isset($_POST['adhesion_score']) ? floatval($_POST['adhesion_score']) : null;
+$faculty_id = $_SESSION['user_id'] ?? 0;
+
+if ($test_id <= 0) {
+    echo json_encode(['success' => false, 'message' => 'Invalid test ID.']);
+    exit;
+}
+
+if ($clarity === null || $visibility === null || $adhesion === null || $clarity < 0 || $clarity > 100 || $visibility < 0 || $visibility > 100 || $adhesion < 0 || $adhesion > 100) {
+    echo json_encode(['success' => false, 'message' => 'Please provide valid scores (0-100) for Clarity, Visibility, and Adhesion.']);
+    exit;
+}
+
+$accuracy = ($clarity + $visibility + $adhesion) / 3;
+
+try {
+    $pdo->beginTransaction();
+
+    $stmt = $pdo->prepare("
+        UPDATE fingerprint_tests 
+        SET status = 'approved',
+            ridge_clarity_score = ?,
+            visibility_score = ?,
+            adhesion_score = ?,
+            accuracy_score = ?,
+            validated_by = ?,
+            validated_at = NOW()
+        WHERE id = ?
+    ");
+    $stmt->execute([$clarity, $visibility, $adhesion, $accuracy, $faculty_id, $test_id]);
+
+    $stmt = $pdo->prepare("
+        INSERT INTO faculty_remarks (test_id, faculty_id, remarks, decision, created_at)
+        VALUES (?, ?, ?, 'approved', NOW())
+    ");
+    $stmt->execute([$test_id, $faculty_id, $remarks ?: 'Approved by faculty researcher.']);
+
+    $pdo->commit();
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Submission approved and scored successfully.',
+        'data' => [
+            'test_id' => $test_id,
+            'status' => 'approved',
+            'accuracy_score' => $accuracy,
+            'ridge_clarity_score' => $clarity,
+            'visibility_score' => $visibility,
+            'adhesion_score' => $adhesion
+        ]
+    ]);
+} catch (PDOException $e) {
+    $pdo->rollBack();
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+}
+exit;

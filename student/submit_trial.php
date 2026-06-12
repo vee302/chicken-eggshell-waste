@@ -9,37 +9,6 @@ $student_name = $_SESSION['user_name'] ?? 'Student';
 $student_id   = $_SESSION['user_id']  ?? 0;
 
 $msg = $msg_type = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $powder_type    = trim($_POST['powder_type']    ?? '');
-    $surface_type   = trim($_POST['surface_type']   ?? '');
-    $accuracy_score = floatval($_POST['accuracy_score'] ?? 0);
-    $notes          = trim($_POST['notes']          ?? '');
-
-    if (!$powder_type || !$surface_type || $accuracy_score <= 0) {
-        $msg = 'Please fill in all required fields with valid values.';
-        $msg_type = 'error';
-    } else {
-            try {
-                // Generate a unique trial_id
-                $stmt = $pdo->query("SELECT MAX(id) FROM fingerprint_tests");
-                $max_id = $stmt->fetchColumn() ?: 0;
-                $next_id = $max_id + 1;
-                $trial_id = 'TR-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
-
-                $stmt = $pdo->prepare("
-                    INSERT INTO fingerprint_tests (trial_id, student_id, powder_type, surface_type, accuracy_score, notes, status, submitted_at)
-                    VALUES (?, ?, ?, ?, ?, ?, 'pending_validation', NOW())
-                ");
-                $stmt->execute([$trial_id, $student_id, $powder_type, $surface_type, $accuracy_score, $notes]);
-                $msg = 'Trial data submitted successfully! It is now pending faculty review.';
-                $msg_type = 'success';
-            } catch (PDOException $e) {
-            $msg = 'Database error. Please try again.';
-            $msg_type = 'error';
-        }
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -49,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="description" content="Submit Fingerprint Trial Data — Green Forensics">
     <title>Submit Trial Data — Green Forensics</title>
     <link rel="stylesheet" href="../css/student_style.css?v=1.0">
+    <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
 </head>
 <body>
 <div class="student-wrapper">
@@ -81,9 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="student_records.php" class="btn btn-secondary">View My Records</a>
             </div>
 
-            <?php if ($msg): ?>
-                <div class="alert-msg alert-<?= $msg_type ?>"><?= htmlspecialchars($msg) ?></div>
-            <?php endif; ?>
+            <div id="alertContainer"></div>
 
             <div class="dashboard-card" style="max-width:720px;">
                 <div class="card-title-wrap">
@@ -98,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </h3>
                 </div>
 
-                <form method="POST" action="submit_trial.php" id="form-submit-trial">
+                <form id="form-submit-trial">
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label for="powder_type">Powder Type <span style="color:var(--danger)">*</span></label>
@@ -140,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="20 6 9 17 4 12"/>
                             </svg>
-                            Submit Trial
+                            <span id="btnText">Submit Trial</span>
                         </button>
                         <button type="reset" class="btn btn-secondary" id="btn-reset-trial">Clear Form</button>
                     </div>
@@ -150,5 +118,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </main>
 </div>
 <?php require_once '_sidebar_js.php'; ?>
+<script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+let isSubmitting = false;
+
+function showNotification(type, message) {
+    const container = document.getElementById('alertContainer');
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+    container.innerHTML = `<div class="alert-msg ${alertClass}">${message}</div>`;
+    setTimeout(() => {
+        container.innerHTML = '';
+    }, 5000);
+}
+
+document.getElementById('form-submit-trial').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    const btn = document.getElementById('btn-submit-trial');
+    const btnText = document.getElementById('btnText');
+    const originalText = btnText.textContent;
+    
+    btnText.textContent = 'Saving...';
+    btn.disabled = true;
+    isSubmitting = true;
+
+    const formData = new FormData(this);
+    formData.append('csrf_token', csrfToken);
+
+    fetch('ajax_submit_trial.php', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-Token': csrfToken
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        isSubmitting = false;
+        btnText.textContent = originalText;
+        btn.disabled = false;
+        
+        if (data.success) {
+            showNotification('success', data.message);
+            document.getElementById('form-submit-trial').reset();
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(err => {
+        isSubmitting = false;
+        btnText.textContent = originalText;
+        btn.disabled = false;
+        showNotification('error', 'An error occurred during submission. Please try again.');
+    });
+});
+</script>
 </body>
 </html>

@@ -12,7 +12,7 @@ $image_path = "images/glass-surface.png"; // Example image from your project fol
 // 2. Prepare the shell command (make sure Python is in your system's PATH)
 // Escape the argument to prevent command injection vulnerability
 $escaped_image_path = escapeshellarg($image_path);
-$command = "python process_image.py " . $escaped_image_path;
+$command = "python python/process_image.py " . $escaped_image_path;
 
 echo "<h2>Green Forensics Image Processing Demo</h2>";
 echo "<p>Running command: <code>$command</code></p>";

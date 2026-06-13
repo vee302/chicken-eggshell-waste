@@ -64,7 +64,7 @@ if (isset($_GET['view'])) {
 
 // Fetch pending users
 $search = trim($_GET['search'] ?? '');
-$qStr = "SELECT id, first_name, middle_name, last_name, full_name, email, contact_number, id_number, department, requested_role, reason_for_access, status, created_at FROM users WHERE status='pending'";
+$qStr = "SELECT id, first_name, middle_name, last_name, full_name, email, contact_number, id_number, department, affiliation, requested_role, reason_for_access, proof_of_affiliation, status, created_at FROM users WHERE status='pending'";
 $params = [];
 if (!empty($search)) {
     $qStr .= " AND (full_name LIKE :s OR email LIKE :s OR id_number LIKE :s)";
@@ -173,10 +173,13 @@ function role_label($r) {
                     <table class="custom-table" id="pendingTable">
                         <thead>
                             <tr>
-                                <th>Name / ID</th>
-                                <th>Email / Contact</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>ID Number</th>
+                                <th>Department / Affiliation</th>
                                 <th>Requested Role</th>
                                 <th>Reason for Access</th>
+                                <th>Proof of Affiliation</th>
                                 <th>Registration Date</th>
                                 <th>Status</th>
                                 <th style="text-align:right;">Actions</th>
@@ -190,23 +193,37 @@ function role_label($r) {
                                     <strong class="user-full-name" style="color:var(--dark-green);display:block;">
                                         <?php echo htmlspecialchars($u['full_name'] ?: trim($u['first_name'].' '.$u['last_name'])); ?>
                                     </strong>
-                                    <span class="user-id-number" style="font-size:.75rem;color:#888;"><?php echo htmlspecialchars($u['id_number'] ?? '—'); ?></span>
                                 </td>
                                 <td>
-                                    <span class="user-email" style="display:block;"><?php echo htmlspecialchars($u['email']); ?></span>
-                                    <span class="user-contact" style="font-size:.75rem;color:#888;"><?php echo htmlspecialchars($u['contact_number'] ?? '—'); ?></span>
+                                    <span class="user-email"><?php echo htmlspecialchars($u['email']); ?></span>
+                                </td>
+                                <td>
+                                    <span class="user-id-number"><?php echo htmlspecialchars($u['id_number'] ?? '—'); ?></span>
+                                </td>
+                                <td>
+                                    <span class="user-department"><?php echo htmlspecialchars($u['department'] ?: '—'); ?></span>
                                 </td>
                                 <td><span class="user-requested-role" style="font-size:.75rem;font-weight:700;color:#6B8F71;" data-role="<?php echo htmlspecialchars($u['requested_role'] ?? ''); ?>"><?php echo role_label($u['requested_role'] ?? ''); ?></span></td>
                                 <td>
-                                    <div class="user-reason" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($u['reason_for_access'] ?? ''); ?>">
+                                    <div class="user-reason" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($u['reason_for_access'] ?? ''); ?>">
                                         <?php echo htmlspecialchars($u['reason_for_access'] ?? '—'); ?>
                                     </div>
+                                </td>
+                                <td>
+                                    <?php if (!empty($u['proof_of_affiliation'])): ?>
+                                        <a href="view_proof.php?user_id=<?php echo $u['id']; ?>" target="_blank" class="btn-view" style="padding: 4px 8px; font-size: 0.7rem;">View Proof</a>
+                                    <?php else: ?>
+                                        <span style="font-size:.75rem;color:#888;font-style:italic;">No Proof Uploaded</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?php echo date('M d, Y', strtotime($u['created_at'])); ?></td>
                                 <td><span class="badge-pending">Pending</span></td>
                                 <td style="text-align:right;">
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;">
                                         <button type="button" class="btn-view" onclick='showUserDetails(<?php echo json_encode($u, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)'>View Details</button>
+                                        <?php if (!empty($u['proof_of_affiliation'])): ?>
+                                            <a href="view_proof.php?user_id=<?php echo $u['id']; ?>" target="_blank" class="btn-view">View Proof</a>
+                                        <?php endif; ?>
                                         <form class="approve-form" onsubmit="handleApprove(event, <?php echo $u['id']; ?>)">
                                             <select name="approved_role" class="role-select-sm" required>
                                                 <option value="">Edit Assigned Role...</option>
@@ -224,7 +241,7 @@ function role_label($r) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr class="no-data-row">
-                                <td colspan="7" style="text-align:center;color:var(--gray);padding:3rem 2rem;">
+                                <td colspan="10" style="text-align:center;color:var(--gray);padding:3rem 2rem;">
                                     <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#D2E2D5;display:block;margin:0 auto 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     No pending registrations at this time.
                                 </td>
@@ -325,18 +342,24 @@ function role_label($r) {
             </div>`;
         }
 
+        const hasProof = user.proof_of_affiliation && user.proof_of_affiliation.trim() !== '';
+        const proofHtml = hasProof 
+            ? `<a href="view_proof.php?user_id=${user.id}" target="_blank" class="btn-view" style="padding: 4px 8px; font-size: 0.75rem;">View Proof</a>`
+            : `<span style="font-size:.85rem;color:#888;font-style:italic;">No Proof Uploaded</span>`;
+
         body.innerHTML = `
             <p class="section-divider">Personal Information</p>
             <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value">${user.full_name || (user.first_name + ' ' + (user.middle_name || '') + ' ' + user.last_name)}</span></div>
-            <div class="detail-row"><span class="detail-label">ID Number</span><span class="detail-value">${user.id_number || '—'}</span></div>
             <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${user.email}</span></div>
             <div class="detail-row"><span class="detail-label">Contact Number</span><span class="detail-value">${user.contact_number || '—'}</span></div>
-            <div class="detail-row"><span class="detail-label">Department</span><span class="detail-value">${user.department || '—'}</span></div>
+            <div class="detail-row"><span class="detail-label">ID Number</span><span class="detail-value">${user.id_number || '—'}</span></div>
+            <div class="detail-row"><span class="detail-label">Department / Affiliation</span><span class="detail-value">${user.department || '—'}</span></div>
             
             <p class="section-divider">Access Request</p>
             <div class="detail-row"><span class="detail-label">Requested Role</span><span class="detail-value">${roleLabel(user.requested_role)}</span></div>
             <div class="detail-row"><span class="detail-label">Reason for Access</span><span class="detail-value">${(user.reason_for_access || '—').replace(/\n/g, '<br>')}</span></div>
-            <div class="detail-row"><span class="detail-label">Registered On</span><span class="detail-value">${user.created_at}</span></div>
+            <div class="detail-row"><span class="detail-label">Proof of Affiliation</span><span class="detail-value">${proofHtml}</span></div>
+            <div class="detail-row"><span class="detail-label">Registration Date</span><span class="detail-value">${user.created_at}</span></div>
             <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge-pending">${user.status}</span></span></div>
             ${actionsHtml}
         `;
@@ -454,7 +477,7 @@ function role_label($r) {
         if (rows.length === 0) {
             tbody.innerHTML = `
                 <tr class="no-data-row">
-                    <td colspan="7" style="text-align:center;color:var(--gray);padding:3rem 2rem;">
+                    <td colspan="10" style="text-align:center;color:var(--gray);padding:3rem 2rem;">
                         <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#D2E2D5;display:block;margin:0 auto 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         No pending registrations at this time.
                     </td>
@@ -520,29 +543,43 @@ function role_label($r) {
                             tr.setAttribute('data-user-id', u.id);
                             
                             const escU = JSON.stringify(u).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                            const hasProof = u.proof_of_affiliation && u.proof_of_affiliation.trim() !== '';
+                            const proofHtml = hasProof 
+                                ? `<a href="view_proof.php?user_id=${u.id}" target="_blank" class="btn-view" style="padding: 4px 8px; font-size: 0.7rem;">View Proof</a>`
+                                : `<span style="font-size:.75rem;color:#888;font-style:italic;">No Proof Uploaded</span>`;
+
+                            const viewProofAction = hasProof
+                                ? `<a href="view_proof.php?user_id=${u.id}" target="_blank" class="btn-view">View Proof</a>`
+                                : '';
                             
                             tr.innerHTML = `
                                 <td>
                                     <strong class="user-full-name" style="color:var(--dark-green);display:block;">
                                         \${u.full_name || (u.first_name + ' ' + u.last_name)}
                                     </strong>
-                                    <span class="user-id-number" style="font-size:.75rem;color:#888;">\${u.id_number || '—'}</span>
                                 </td>
                                 <td>
-                                    <span class="user-email" style="display:block;">\${u.email}</span>
-                                    <span class="user-contact" style="font-size:.75rem;color:#888;">\${u.contact_number || '—'}</span>
+                                    <span class="user-email">\${u.email}</span>
+                                </td>
+                                <td>
+                                    <span class="user-id-number">\${u.id_number || '—'}</span>
+                                </td>
+                                <td>
+                                    <span class="user-department">\${u.department || '—'}</span>
                                 </td>
                                 <td><span class="user-requested-role" style="font-size:.75rem;font-weight:700;color:#6B8F71;" data-role="\${u.requested_role}">\${roleLabel(u.requested_role)}</span></td>
                                 <td>
-                                    <div class="user-reason" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="\${u.reason_for_access || ''}">
+                                    <div class="user-reason" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="\${u.reason_for_access || ''}">
                                         \${u.reason_for_access || '—'}
                                     </div>
                                 </td>
+                                <td>\${proofHtml}</td>
                                 <td>\${new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                                 <td><span class="badge-pending">Pending</span></td>
                                 <td style="text-align:right;">
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;">
                                         <button type="button" class="btn-view" onclick='showUserDetails(\${escU})'>View Details</button>
+                                        \${viewProofAction}
                                         <form class="approve-form" onsubmit="handleApprove(event, \${u.id})">
                                             <select name="approved_role" class="role-select-sm" required>
                                                 <option value="">Edit Assigned Role...</option>
@@ -572,7 +609,7 @@ function role_label($r) {
                     if (users.length === 0 && !tbody.querySelector('.no-data-row')) {
                         tbody.innerHTML = `
                             <tr class="no-data-row">
-                                <td colspan="7" style="text-align:center;color:var(--gray);padding:3rem 2rem;">
+                                <td colspan="10" style="text-align:center;color:var(--gray);padding:3rem 2rem;">
                                     <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#D2E2D5;display:block;margin:0 auto 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     No pending registrations at this time.
                                 </td>

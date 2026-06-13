@@ -16,7 +16,7 @@ $search = trim($_GET['search'] ?? '');
 try {
     if (!empty($search)) {
         $stmt = $pdo->prepare("
-            SELECT id, first_name, middle_name, last_name, full_name, email, contact_number, id_number, department, requested_role, reason_for_access, status, created_at 
+            SELECT id, first_name, middle_name, last_name, full_name, email, contact_number, id_number, department, affiliation, requested_role, reason_for_access, proof_of_affiliation, status, created_at 
             FROM users 
             WHERE status='pending' AND (full_name LIKE ? OR email LIKE ? OR id_number LIKE ?) 
             ORDER BY created_at DESC
@@ -24,7 +24,7 @@ try {
         $stmt->execute(["%$search%", "%$search%", "%$search%"]);
     } else {
         $stmt = $pdo->prepare("
-            SELECT id, first_name, middle_name, last_name, full_name, email, contact_number, id_number, department, requested_role, reason_for_access, status, created_at 
+            SELECT id, first_name, middle_name, last_name, full_name, email, contact_number, id_number, department, affiliation, requested_role, reason_for_access, proof_of_affiliation, status, created_at 
             FROM users 
             WHERE status='pending' 
             ORDER BY created_at DESC

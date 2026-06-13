@@ -47,6 +47,7 @@ try {
         `affiliation`       VARCHAR(150) DEFAULT NULL,
         `requested_role`    VARCHAR(50) DEFAULT NULL,
         `reason_for_access` TEXT DEFAULT NULL,
+        `proof_of_affiliation` VARCHAR(255) DEFAULT NULL,
         `password`          VARCHAR(255) NOT NULL,
         `role`              ENUM('super_admin','faculty_researcher','criminology_student','alumni_police_partner')
                             DEFAULT NULL,
@@ -80,6 +81,7 @@ try {
     $addUserColumn('affiliation', "`affiliation` VARCHAR(150) DEFAULT NULL AFTER `department`");
     $addUserColumn('requested_role', "`requested_role` VARCHAR(50) DEFAULT NULL AFTER `affiliation`");
     $addUserColumn('reason_for_access', "`reason_for_access` TEXT DEFAULT NULL AFTER `requested_role`");
+    $addUserColumn('proof_of_affiliation', "`proof_of_affiliation` VARCHAR(255) DEFAULT NULL AFTER `reason_for_access`");
 
     if (!in_array('role', $cols)) {
         $pdo->exec("ALTER TABLE `users` ADD COLUMN `role`

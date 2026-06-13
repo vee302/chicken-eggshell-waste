@@ -24,20 +24,21 @@ $error_message = "";
 $form_data = [];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])) {
-    $first_name      = trim($_POST["first_name"] ?? "");
-    $middle_name     = trim($_POST["middle_name"] ?? "");
-    $last_name       = trim($_POST["last_name"] ?? "");
-    $id_number       = trim($_POST["id_number"] ?? "");
-    $contact_number  = trim($_POST["contact_number"] ?? "");
-    $email           = strtolower(trim($_POST["email"] ?? ""));
-    $requested_role  = trim($_POST["requested_role"] ?? "");
-    $reason          = trim($_POST["reason_for_access"] ?? "");
-    $password        = trim($_POST["password"] ?? "");
-    $confirm_pass    = trim($_POST["confirm_password"] ?? "");
-    $full_name       = trim("$first_name $middle_name $last_name");
+    $first_name             = trim($_POST["first_name"] ?? "");
+    $middle_name            = trim($_POST["middle_name"] ?? "");
+    $last_name              = trim($_POST["last_name"] ?? "");
+    $id_number              = trim($_POST["id_number"] ?? "");
+    $department_affiliation = trim($_POST["department_affiliation"] ?? "");
+    $contact_number         = trim($_POST["contact_number"] ?? "");
+    $email                  = strtolower(trim($_POST["email"] ?? ""));
+    $requested_role         = trim($_POST["requested_role"] ?? "");
+    $reason                 = trim($_POST["reason_for_access"] ?? "");
+    $password               = trim($_POST["password"] ?? "");
+    $confirm_pass           = trim($_POST["confirm_password"] ?? "");
+    $full_name              = trim("$first_name $middle_name $last_name");
 
     // Preserve form data for re-fill
-    $form_data = compact('first_name', 'middle_name', 'last_name', 'id_number', 'contact_number', 'email', 'requested_role', 'reason');
+    $form_data = compact('first_name', 'middle_name', 'last_name', 'id_number', 'department_affiliation', 'contact_number', 'email', 'requested_role', 'reason');
 
     // Server-side Validation
     if (empty($first_name)) {
@@ -46,6 +47,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "Last Name is required.";
     } elseif (empty($id_number)) {
         $error_message = "ID Number is required.";
+    } elseif (empty($department_affiliation)) {
+        $error_message = "Department / Affiliation is required.";
+    } elseif (!in_array($department_affiliation, [
+        'College of Criminal Justice Education',
+        'Faculty Researcher',
+        'Alumni / Police Partner',
+        'Police Partner Institution'
+    ])) {
+        $error_message = "Invalid Department / Affiliation selected.";
     } elseif (empty($contact_number)) {
         $error_message = "Contact Number is required.";
     } elseif (empty($email)) {
@@ -67,42 +77,104 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     } elseif ($password !== $confirm_pass) {
         $error_message = "Password and Confirm Password must match.";
     } else {
-        try {
-            // Check email uniqueness
-            $chk = $pdo->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
-            $chk->execute([':email' => $email]);
-            
-            if ($chk->fetch()) {
-                $error_message = "An account with this email address already exists.";
+        // Process file upload if provided
+        $proof_path = null;
+        $has_proof = isset($_FILES['proof_of_affiliation']) && $_FILES['proof_of_affiliation']['error'] !== UPLOAD_ERR_NO_FILE;
+        $file_error = false;
+
+        if ($has_proof) {
+            $file = $_FILES['proof_of_affiliation'];
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                $error_message = "Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.";
+                $file_error = true;
             } else {
-                $hashed = password_hash($password, PASSWORD_DEFAULT);
-
-                $ins = $pdo->prepare("INSERT INTO users
-                    (first_name, middle_name, last_name, full_name, email, password, contact_number, id_number, requested_role, reason_for_access, role, status)
-                    VALUES (:fn, :mn, :ln, :full, :email, :pass, :contact, :idnum, :reqrole, :reason, NULL, 'pending')");
-                
-                $ins->execute([
-                    ':fn'      => $first_name,
-                    ':mn'      => $middle_name !== "" ? $middle_name : null,
-                    ':ln'      => $last_name,
-                    ':full'    => $full_name,
-                    ':email'   => $email,
-                    ':pass'    => $hashed,
-                    ':contact' => $contact_number,
-                    ':idnum'   => $id_number,
-                    ':reqrole' => $requested_role,
-                    ':reason'  => $reason
-                ]);
-
-                $registeredUserId = (int)$pdo->lastInsertId();
-                $_SESSION['pending_registration_user_id'] = $registeredUserId;
-                $_SESSION['pending_registration_email'] = $email;
-
-                header("Location: pending_approval.php");
-                exit;
+                $max_size = 5 * 1024 * 1024;
+                if ($file['size'] > $max_size) {
+                    $error_message = "Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.";
+                    $file_error = true;
+                } else {
+                    $allowed_exts = ['jpg', 'jpeg', 'png', 'pdf'];
+                    $file_name = $file['name'];
+                    $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+                    
+                    $allowed_mimes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+                    $file_mime = null;
+                    if (function_exists('finfo_open')) {
+                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                        $file_mime = finfo_file($finfo, $file['tmp_name']);
+                        finfo_close($finfo);
+                    } elseif (function_exists('mime_content_type')) {
+                        $file_mime = mime_content_type($file['tmp_name']);
+                    }
+                    
+                    if (!in_array($file_ext, $allowed_exts)) {
+                        $error_message = "Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.";
+                        $file_error = true;
+                    } elseif ($file_mime !== null && !in_array($file_mime, $allowed_mimes)) {
+                        $error_message = "Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.";
+                        $file_error = true;
+                    } else {
+                        // Create proofs folder with index.html to prevent browsing (extra safety)
+                        $upload_dir = 'uploads/proofs/';
+                        if (!is_dir($upload_dir)) {
+                            mkdir($upload_dir, 0755, true);
+                        }
+                        
+                        $temp = explode(".", $file_name);
+                        $new_filename = 'proof_' . round(microtime(true)) . '_' . bin2hex(random_bytes(8)) . '.' . end($temp);
+                        $dest_path = $upload_dir . $new_filename;
+                        if (move_uploaded_file($file['tmp_name'], $dest_path)) {
+                            $proof_path = $dest_path;
+                        } else {
+                            $error_message = "Failed to upload proof of affiliation file.";
+                            $file_error = true;
+                        }
+                    }
+                }
             }
-        } catch (PDOException $e) {
-            $error_message = "Database Error: " . $e->getMessage();
+        }
+
+        if (!$file_error) {
+            try {
+                // Check email uniqueness
+                $chk = $pdo->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
+                $chk->execute([':email' => $email]);
+                
+                if ($chk->fetch()) {
+                    $error_message = "An account with this email address already exists.";
+                } else {
+                    $hashed = password_hash($password, PASSWORD_DEFAULT);
+
+                    $ins = $pdo->prepare("INSERT INTO users
+                        (first_name, middle_name, last_name, full_name, email, password, contact_number, id_number, department, affiliation, requested_role, reason_for_access, proof_of_affiliation, role, status)
+                        VALUES (:fn, :mn, :ln, :full, :email, :pass, :contact, :idnum, :dept, :aff, :reqrole, :reason, :proof, NULL, 'pending')");
+                    
+                    $ins->execute([
+                        ':fn'      => $first_name,
+                        ':mn'      => $middle_name !== "" ? $middle_name : null,
+                        ':ln'      => $last_name,
+                        ':full'    => $full_name,
+                        ':email'   => $email,
+                        ':pass'    => $hashed,
+                        ':contact' => $contact_number,
+                        ':idnum'   => $id_number,
+                        ':dept'    => $department_affiliation,
+                        ':aff'     => $department_affiliation,
+                        ':reqrole' => $requested_role,
+                        ':reason'  => $reason,
+                        ':proof'   => $proof_path
+                    ]);
+
+                    $registeredUserId = (int)$pdo->lastInsertId();
+                    $_SESSION['pending_registration_user_id'] = $registeredUserId;
+                    $_SESSION['pending_registration_email'] = $email;
+
+                    header("Location: pending_approval.php");
+                    exit;
+                }
+            } catch (PDOException $e) {
+                $error_message = "Database Error: " . $e->getMessage();
+            }
         }
     }
 }
@@ -351,7 +423,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 </div>
             </div>
 
-            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" id="registerForm" autocomplete="off" novalidate>
+            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" id="registerForm" enctype="multipart/form-data" autocomplete="off" novalidate>
                 <!-- ===== STEP 1: Profile & Identity ===== -->
                 <div class="form-step active" id="step1">
                     <div class="form-grid-2">
@@ -373,6 +445,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     <div class="form-group">
                         <label for="id_number">Student / Employee / Partner ID Number <span class="required-star">*</span></label>
                         <input type="text" id="id_number" name="id_number" class="form-control-plain" placeholder="e.g. 2024-CCJE-0001" value="<?php echo htmlspecialchars($form_data['id_number'] ?? ''); ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="department_affiliation">Department / Affiliation <span class="required-star">*</span></label>
+                        <select id="department_affiliation" name="department_affiliation" class="form-control-plain">
+                            <option value="" disabled <?php echo empty($form_data['department_affiliation']) ? 'selected' : ''; ?>>Select department or affiliation</option>
+                            <option value="College of Criminal Justice Education" <?php echo ($form_data['department_affiliation'] ?? '') === 'College of Criminal Justice Education' ? 'selected' : ''; ?>>College of Criminal Justice Education</option>
+                            <option value="Faculty Researcher" <?php echo ($form_data['department_affiliation'] ?? '') === 'Faculty Researcher' ? 'selected' : ''; ?>>Faculty Researcher</option>
+                            <option value="Alumni / Police Partner" <?php echo ($form_data['department_affiliation'] ?? '') === 'Alumni / Police Partner' ? 'selected' : ''; ?>>Alumni / Police Partner</option>
+                            <option value="Police Partner Institution" <?php echo ($form_data['department_affiliation'] ?? '') === 'Police Partner Institution' ? 'selected' : ''; ?>>Police Partner Institution</option>
+                        </select>
                     </div>
 
                     <div class="form-grid-2">
@@ -408,6 +491,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     <div class="form-group">
                         <label for="reason_for_access">Reason for Access <span class="required-star">*</span></label>
                         <textarea id="reason_for_access" name="reason_for_access" class="form-control-plain" rows="3" placeholder="Briefly explain your purpose for accessing the Green Forensics system."><?php echo htmlspecialchars($form_data['reason'] ?? ''); ?></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="proof_of_affiliation">Proof of Affiliation (Optional)</label>
+                        <input type="file" id="proof_of_affiliation" name="proof_of_affiliation" class="form-control-plain" accept=".jpg,.jpeg,.png,.pdf">
+                        <p class="field-hint">Allowed types: JPG, JPEG, PNG, PDF. Max file size: 5MB.</p>
                     </div>
 
                     <div class="form-group">
@@ -544,12 +633,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 const fn = document.getElementById("first_name").value.trim();
                 const ln = document.getElementById("last_name").value.trim();
                 const idNum = document.getElementById("id_number").value.trim();
+                const deptAff = document.getElementById("department_affiliation").value;
                 const contact = document.getElementById("contact_number").value.trim();
                 const email = document.getElementById("email").value.trim();
 
                 if (!fn) { showClientError("First Name is required."); return; }
                 if (!ln) { showClientError("Last Name is required."); return; }
                 if (!idNum) { showClientError("ID Number is required."); return; }
+                if (!deptAff) { showClientError("Department / Affiliation is required."); return; }
                 if (!contact) { showClientError("Contact Number is required."); return; }
                 if (!email) { showClientError("Email Address is required."); return; }
                 
@@ -587,6 +678,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             
             const role = document.getElementById("requested_role").value;
             const reason = document.getElementById("reason_for_access").value.trim();
+            
+            // Client-side file validation
+            const fileInput = document.getElementById("proof_of_affiliation");
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
+                const allowedExtensions = /(\.jpg|\.jpeg|\.png|\.pdf)$/i;
+                if (!allowedTypes.includes(file.type) && !allowedExtensions.exec(file.name)) {
+                    showClientError("Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.");
+                    return false;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    showClientError("Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.");
+                    return false;
+                }
+            }
+
             const pass = document.getElementById("password").value;
             const conf = document.getElementById("confirm_password").value;
 

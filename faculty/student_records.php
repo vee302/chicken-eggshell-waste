@@ -80,7 +80,7 @@ if (isset($_GET['view'])) {
         
         .score-box { background: var(--cream); border-radius:8px; padding:10px 15px; margin-bottom:1rem; border:1px solid rgba(45,106,79,0.08); }
         .score-title { font-size:0.75rem; font-weight:700; color:var(--medium-green); margin-bottom:6px; text-transform:uppercase; }
-        .score-values { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; text-align:center; }
+        .score-values { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; text-align:center; }
         .score-val { font-size:1.15rem; font-weight:800; color:var(--dark-green); }
         .score-lbl { font-size:0.65rem; color:var(--gray); font-weight:600; text-transform:uppercase; }
     </style>
@@ -226,7 +226,7 @@ if (isset($_GET['view'])) {
             <div class="detail-row"><span class="detail-label">Notes from Submission</span><span class="detail-value"><?= nl2br(htmlspecialchars($view_record['notes'] ?: 'No notes provided.')) ?></span></div>
             <div class="detail-row"><span class="detail-label">Date Submitted</span><span class="detail-value"><?= date('F d, Y g:i A', strtotime($view_record['submitted_at'])) ?></span></div>
 
-            <p class="section-divider">Biometric Clarity & Adhesion Scores</p>
+            <p class="section-divider">Automated Image Evaluation Scores</p>
             <div class="score-box">
                 <div class="score-title">Individual Forensic Performance Metrics</div>
                 <div class="score-values">
@@ -242,11 +242,19 @@ if (isset($_GET['view'])) {
                         <div class="score-val"><?= $view_record['adhesion_score'] !== null ? number_format($view_record['adhesion_score'], 1) . '%' : '—' ?></div>
                         <div class="score-lbl">Adhesion</div>
                     </div>
+                    <div>
+                        <div class="score-val"><?= $view_record['contrast_score'] !== null ? number_format($view_record['contrast_score'], 1) . '%' : '—' ?></div>
+                        <div class="score-lbl">Contrast</div>
+                    </div>
                 </div>
             </div>
+            <div class="detail-row" style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green); margin-bottom: 0.5rem;">
+                <span class="detail-label" style="font-weight: 700;">AI Preliminary Score</span>
+                <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;"><?= $view_record['ai_accuracy_score'] !== null ? number_format($view_record['ai_accuracy_score'], 1) . '%' : 'Awaiting AI Evaluation' ?></span>
+            </div>
             <div class="detail-row" style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green);">
-                <span class="detail-label" style="font-weight: 700;">Composite Accuracy Score</span>
-                <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;"><?= $view_record['accuracy_score'] !== null ? number_format($view_record['accuracy_score'], 1) . '%' : 'Awaiting Review' ?></span>
+                <span class="detail-label" style="font-weight: 700;">Faculty Final Score</span>
+                <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;"><?= $view_record['faculty_final_score'] !== null ? number_format($view_record['faculty_final_score'], 1) . '%' : ($view_record['status'] === 'pending_validation' ? 'Awaiting Validation' : '—') ?></span>
             </div>
 
             <p class="section-divider">Validation Details</p>

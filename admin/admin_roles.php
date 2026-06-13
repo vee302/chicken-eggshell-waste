@@ -237,7 +237,7 @@ function role_label($r) {
                                 <li class="perm-item">Submit latent fingerprint evaluation data</li>
                                 <li class="perm-item">Upload fingerprint photography files</li>
                                 <li class="perm-item">View own records & historical data</li>
-                                <li class="perm-item">View biometric accuracy rating scores</li>
+                                <li class="perm-item">View automated image evaluation scores</li>
                                 <li class="perm-item">Submit safety and climate logs</li>
                             </ul>
                         </div>

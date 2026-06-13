@@ -18,11 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['tes
         $clarity    = isset($_POST['ridge_clarity_score']) ? floatval($_POST['ridge_clarity_score']) : NULL;
         $visibility = isset($_POST['visibility_score']) ? floatval($_POST['visibility_score']) : NULL;
         $adhesion   = isset($_POST['adhesion_score']) ? floatval($_POST['adhesion_score']) : NULL;
+        $contrast   = isset($_POST['contrast_score']) ? floatval($_POST['contrast_score']) : NULL;
         
-        if ($clarity === NULL || $visibility === NULL || $adhesion === NULL || $clarity < 0 || $clarity > 100 || $visibility < 0 || $visibility > 100 || $adhesion < 0 || $adhesion > 100) {
-            $error = 'Please provide valid scores (0-100) for Clarity, Visibility, and Adhesion.';
+        if ($clarity === NULL || $visibility === NULL || $adhesion === NULL || $contrast === NULL || $clarity < 0 || $clarity > 100 || $visibility < 0 || $visibility > 100 || $adhesion < 0 || $adhesion > 100 || $contrast < 0 || $contrast > 100) {
+            $error = 'Please provide valid scores (0-100) for Clarity, Visibility, Adhesion, and Contrast.';
         } else {
-            $accuracy = ($clarity + $visibility + $adhesion) / 3;
+            $accuracy = ($clarity + $visibility + $adhesion + $contrast) / 4;
             try {
                 $pdo->beginTransaction();
                 
@@ -32,12 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['tes
                         ridge_clarity_score = ?,
                         visibility_score = ?,
                         adhesion_score = ?,
+                        contrast_score = ?,
                         accuracy_score = ?,
+                        faculty_final_score = ?,
                         validated_by = ?,
                         validated_at = NOW()
                     WHERE id = ?
                 ");
-                $stmt->execute([$clarity, $visibility, $adhesion, $accuracy, $faculty_id, $test_id]);
+                $stmt->execute([$clarity, $visibility, $adhesion, $contrast, $accuracy, $accuracy, $faculty_id, $test_id]);
                 
                 $stmt = $pdo->prepare("
                     INSERT INTO faculty_remarks (test_id, faculty_id, remarks, decision, created_at)
@@ -213,9 +216,9 @@ try {
                                         <?php if ($row['image_path']): ?>
                                             <a href="../uploads/fingerprints/<?= htmlspecialchars($row['image_path']) ?>" target="_blank" class="btn btn-secondary btn-sm">View Image</a>
                                         <?php endif; ?>
-                                        <button class="btn btn-primary btn-sm" onclick="openModal(<?= $row['id'] ?>,'approve')">Approve</button>
-                                        <button class="btn btn-danger btn-sm" onclick="openModal(<?= $row['id'] ?>,'reject')">Reject</button>
-                                        <button class="btn btn-secondary btn-sm" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick="openModal(<?= $row['id'] ?>,'needs_revision')">Needs Revision</button>
+                                        <button class="btn btn-primary btn-sm" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'approve')">Approve</button>
+                                        <button class="btn btn-danger btn-sm" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'reject')">Reject</button>
+                                        <button class="btn btn-secondary btn-sm" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'needs_revision')">Needs Revision</button>
                                     </div>
                                 </td>
                             </tr>
@@ -243,20 +246,59 @@ try {
                 <input type="hidden" name="test_id" id="modalTestId">
                 <input type="hidden" name="action"  id="modalAction">
                 
+                <!-- Image Preview Section -->
+                <div style="text-align:center; margin-bottom:1rem; border:1px solid #e9ecef; padding:8px; border-radius:8px; background:#fafafa; display:none;" id="modalImgWrapper">
+                    <img id="modalImgPreview" src="" style="max-height:180px; max-width:100%; object-fit:contain; border-radius:6px; border:1px solid #ddd;" alt="Fingerprint Preview">
+                </div>
+
+                <!-- AI Preliminary Scores Panel -->
+                <div id="aiScorePanel" style="display:none; background:rgba(45,106,79,0.06); border-radius:8px; padding:12px; margin-bottom:1rem; border:1px solid rgba(45,106,79,0.12);">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--dark-green); text-transform:uppercase; margin-bottom:8px; letter-spacing:0.5px;">AI Preliminary Score (Automated Image Evaluation)</div>
+                    <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; text-align:center;">
+                        <div style="background:#fff; padding:6px; border-radius:6px; border:1px solid #e2e8e0;">
+                            <span style="font-size:0.6rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Clarity</span>
+                            <strong style="font-size:0.85rem; color:var(--dark-green);" id="ai_clarity_lbl">—</strong>
+                        </div>
+                        <div style="background:#fff; padding:6px; border-radius:6px; border:1px solid #e2e8e0;">
+                            <span style="font-size:0.6rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Visibility</span>
+                            <strong style="font-size:0.85rem; color:var(--dark-green);" id="ai_visibility_lbl">—</strong>
+                        </div>
+                        <div style="background:#fff; padding:6px; border-radius:6px; border:1px solid #e2e8e0;">
+                            <span style="font-size:0.6rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Adhesion</span>
+                            <strong style="font-size:0.85rem; color:var(--dark-green);" id="ai_adhesion_lbl">—</strong>
+                        </div>
+                        <div style="background:#fff; padding:6px; border-radius:6px; border:1px solid #e2e8e0;">
+                            <span style="font-size:0.6rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Contrast</span>
+                            <strong style="font-size:0.85rem; color:var(--dark-green);" id="ai_contrast_lbl">—</strong>
+                        </div>
+                        <div style="background:var(--cream); padding:6px; border-radius:6px; border:1px solid rgba(45,106,79,0.2);">
+                            <span style="font-size:0.6rem; color:var(--medium-green); display:block; text-transform:uppercase; font-weight:700;">Overall</span>
+                            <strong style="font-size:0.85rem; color:var(--dark-green);" id="ai_overall_lbl">—</strong>
+                        </div>
+                    </div>
+                    <p style="font-size:0.65rem; color:var(--gray); margin-top:6px; margin-bottom:0; font-style:italic;" id="ai_evaluated_date_lbl"></p>
+                </div>
+
+                <!-- Faculty Final Score Inputs -->
                 <div id="scoreFields" style="display:none; margin-bottom: 1.25rem;">
-                    <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--dark-green); margin-bottom:8px; border-bottom:1px solid #D2E2D5; padding-bottom:4px;">Forensic Metric Scores</div>
-                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;">
-                        <div class="form-group">
-                            <label for="ridge_clarity">Ridge Clarity (%)</label>
-                            <input type="number" name="ridge_clarity_score" id="ridge_clarity" class="form-control" min="0" max="100" step="0.1" value="85.0">
+                    <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--dark-green); margin-bottom:8px; border-bottom:1px solid #D2E2D5; padding-bottom:4px;">Faculty Final Score</div>
+                    <p style="font-size:0.75rem; color:#6c757d; margin-top:0; margin-bottom:10px;">Pre-populated with AI evaluation. Adjust the scores below if needed.</p>
+                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="ridge_clarity" style="font-size:0.7rem; font-weight:700;">Clarity (%)</label>
+                            <input type="number" name="ridge_clarity_score" id="ridge_clarity" class="form-control" min="0" max="100" step="0.01" value="0.0">
                         </div>
-                        <div class="form-group">
-                            <label for="visibility">Visibility (%)</label>
-                            <input type="number" name="visibility_score" id="visibility" class="form-control" min="0" max="100" step="0.1" value="85.0">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="visibility" style="font-size:0.7rem; font-weight:700;">Visibility (%)</label>
+                            <input type="number" name="visibility_score" id="visibility" class="form-control" min="0" max="100" step="0.01" value="0.0">
                         </div>
-                        <div class="form-group">
-                            <label for="adhesion">Adhesion (%)</label>
-                            <input type="number" name="adhesion_score" id="adhesion" class="form-control" min="0" max="100" step="0.1" value="85.0">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="adhesion" style="font-size:0.7rem; font-weight:700;">Adhesion (%)</label>
+                            <input type="number" name="adhesion_score" id="adhesion" class="form-control" min="0" max="100" step="0.01" value="0.0">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="contrast" style="font-size:0.7rem; font-weight:700;">Contrast (%)</label>
+                            <input type="number" name="contrast_score" id="contrast" class="form-control" min="0" max="100" step="0.01" value="0.0">
                         </div>
                     </div>
                 </div>
@@ -279,36 +321,68 @@ try {
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 let isSubmitting = false;
 
-function openModal(id, action) {
+function openModal(row, action) {
+    const id = row.id;
     document.getElementById('modalTestId').value = id;
     document.getElementById('modalAction').value  = action;
-    const titles = { approve:'Approve Submission & Set Scores', reject:'Reject Submission', needs_revision:'Request Revision (Needs Revision)' };
+    const titles = { approve:'Approve Submission & Set Scores (Faculty Validation)', reject:'Reject Submission', needs_revision:'Request Revision (Needs Revision)' };
     document.getElementById('modalTitle').textContent = titles[action] || 'Validate';
     
     const btn = document.getElementById('submitBtn');
     const scoreFields = document.getElementById('scoreFields');
+    const aiScorePanel = document.getElementById('aiScorePanel');
     const remarksRequired = document.getElementById('remarksRequired');
     const remarksField = document.getElementById('remarksField');
     
     const clarityInp = document.getElementById('ridge_clarity');
     const visibilityInp = document.getElementById('visibility');
     const adhesionInp = document.getElementById('adhesion');
+    const contrastInp = document.getElementById('contrast');
     
+    // Image Preview setup
+    const modalImgWrapper = document.getElementById('modalImgWrapper');
+    const modalImgPreview = document.getElementById('modalImgPreview');
+    if (row.image_path) {
+        modalImgPreview.src = '../uploads/fingerprints/' + row.image_path;
+        modalImgWrapper.style.display = 'block';
+    } else {
+        modalImgWrapper.style.display = 'none';
+    }
+
     if (action === 'approve') {
         btn.className = 'btn btn-primary';
         btn.textContent = 'Confirm Approval';
         scoreFields.style.display = 'block';
+        aiScorePanel.style.display = 'block';
         remarksRequired.style.display = 'none';
         remarksField.required = false;
         remarksField.placeholder = 'Enter approval remarks (optional)...';
         
+        // Pre-populate input fields with AI scores (defaults)
+        clarityInp.value = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score) : 0;
+        visibilityInp.value = row.visibility_score !== null ? parseFloat(row.visibility_score) : 0;
+        adhesionInp.value = row.adhesion_score !== null ? parseFloat(row.adhesion_score) : 0;
+        contrastInp.value = row.contrast_score !== null ? parseFloat(row.contrast_score) : 0;
+        
+        // Static AI score labels
+        document.getElementById('ai_clarity_lbl').textContent = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score).toFixed(1) + '%' : 'N/A';
+        document.getElementById('ai_visibility_lbl').textContent = row.visibility_score !== null ? parseFloat(row.visibility_score).toFixed(1) + '%' : 'N/A';
+        document.getElementById('ai_adhesion_lbl').textContent = row.adhesion_score !== null ? parseFloat(row.adhesion_score).toFixed(1) + '%' : 'N/A';
+        document.getElementById('ai_contrast_lbl').textContent = row.contrast_score !== null ? parseFloat(row.contrast_score).toFixed(1) + '%' : 'N/A';
+        document.getElementById('ai_overall_lbl').textContent = row.accuracy_score !== null ? parseFloat(row.accuracy_score).toFixed(1) + '%' : 'N/A';
+        
+        const evalDate = row.ai_evaluated_at ? new Date(row.ai_evaluated_at).toLocaleString() : 'N/A';
+        document.getElementById('ai_evaluated_date_lbl').textContent = 'AI evaluation source: ' + (row.evaluation_source || 'AI Preliminary') + ' | Processed: ' + evalDate;
+        
         clarityInp.required = true;
         visibilityInp.required = true;
         adhesionInp.required = true;
+        contrastInp.required = true;
     } else {
         btn.className = 'btn btn-danger';
         btn.textContent = action === 'reject' ? 'Confirm Rejection' : 'Confirm Revision Request';
         scoreFields.style.display = 'none';
+        aiScorePanel.style.display = 'none';
         remarksRequired.style.display = 'block';
         remarksField.required = true;
         remarksField.placeholder = 'Explain feedback / reason (required)...';
@@ -316,6 +390,7 @@ function openModal(id, action) {
         clarityInp.required = false;
         visibilityInp.required = false;
         adhesionInp.required = false;
+        contrastInp.required = false;
     }
     
     document.getElementById('actionModal').classList.add('active');
@@ -360,6 +435,7 @@ document.getElementById('validationForm').addEventListener('submit', function(e)
         formData.append('ridge_clarity_score', document.getElementById('ridge_clarity').value);
         formData.append('visibility_score', document.getElementById('visibility').value);
         formData.append('adhesion_score', document.getElementById('adhesion').value);
+        formData.append('contrast_score', document.getElementById('contrast').value);
     } else if (action === 'reject') {
         endpoint = 'ajax_reject_trial.php';
     } else if (action === 'needs_revision') {
@@ -485,9 +561,9 @@ function autoRefreshTrials() {
                             <td style="text-align: right;">
                                 <div class="btn-group" style="display:inline-flex; gap:6px;">
                                     ${viewImageBtn}
-                                    <button class="btn btn-primary btn-sm" onclick="openModal(${s.id},'approve')">Approve</button>
-                                    <button class="btn btn-danger btn-sm" onclick="openModal(${s.id},'reject')">Reject</button>
-                                    <button class="btn btn-secondary btn-sm" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick="openModal(${s.id},'needs_revision')">Needs Revision</button>
+                                    <button class="btn btn-primary btn-sm" onclick='openModal(${JSON.stringify(s)}, "approve")'>Approve</button>
+                                    <button class="btn btn-danger btn-sm" onclick='openModal(${JSON.stringify(s)}, "reject")'>Reject</button>
+                                    <button class="btn btn-secondary btn-sm" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick='openModal(${JSON.stringify(s)}, "needs_revision")'>Needs Revision</button>
                                 </div>
                             </td>
                         `;

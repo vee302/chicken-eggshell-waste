@@ -30,9 +30,19 @@ try {
     $stmt->execute([$student_id]);
     $rejected = (int)$stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT ROUND(AVG(accuracy_score),1) FROM fingerprint_tests WHERE student_id = ?");
+    // Only calculate average from approved records and accuracy_score IS NOT NULL
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = ? AND status='approved' AND accuracy_score IS NOT NULL");
     $stmt->execute([$student_id]);
-    $avg_score = $stmt->fetchColumn() ?? 0;
+    $approved_count = (int)$stmt->fetchColumn();
+
+    if ($approved_count > 0) {
+        $stmt = $pdo->prepare("SELECT ROUND(AVG(accuracy_score),1) FROM fingerprint_tests WHERE student_id = ? AND status='approved' AND accuracy_score IS NOT NULL");
+        $stmt->execute([$student_id]);
+        $avg_score_val = $stmt->fetchColumn();
+        $avg_score = $avg_score_val . '%';
+    } else {
+        $avg_score = ($pending > 0) ? 'Awaiting Evaluation' : 'N/A';
+    }
 
     echo json_encode([
         'success' => true,

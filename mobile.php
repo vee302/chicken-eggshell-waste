@@ -880,7 +880,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
         </div>
     </footer>
 
-    <!-- Biometric Scan Transition Overlay -->
+    <!-- Image Evaluation Transition Overlay -->
     <div id="scanOverlay" class="scan-overlay">
         <div class="scan-content">
             <div class="scanner-ring">
@@ -902,7 +902,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 </svg>
                 <div class="scanner-bar"></div>
             </div>
-            <div class="scan-text">Scanning Biometrics...</div>
+            <div class="scan-text">Evaluating Image...</div>
         </div>
     </div>
 

@@ -10,12 +10,25 @@ $student_id   = $_SESSION['user_id']  ?? 0;
 
 $trials = [];
 $overall_avg = 0;
+$has_pending = false;
+$approved_trials = [];
 try {
     $stmt = $pdo->prepare("SELECT * FROM fingerprint_tests WHERE student_id = ? ORDER BY submitted_at DESC");
     $stmt->execute([$student_id]);
     $trials = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if ($trials) {
-        $overall_avg = round(array_sum(array_column($trials, 'accuracy_score')) / count($trials), 1);
+    
+    foreach ($trials as $t) {
+        if ($t['status'] === 'pending_validation') {
+            $has_pending = true;
+        }
+    }
+    
+    $approved_trials = array_filter($trials, function($t) {
+        return $t['status'] === 'approved' && $t['accuracy_score'] !== null;
+    });
+    
+    if ($approved_trials) {
+        $overall_avg = round(array_sum(array_column($approved_trials, 'accuracy_score')) / count($approved_trials), 1);
     }
 } catch (PDOException $e) {}
 ?>
@@ -63,8 +76,16 @@ try {
                         <span class="stat-title">Overall Average</span>
                         <div class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
                     </div>
-                    <div class="stat-value"><?= $overall_avg ?>%</div>
-                    <div class="stat-desc">Average across all trials</div>
+                    <div class="stat-value">
+                        <?php if ($approved_trials): ?>
+                            <?= $overall_avg ?>%
+                        <?php elseif ($has_pending): ?>
+                            Awaiting Validation
+                        <?php else: ?>
+                            N/A
+                        <?php endif; ?>
+                    </div>
+                    <div class="stat-desc">Average across approved trials</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-header">
@@ -74,7 +95,7 @@ try {
                     <div class="stat-value"><?= count($trials) ?></div>
                     <div class="stat-desc">Submitted trials</div>
                 </div>
-                <?php if ($trials): $scores = array_column($trials, 'accuracy_score'); ?>
+                <?php if ($approved_trials): $scores = array_column($approved_trials, 'accuracy_score'); ?>
                 <div class="stat-card card-approved">
                     <div class="stat-header">
                         <span class="stat-title">Best Score</span>
@@ -121,16 +142,46 @@ try {
                                 <td><?= $i + 1 ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($t['powder_type']) ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($t['surface_type']) ?></td>
-                                <td><strong><?= number_format($t['accuracy_score'], 1) ?>%</strong></td>
-                                <td style="min-width:130px;">
-                                    <div class="score-bar">
-                                        <div class="score-bar-track">
-                                            <div class="score-bar-fill" style="width:<?= min(100, $t['accuracy_score']) ?>%"></div>
-                                        </div>
-                                        <span style="font-size:.75rem;color:var(--gray);width:35px;text-align:right;"><?= number_format($t['accuracy_score'], 0) ?>%</span>
-                                    </div>
+                                <td>
+                                    <strong>
+                                        <?php if ($t['status'] === 'approved' && $t['accuracy_score'] !== null): ?>
+                                            <?= number_format($t['accuracy_score'], 1) ?>%
+                                        <?php elseif ($t['status'] === 'pending_validation'): ?>
+                                            Awaiting Validation
+                                        <?php elseif ($t['status'] === 'needs_revision'): ?>
+                                            Needs Revision
+                                        <?php elseif ($t['status'] === 'rejected'): ?>
+                                            Rejected
+                                        <?php else: ?>
+                                            N/A
+                                        <?php endif; ?>
+                                    </strong>
                                 </td>
-                                <td><span class="badge badge-<?= $t['status'] ?>"><?= ucfirst($t['status']) ?></span></td>
+                                <td style="min-width:130px;">
+                                    <?php if ($t['status'] === 'approved' && $t['accuracy_score'] !== null): ?>
+                                        <div class="score-bar">
+                                            <div class="score-bar-track">
+                                                <div class="score-bar-fill" style="width:<?= min(100, $t['accuracy_score']) ?>%"></div>
+                                            </div>
+                                            <span style="font-size:.75rem;color:var(--gray);width:35px;text-align:right;"><?= number_format($t['accuracy_score'], 0) ?>%</span>
+                                        </div>
+                                    <?php else: ?>
+                                        <span style="font-size:.75rem;color:var(--gray);font-style:italic;">Awaiting review</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="badge badge-<?= $t['status'] ?>">
+                                        <?php 
+                                            if ($t['status'] === 'pending_validation') {
+                                                echo 'Pending Validation';
+                                            } elseif ($t['status'] === 'needs_revision') {
+                                                echo 'Needs Revision';
+                                            } else {
+                                                echo ucfirst($t['status']);
+                                            }
+                                        ?>
+                                    </span>
+                                </td>
                                 <td><?= date('M d, Y', strtotime($t['submitted_at'])) ?></td>
                             </tr>
                             <?php endforeach; ?>

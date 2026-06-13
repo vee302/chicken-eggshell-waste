@@ -154,7 +154,12 @@ try {
     $addTestColumn('ridge_clarity_score', "`ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL");
     $addTestColumn('visibility_score', "`visibility_score` DECIMAL(5,2) DEFAULT NULL");
     $addTestColumn('adhesion_score', "`adhesion_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('contrast_score', "`contrast_score` DECIMAL(5,2) DEFAULT NULL");
     $addTestColumn('accuracy_score', "`accuracy_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('ai_evaluated_at', "`ai_evaluated_at` DATETIME DEFAULT NULL");
+    $addTestColumn('evaluation_source', "`evaluation_source` VARCHAR(50) DEFAULT 'AI Preliminary'");
+    $addTestColumn('faculty_final_score', "`faculty_final_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('ai_accuracy_score', "`ai_accuracy_score` DECIMAL(5,2) DEFAULT NULL");
     $addTestColumn('status', "`status` VARCHAR(50) DEFAULT 'pending_validation'");
     $addTestColumn('validated_by', "`validated_by` INT DEFAULT NULL AFTER `submitted_at`");
     $addTestColumn('validated_at', "`validated_at` TIMESTAMP DEFAULT NULL AFTER `validated_by`");
@@ -173,7 +178,10 @@ try {
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL");
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `visibility_score` DECIMAL(5,2) DEFAULT NULL");
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `adhesion_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `contrast_score` DECIMAL(5,2) DEFAULT NULL");
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `accuracy_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `faculty_final_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `ai_accuracy_score` DECIMAL(5,2) DEFAULT NULL");
 
     // Safe migration of status column
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `status` VARCHAR(50) DEFAULT 'pending_validation'");

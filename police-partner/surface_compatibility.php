@@ -20,6 +20,7 @@ try {
                 AVG(ridge_clarity_score) as avg_clarity,
                 AVG(visibility_score) as avg_visibility,
                 AVG(adhesion_score) as avg_adhesion,
+                AVG(contrast_score) as avg_contrast,
                 AVG(accuracy_score) as avg_accuracy
             FROM fingerprint_tests 
             WHERE status = 'approved' AND surface_type = ?
@@ -33,6 +34,7 @@ try {
                 'avg_clarity' => 0,
                 'avg_visibility' => 0,
                 'avg_adhesion' => 0,
+                'avg_contrast' => 0,
                 'avg_accuracy' => 0,
                 'best_powder' => 'N/A',
                 'compatibility_rating' => 'Not Tested'
@@ -85,6 +87,7 @@ try {
             'avg_clarity' => $metrics['avg_clarity'] ?? 0,
             'avg_visibility' => $metrics['avg_visibility'] ?? 0,
             'avg_adhesion' => $metrics['avg_adhesion'] ?? 0,
+            'avg_contrast' => $metrics['avg_contrast'] ?? 0,
             'avg_accuracy' => $acc ?? 0,
             'best_powder' => $best_powder,
             'compatibility_rating' => $rating
@@ -227,6 +230,7 @@ try {
                                 <th>Avg Ridge Clarity</th>
                                 <th>Avg Visibility</th>
                                 <th>Avg Adhesion</th>
+                                <th>Avg Contrast</th>
                                 <th>Avg Composite Accuracy</th>
                                 <th>Best Performing Powder Type</th>
                                 <th style="text-align: right;">Compatibility Status</th>
@@ -249,6 +253,7 @@ try {
                                 <td><?= $data['trial_count'] > 0 ? number_format($data['avg_clarity'], 1).'%' : '—' ?></td>
                                 <td><?= $data['trial_count'] > 0 ? number_format($data['avg_visibility'], 1).'%' : '—' ?></td>
                                 <td><?= $data['trial_count'] > 0 ? number_format($data['avg_adhesion'], 1).'%' : '—' ?></td>
+                                <td><?= $data['trial_count'] > 0 ? number_format($data['avg_contrast'], 1).'%' : '—' ?></td>
                                 <td><strong><?= $data['trial_count'] > 0 ? number_format($data['avg_accuracy'], 1).'%' : '—' ?></strong></td>
                                 <td>
                                     <?php if ($data['trial_count'] > 0): ?>

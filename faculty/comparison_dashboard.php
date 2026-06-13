@@ -359,6 +359,7 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                             <div class="metric-box"><span>Ridge Clarity</span><strong><?= $selected_pair['eggshell']['ridge_clarity_score'] ?>%</strong></div>
                             <div class="metric-box"><span>Visibility</span><strong><?= $selected_pair['eggshell']['visibility_score'] ?>%</strong></div>
                             <div class="metric-box"><span>Adhesion</span><strong><?= $selected_pair['eggshell']['adhesion_score'] ?>%</strong></div>
+                            <div class="metric-box" style="grid-column: span 2;"><span>Contrast</span><strong><?= $selected_pair['eggshell']['contrast_score'] !== null ? $selected_pair['eggshell']['contrast_score'] : '0.00' ?>%</strong></div>
                         </div>
                     </div>
                     
@@ -384,7 +385,65 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                             <div class="metric-box"><span>Ridge Clarity</span><strong><?= $selected_pair['commercial']['ridge_clarity_score'] ?>%</strong></div>
                             <div class="metric-box"><span>Visibility</span><strong><?= $selected_pair['commercial']['visibility_score'] ?>%</strong></div>
                             <div class="metric-box"><span>Adhesion</span><strong><?= $selected_pair['commercial']['adhesion_score'] ?>%</strong></div>
+                            <div class="metric-box" style="grid-column: span 2;"><span>Contrast</span><strong><?= $selected_pair['commercial']['contrast_score'] !== null ? $selected_pair['commercial']['contrast_score'] : '0.00' ?>%</strong></div>
                         </div>
+                    </div>
+                </div>
+                <?php
+                    $eg_rec = $selected_pair['eggshell'];
+                    $co_rec = $selected_pair['commercial'];
+                    
+                    $eg_acc = isset($eg_rec['accuracy_score']) ? floatval($eg_rec['accuracy_score']) : 0.0;
+                    $co_acc = isset($co_rec['accuracy_score']) ? floatval($co_rec['accuracy_score']) : 0.0;
+                    
+                    if ($eg_acc > $co_acc) {
+                        $better_powder = "Eggshell-Based Powder";
+                    } elseif ($co_acc > $eg_acc) {
+                        $better_powder = "Commercial Powder";
+                    } else {
+                        $better_powder = "Equal Performance";
+                    }
+                    
+                    $score_diff = abs($eg_acc - $co_acc);
+                    $surf_type = ucfirst($selected_pair['surface_type']);
+                    
+                    $status_labels = [
+                        'pending_validation' => 'Pending Validation',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
+                        'needs_revision' => 'Needs Revision'
+                    ];
+                    $eg_status = $status_labels[$eg_rec['status']] ?? ucfirst($eg_rec['status']);
+                    $co_status = $status_labels[$co_rec['status']] ?? ucfirst($co_rec['status']);
+                    $validation_status = "Eggshell: " . $eg_status . " | Commercial: " . $co_status;
+                ?>
+                <div class="comparison-summary-card" style="margin-top: 1.5rem; background: var(--cream); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(45,106,79,0.15); display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+                    <div style="grid-column: 1 / span 3; border-bottom: 1px solid rgba(45,106,79,0.2); padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+                        <h4 style="margin:0; color:var(--dark-green); text-transform:uppercase; font-size:0.8rem; letter-spacing:0.8px;">Powder Performance Comparison Analysis</h4>
+                    </div>
+                    <div>
+                        <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Better Performing Powder</span>
+                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= htmlspecialchars($better_powder) ?></strong>
+                    </div>
+                    <div>
+                        <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Difference in Score</span>
+                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= number_format($score_diff, 2) ?>%</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Surface Material</span>
+                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= htmlspecialchars($surf_type) ?></strong>
+                    </div>
+                    <div>
+                        <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Eggshell Powder Accuracy</span>
+                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= number_format($eg_acc, 2) ?>%</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Commercial Powder Accuracy</span>
+                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= number_format($co_acc, 2) ?>%</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Faculty Validation Status</span>
+                        <strong style="font-size:0.85rem; color:var(--dark-green);"><?= htmlspecialchars($validation_status) ?></strong>
                     </div>
                 </div>
                 <?php else: ?>
@@ -415,6 +474,7 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                                 <th>Ridge Clarity</th>
                                 <th>Visibility</th>
                                 <th>Adhesion</th>
+                                <th>Contrast</th>
                                 <th>Accuracy</th>
                                 <th>Date</th>
                                 <th>Status</th>
@@ -440,6 +500,7 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                                 <td><?= number_format($r['ridge_clarity_score'],1) ?>%</td>
                                 <td><?= number_format($r['visibility_score'],1) ?>%</td>
                                 <td><?= number_format($r['adhesion_score'],1) ?>%</td>
+                                <td><?= $r['contrast_score'] !== null ? number_format($r['contrast_score'],1) . '%' : '—' ?></td>
                                 <td><strong><?= number_format($r['accuracy_score'],1) ?>%</strong></td>
                                 <td><?= date('M d, Y', strtotime($r['submitted_at'])) ?></td>
                                 <td>

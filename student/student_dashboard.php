@@ -10,13 +10,21 @@ $student_id   = $_SESSION['user_id']  ?? 0;
 
 // Summary stats
 $total = $pending = $approved = $rejected = 0;
-$avg_score = 0;
+$avg_display = 'N/A';
 try {
     $total    = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id")->fetchColumn();
     $pending  = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id AND status='pending_validation'")->fetchColumn();
     $approved = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id AND status='approved'")->fetchColumn();
     $rejected = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id AND status='rejected'")->fetchColumn();
-    $avg_score = $pdo->query("SELECT ROUND(AVG(accuracy_score),1) FROM fingerprint_tests WHERE student_id = $student_id")->fetchColumn() ?? 0;
+    
+    // Only calculate average accuracy from approved records and accuracy_score IS NOT NULL
+    $avg_score = $pdo->query("SELECT ROUND(AVG(accuracy_score),1) FROM fingerprint_tests WHERE student_id = $student_id AND status='approved' AND accuracy_score IS NOT NULL")->fetchColumn();
+    
+    if ($avg_score !== null) {
+        $avg_display = $avg_score . '%';
+    } else {
+        $avg_display = ($pending > 0) ? 'Awaiting Evaluation' : 'N/A';
+    }
 } catch (PDOException $e) {}
 
 // Recent 5 submissions
@@ -157,7 +165,7 @@ try {
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value"><?= $avg_score ?>%</div>
+                    <div class="stat-value" style="font-size: <?= (strlen($avg_display) > 6) ? '1.25rem' : '2rem' ?>;"><?= htmlspecialchars($avg_display) ?></div>
                     <div class="stat-desc">Average across all your submissions</div>
                 </div>
             </div>
@@ -273,8 +281,34 @@ try {
                             <tr>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($row['powder_type']) ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($row['surface_type']) ?></td>
-                                <td><?= number_format($row['accuracy_score'], 1) ?>%</td>
-                                <td><span class="badge badge-<?= $row['status'] ?>"><?= ucfirst($row['status']) ?></span></td>
+                                <td>
+                                    <?php 
+                                        if ($row['status'] === 'approved' && $row['accuracy_score'] !== null) {
+                                            echo number_format($row['accuracy_score'], 1) . '%';
+                                        } elseif ($row['status'] === 'pending_validation') {
+                                            echo 'Awaiting Validation';
+                                        } elseif ($row['status'] === 'needs_revision') {
+                                            echo 'Needs Revision';
+                                        } elseif ($row['status'] === 'rejected') {
+                                            echo 'Rejected';
+                                        } else {
+                                            echo 'N/A';
+                                        }
+                                    ?>
+                                </td>
+                                <td>
+                                    <span class="badge badge-<?= $row['status'] ?>">
+                                        <?php
+                                            $status_labels = [
+                                                'pending_validation' => 'Pending Validation',
+                                                'approved' => 'Approved',
+                                                'rejected' => 'Rejected',
+                                                'needs_revision' => 'Needs Revision'
+                                            ];
+                                            echo htmlspecialchars($status_labels[$row['status']] ?? ucfirst($row['status']));
+                                        ?>
+                                    </span>
+                                </td>
                                 <td><?= date('M d, Y', strtotime($row['submitted_at'])) ?></td>
                             </tr>
                             <?php endforeach; ?>

@@ -18,7 +18,7 @@ try {
                ROUND(MAX(accuracy_score), 1) AS max_score,
                ROUND(MIN(accuracy_score), 1) AS min_score
         FROM fingerprint_tests
-        WHERE student_id = ?
+        WHERE student_id = ? AND status = 'approved' AND accuracy_score IS NOT NULL
         GROUP BY surface_type, powder_type
         ORDER BY surface_type, powder_type
     ");

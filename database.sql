@@ -46,12 +46,17 @@ CREATE TABLE IF NOT EXISTS `fingerprint_tests` (
     `ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL,
     `visibility_score` DECIMAL(5,2) DEFAULT NULL,
     `adhesion_score` DECIMAL(5,2) DEFAULT NULL,
+    `contrast_score` DECIMAL(5,2) DEFAULT NULL,
     `accuracy_score` DECIMAL(5,2) DEFAULT NULL,
     `notes` TEXT DEFAULT NULL,
     `status` ENUM('pending_validation','approved','rejected','needs_revision') DEFAULT 'pending_validation',
     `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `validated_by` INT DEFAULT NULL,
     `validated_at` TIMESTAMP DEFAULT NULL,
+    `ai_evaluated_at` DATETIME DEFAULT NULL,
+    `evaluation_source` VARCHAR(50) DEFAULT 'AI Preliminary',
+    `faculty_final_score` DECIMAL(5,2) DEFAULT NULL,
+    `ai_accuracy_score` DECIMAL(5,2) DEFAULT NULL,
     FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`validated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -350,7 +350,7 @@ try {
         }
         .score-values {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             text-align: center;
         }
@@ -581,6 +581,10 @@ try {
                         <div class="score-val" id="modalAdhesion">—</div>
                         <div class="score-lbl">Adhesion</div>
                     </div>
+                    <div>
+                        <div class="score-val" id="modalContrast">—</div>
+                        <div class="score-lbl">Contrast</div>
+                    </div>
                 </div>
             </div>
             <div class="detail-row" style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green);">
@@ -655,6 +659,7 @@ try {
         document.getElementById("modalClarity").textContent = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score).toFixed(1) + '%' : '—';
         document.getElementById("modalVisibility").textContent = row.visibility_score !== null ? parseFloat(row.visibility_score).toFixed(1) + '%' : '—';
         document.getElementById("modalAdhesion").textContent = row.adhesion_score !== null ? parseFloat(row.adhesion_score).toFixed(1) + '%' : '—';
+        document.getElementById("modalContrast").textContent = row.contrast_score !== null ? parseFloat(row.contrast_score).toFixed(1) + '%' : '—';
         document.getElementById("modalAccuracy").textContent = row.accuracy_score !== null ? parseFloat(row.accuracy_score).toFixed(1) + '%' : '—';
 
         // Validator details

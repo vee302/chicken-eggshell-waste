@@ -91,10 +91,25 @@ $msg = $msg_type = '';
                         </div>
                     </div>
 
+                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fingerprint_image').click()" style="margin-bottom: 1.25rem;">
+                        <div class="upload-zone-icon">
+                            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="16 16 12 12 8 16"/>
+                                <line x1="12" y1="12" x2="12" y2="21"/>
+                                <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                            </svg>
+                        </div>
+                        <h4>Click to browse or drag &amp; drop fingerprint image <span style="color:var(--danger)">*</span></h4>
+                        <p>Supports JPG, PNG, WebP — max 5 MB</p>
+                        <p id="file-chosen" style="margin-top:.5rem;font-weight:600;color:var(--medium-green);"></p>
+                    </div>
+                    <input type="file" name="fingerprint_image" id="fingerprint_image"
+                           accept="image/jpeg,image/png,image/webp" style="display:none;" required>
+
                     <div class="form-group">
-                        <label for="accuracy_score">Accuracy Score (%) <span style="color:var(--danger)">*</span></label>
-                        <input type="number" name="accuracy_score" id="accuracy_score" class="form-control"
-                               min="0" max="100" step="0.1" placeholder="e.g. 87.5" required>
+                        <label for="image_label">Image Label / Description</label>
+                        <input type="text" name="image_label" id="image_label" class="form-control"
+                               placeholder="e.g. Eggshell on Glass — Trial 3">
                     </div>
 
                     <div class="form-group">
@@ -119,6 +134,26 @@ $msg = $msg_type = '';
 </div>
 <?php require_once '_sidebar_js.php'; ?>
 <script>
+const inp = document.getElementById('fingerprint_image');
+const chosen = document.getElementById('file-chosen');
+inp.addEventListener('change', () => {
+    chosen.textContent = inp.files[0] ? inp.files[0].name : '';
+});
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) {
+        inp.files = e.dataTransfer.files;
+        chosen.textContent = inp.files[0].name;
+    }
+});
+
+document.getElementById('btn-reset-trial').addEventListener('click', () => {
+    chosen.textContent = '';
+});
+
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 let isSubmitting = false;
 
@@ -128,18 +163,23 @@ function showNotification(type, message) {
     container.innerHTML = `<div class="alert-msg ${alertClass}">${message}</div>`;
     setTimeout(() => {
         container.innerHTML = '';
-    }, 5000);
+    }, 6000);
 }
 
 document.getElementById('form-submit-trial').addEventListener('submit', function(e) {
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (!inp.files.length) {
+        showNotification('error', 'Please select a fingerprint image file to upload.');
+        return;
+    }
+
     const btn = document.getElementById('btn-submit-trial');
     const btnText = document.getElementById('btnText');
     const originalText = btnText.textContent;
     
-    btnText.textContent = 'Saving...';
+    btnText.textContent = 'Submitting...';
     btn.disabled = true;
     isSubmitting = true;
 
@@ -162,6 +202,7 @@ document.getElementById('form-submit-trial').addEventListener('submit', function
         if (data.success) {
             showNotification('success', data.message);
             document.getElementById('form-submit-trial').reset();
+            chosen.textContent = '';
         } else {
             showNotification('error', data.message);
         }

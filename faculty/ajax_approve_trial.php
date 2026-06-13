@@ -24,6 +24,7 @@ $remarks  = trim($_POST['remarks'] ?? '');
 $clarity  = isset($_POST['ridge_clarity_score']) ? floatval($_POST['ridge_clarity_score']) : null;
 $visibility = isset($_POST['visibility_score']) ? floatval($_POST['visibility_score']) : null;
 $adhesion   = isset($_POST['adhesion_score']) ? floatval($_POST['adhesion_score']) : null;
+$contrast   = isset($_POST['contrast_score']) ? floatval($_POST['contrast_score']) : null;
 $faculty_id = $_SESSION['user_id'] ?? 0;
 
 if ($test_id <= 0) {
@@ -31,12 +32,14 @@ if ($test_id <= 0) {
     exit;
 }
 
-if ($clarity === null || $visibility === null || $adhesion === null || $clarity < 0 || $clarity > 100 || $visibility < 0 || $visibility > 100 || $adhesion < 0 || $adhesion > 100) {
-    echo json_encode(['success' => false, 'message' => 'Please provide valid scores (0-100) for Clarity, Visibility, and Adhesion.']);
+if ($clarity === null || $visibility === null || $adhesion === null || $contrast === null || 
+    $clarity < 0 || $clarity > 100 || $visibility < 0 || $visibility > 100 || 
+    $adhesion < 0 || $adhesion > 100 || $contrast < 0 || $contrast > 100) {
+    echo json_encode(['success' => false, 'message' => 'Please provide valid scores (0-100) for Clarity, Visibility, Adhesion, and Contrast.']);
     exit;
 }
 
-$accuracy = ($clarity + $visibility + $adhesion) / 3;
+$accuracy = ($clarity + $visibility + $adhesion + $contrast) / 4.0;
 
 try {
     $pdo->beginTransaction();
@@ -47,12 +50,14 @@ try {
             ridge_clarity_score = ?,
             visibility_score = ?,
             adhesion_score = ?,
+            contrast_score = ?,
             accuracy_score = ?,
+            faculty_final_score = ?,
             validated_by = ?,
             validated_at = NOW()
         WHERE id = ?
     ");
-    $stmt->execute([$clarity, $visibility, $adhesion, $accuracy, $faculty_id, $test_id]);
+    $stmt->execute([$clarity, $visibility, $adhesion, $contrast, $accuracy, $accuracy, $faculty_id, $test_id]);
 
     $stmt = $pdo->prepare("
         INSERT INTO faculty_remarks (test_id, faculty_id, remarks, decision, created_at)

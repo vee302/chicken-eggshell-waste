@@ -1,5 +1,5 @@
 <?php
-// student/ajax_upload_fingerprint.php — Student AJAX Upload Fingerprint
+// student/ajax_upload_fingerprint.php — Student AJAX Upload Fingerprint with Image Evaluation
 require_once '../config.php';
 require_once 'auth.php';
 
@@ -62,6 +62,58 @@ if (!is_dir($dest_dir)) {
 $dest = $dest_dir . $filename;
 
 if (move_uploaded_file($file['tmp_name'], $dest)) {
+    // Determine absolute paths for Python script execution
+    $dest_abs = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
+    $python_script = dirname(__DIR__) . '/python/evaluate_fingerprint.py';
+    
+    // Default score fields to NULL (Awaiting Faculty Validation)
+    $clarity = null;
+    $visibility = null;
+    $adhesion = null;
+    $contrast = null;
+    $accuracy = null;
+    $ai_accuracy = null;
+    $ai_evaluated_at = null;
+    $evaluation_source = 'AI Preliminary';
+    
+    $ai_msg = "";
+    $ai_success = false;
+    
+    // Execute Python script
+    $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest_abs) . " 2>&1";
+    $output = shell_exec($command);
+    
+    if ($output === null || empty(trim($output))) {
+        // Python missing or command failed
+        $ai_msg = "AI evaluation service is currently unavailable. Please contact the administrator.";
+    } else {
+        $ai_res = json_decode($output, true);
+        if ($ai_res === null || json_last_error() !== JSON_ERROR_NONE) {
+            // JSON parsing error or python script output unexpected format
+            $ai_msg = "AI evaluation service is currently unavailable. Please contact the administrator.";
+        } else {
+            if (isset($ai_res['success']) && $ai_res['success'] === true) {
+                // Evaluation succeeded
+                $clarity = $ai_res['ridge_clarity_score'];
+                $visibility = $ai_res['visibility_score'];
+                $adhesion = $ai_res['adhesion_score'];
+                $contrast = $ai_res['contrast_score'];
+                $accuracy = $ai_res['accuracy_score'];
+                $ai_accuracy = $ai_res['accuracy_score'];
+                $ai_evaluated_at = date('Y-m-d H:i:s');
+                $ai_success = true;
+                $ai_msg = "Fingerprint image uploaded successfully and evaluated using automated image evaluation.";
+            } else {
+                // Script caught an error (e.g. library missing or invalid image format)
+                if (isset($ai_res['message']) && strpos($ai_res['message'], 'Required Python packages') !== false) {
+                    $ai_msg = "AI evaluation service is currently unavailable. Please contact the administrator.";
+                } else {
+                    $ai_msg = "Awaiting Faculty Evaluation.";
+                }
+            }
+        }
+    }
+
     try {
         // Generate a unique trial_id
         $stmt = $pdo->prepare("SELECT MAX(id) FROM fingerprint_tests");
@@ -74,15 +126,20 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
         $stmt = $pdo->prepare("
             INSERT INTO fingerprint_tests 
                 (trial_id, student_id, image_path, image_label, powder_type, surface_type, 
-                 ridge_clarity_score, visibility_score, adhesion_score, accuracy_score, status, submitted_at)
-            VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, 'pending_validation', NOW())
+                 ridge_clarity_score, visibility_score, adhesion_score, contrast_score, accuracy_score, 
+                 status, submitted_at, ai_evaluated_at, evaluation_source, ai_accuracy_score)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_validation', NOW(), ?, ?, ?)
         ");
-        $stmt->execute([$trial_id, $student_id, $filename, $label, $powder_type, $surface_type]);
+        $stmt->execute([
+            $trial_id, $student_id, $filename, $label, $powder_type, $surface_type,
+            $clarity, $visibility, $adhesion, $contrast, $accuracy, 
+            $ai_evaluated_at, $evaluation_source, $ai_accuracy
+        ]);
 
-        // Return the new trial record
+        // Output response
         echo json_encode([
             'success' => true,
-            'message' => 'Fingerprint image uploaded successfully and submitted for faculty validation.',
+            'message' => $ai_success ? $ai_msg : $ai_msg,
             'data' => [
                 'id' => $pdo->lastInsertId(),
                 'trial_id' => $trial_id,

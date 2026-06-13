@@ -40,6 +40,7 @@ $avg_accuracy = 0;
 $avg_clarity = 0;
 $avg_visibility = 0;
 $avg_adhesion = 0;
+$avg_contrast = 0;
 
 try {
     $sql = "
@@ -67,11 +68,13 @@ try {
         $sum_clarity = 0;
         $sum_visibility = 0;
         $sum_adhesion = 0;
+        $sum_contrast = 0;
         
         $count_accuracy = 0;
         $count_clarity = 0;
         $count_visibility = 0;
         $count_adhesion = 0;
+        $count_contrast = 0;
         
         foreach ($trials as $t) {
             if ($t['accuracy_score'] !== null) {
@@ -90,12 +93,17 @@ try {
                 $sum_adhesion += $t['adhesion_score'];
                 $count_adhesion++;
             }
+            if ($t['contrast_score'] !== null) {
+                $sum_contrast += $t['contrast_score'];
+                $count_contrast++;
+            }
         }
         
         $avg_accuracy = $count_accuracy ? ($sum_accuracy / $count_accuracy) : 0;
         $avg_clarity = $count_clarity ? ($sum_clarity / $count_clarity) : 0;
         $avg_visibility = $count_visibility ? ($sum_visibility / $count_visibility) : 0;
         $avg_adhesion = $count_adhesion ? ($sum_adhesion / $count_adhesion) : 0;
+        $avg_contrast = $count_contrast ? ($sum_contrast / $count_contrast) : 0;
     }
 } catch (PDOException $e) {
     $error = "Database error: " . $e->getMessage();
@@ -385,7 +393,7 @@ try {
                         <span class="stat-title">Average Ridge Clarity</span>
                     </div>
                     <div class="stat-value" style="color: var(--dark-green);"><?= number_format($avg_clarity, 1) ?>%</div>
-                    <div class="stat-desc">Biometric detail distinction</div>
+                    <div class="stat-desc">Image detail distinction</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-header">
@@ -401,7 +409,14 @@ try {
                     <div class="stat-value" style="color: var(--dark-green);"><?= number_format($avg_adhesion, 1) ?>%</div>
                     <div class="stat-desc">Powder stickiness quality</div>
                 </div>
-                <div class="stat-card" style="grid-column: span 2; background: var(--cream); border: 1px solid rgba(45,106,79,0.15);">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Average Contrast</span>
+                    </div>
+                    <div class="stat-value" style="color: var(--dark-green);"><?= number_format($avg_contrast, 1) ?>%</div>
+                    <div class="stat-desc">Edge contrast levels</div>
+                </div>
+                <div class="stat-card" style="background: var(--cream); border: 1px solid rgba(45,106,79,0.15);">
                     <div class="stat-header">
                         <span class="stat-title" style="color: var(--dark-green); font-weight: 700;">Overall Composite Accuracy Average</span>
                     </div>
@@ -432,6 +447,7 @@ try {
                                 <th>Clarity</th>
                                 <th>Visibility</th>
                                 <th>Adhesion</th>
+                                <th>Contrast</th>
                                 <th>Accuracy</th>
                                 <th>Validated Date</th>
                                 <th style="text-align: right;">Action</th>
@@ -440,7 +456,7 @@ try {
                         <tbody>
                         <?php if (empty($trials)): ?>
                             <tr>
-                                <td colspan="9" style="text-align:center;color:#6c757d;padding:2rem;">
+                                <td colspan="10" style="text-align:center;color:#6c757d;padding:2rem;">
                                     No approved trials match the selected filter parameters.
                                 </td>
                             </tr>
@@ -453,6 +469,7 @@ try {
                                 <td><?= $row['ridge_clarity_score'] !== null ? number_format($row['ridge_clarity_score'], 1).'%' : '—' ?></td>
                                 <td><?= $row['visibility_score'] !== null ? number_format($row['visibility_score'], 1).'%' : '—' ?></td>
                                 <td><?= $row['adhesion_score'] !== null ? number_format($row['adhesion_score'], 1).'%' : '—' ?></td>
+                                <td><?= $row['contrast_score'] !== null ? number_format($row['contrast_score'], 1).'%' : '—' ?></td>
                                 <td><strong><?= number_format($row['accuracy_score'], 1) ?>%</strong></td>
                                 <td><?= $row['validated_at'] ? date('M d, Y', strtotime($row['validated_at'])) : '—' ?></td>
                                 <td style="text-align: right;">
@@ -507,6 +524,10 @@ try {
                     <div>
                         <div class="score-val" id="modalAdhesion">—</div>
                         <div class="score-lbl">Adhesion</div>
+                    </div>
+                    <div>
+                        <div class="score-val" id="modalContrast">—</div>
+                        <div class="score-lbl">Contrast</div>
                     </div>
                 </div>
             </div>
@@ -582,6 +603,7 @@ try {
         document.getElementById("modalClarity").textContent = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score).toFixed(1) + '%' : '—';
         document.getElementById("modalVisibility").textContent = row.visibility_score !== null ? parseFloat(row.visibility_score).toFixed(1) + '%' : '—';
         document.getElementById("modalAdhesion").textContent = row.adhesion_score !== null ? parseFloat(row.adhesion_score).toFixed(1) + '%' : '—';
+        document.getElementById("modalContrast").textContent = row.contrast_score !== null ? parseFloat(row.contrast_score).toFixed(1) + '%' : '—';
         document.getElementById("modalAccuracy").textContent = row.accuracy_score !== null ? parseFloat(row.accuracy_score).toFixed(1) + '%' : '—';
 
         // Validator details

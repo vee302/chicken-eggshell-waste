@@ -61,17 +61,20 @@ try {
     $avg_clarity = 0;
     $avg_visibility = 0;
     $avg_adhesion = 0;
+    $avg_contrast = 0;
 
     if ($total_count > 0) {
         $sum_accuracy = 0;
         $sum_clarity = 0;
         $sum_visibility = 0;
         $sum_adhesion = 0;
+        $sum_contrast = 0;
         
         $count_accuracy = 0;
         $count_clarity = 0;
         $count_visibility = 0;
         $count_adhesion = 0;
+        $count_contrast = 0;
         
         foreach ($trials as $t) {
             if ($t['accuracy_score'] !== null) {
@@ -90,12 +93,17 @@ try {
                 $sum_adhesion += $t['adhesion_score'];
                 $count_adhesion++;
             }
+            if ($t['contrast_score'] !== null) {
+                $sum_contrast += $t['contrast_score'];
+                $count_contrast++;
+            }
         }
         
         $avg_accuracy = $count_accuracy ? ($sum_accuracy / $count_accuracy) : 0;
         $avg_clarity = $count_clarity ? ($sum_clarity / $count_clarity) : 0;
         $avg_visibility = $count_visibility ? ($sum_visibility / $count_visibility) : 0;
         $avg_adhesion = $count_adhesion ? ($sum_adhesion / $count_adhesion) : 0;
+        $avg_contrast = $count_contrast ? ($sum_contrast / $count_contrast) : 0;
     }
 
     echo json_encode([
@@ -108,7 +116,8 @@ try {
                 'avg_accuracy' => $avg_accuracy,
                 'avg_clarity' => $avg_clarity,
                 'avg_visibility' => $avg_visibility,
-                'avg_adhesion' => $avg_adhesion
+                'avg_adhesion' => $avg_adhesion,
+                'avg_contrast' => $avg_contrast
             ]
         ]
     ]);

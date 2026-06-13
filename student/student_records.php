@@ -194,10 +194,22 @@ try {
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($r['powder_type']) ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($r['surface_type']) ?></td>
                                 <td>
-                                    <strong><?= $r['accuracy_score'] !== null ? number_format($r['accuracy_score'], 1) . '%' : 'Awaiting Validation' ?></strong>
+                                    <strong>
+                                        <?php if ($r['status'] === 'approved' && $r['accuracy_score'] !== null): ?>
+                                            <?= number_format($r['accuracy_score'], 1) ?>%
+                                        <?php elseif ($r['status'] === 'pending_validation'): ?>
+                                            Awaiting Validation
+                                        <?php elseif ($r['status'] === 'needs_revision'): ?>
+                                            Needs Revision
+                                        <?php elseif ($r['status'] === 'rejected'): ?>
+                                            Rejected
+                                        <?php else: ?>
+                                            N/A
+                                        <?php endif; ?>
+                                    </strong>
                                 </td>
                                 <td style="min-width:120px;">
-                                    <?php if ($r['accuracy_score'] !== null): ?>
+                                    <?php if ($r['status'] === 'approved' && $r['accuracy_score'] !== null): ?>
                                         <div class="score-bar">
                                             <div class="score-bar-track">
                                                 <div class="score-bar-fill" style="width:<?= min(100,$r['accuracy_score']) ?>%"></div>
@@ -340,8 +352,9 @@ function renderRecordsTable(records) {
                 </a>`;
         }
 
-        const scoreText = r.accuracy_score !== null ? parseFloat(r.accuracy_score).toFixed(1) + '%' : 'Awaiting Validation';
-        const scoreBarHtml = r.accuracy_score !== null ? `
+        const isApproved = r.status === 'approved';
+        const scoreText = isApproved ? (r.accuracy_score !== null ? parseFloat(r.accuracy_score).toFixed(1) + '%' : '—') : (r.status === 'pending_validation' ? 'Awaiting Validation' : (r.status === 'needs_revision' ? 'Needs Revision' : (r.status === 'rejected' ? 'Rejected' : 'N/A')));
+        const scoreBarHtml = (isApproved && r.accuracy_score !== null) ? `
             <div class="score-bar">
                 <div class="score-bar-track">
                     <div class="score-bar-fill" style="width:${Math.min(100, r.accuracy_score)}%"></div>

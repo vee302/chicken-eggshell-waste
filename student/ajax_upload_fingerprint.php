@@ -1,5 +1,6 @@
 <?php
 // student/ajax_upload_fingerprint.php — Student AJAX Upload Fingerprint with Image Evaluation
+@ob_start();
 require_once '../config.php';
 require_once 'auth.php';
 
@@ -7,6 +8,7 @@ header('Content-Type: application/json');
 
 // Session Role check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'criminology_student') {
+    if (ob_get_length()) ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Unauthorized access.']);
     exit;
 }
@@ -15,11 +17,13 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset(
 $headers = getallheaders();
 $csrf_token = $_POST['csrf_token'] ?? $headers['X-CSRF-Token'] ?? '';
 if (empty($csrf_token) || !hash_equals($_SESSION['csrf_token'] ?? '', $csrf_token)) {
+    if (ob_get_length()) ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Invalid CSRF token.']);
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['fingerprint_image'])) {
+    if (ob_get_length()) ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'No image file uploaded.']);
     exit;
 }
@@ -34,22 +38,26 @@ $allowed_exts  = ['jpg', 'jpeg', 'png', 'webp'];
 $max_bytes     = 5 * 1024 * 1024; // 5 MB
 
 if (!$powder_type || !$surface_type) {
+    if (ob_get_length()) ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Powder Type and Surface Type are required.']);
     exit;
 }
 
 if ($file['error'] !== UPLOAD_ERR_OK) {
+    if (ob_get_length()) ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'File upload error code: ' . $file['error']]);
     exit;
 }
 
 $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 if (!in_array($ext, $allowed_exts)) {
+    if (ob_get_length()) ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Only JPG, JPEG, PNG and WebP images are allowed.']);
     exit;
 }
 
 if ($file['size'] > $max_bytes) {
+    if (ob_get_length()) ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'File size must not exceed 5 MB.']);
     exit;
 }
@@ -57,13 +65,14 @@ if ($file['size'] > $max_bytes) {
 $filename = 'fp_' . $student_id . '_' . time() . '.' . $ext;
 $dest_dir = dirname(__DIR__) . '/uploads/fingerprints/';
 if (!is_dir($dest_dir)) {
-    mkdir($dest_dir, 0775, true);
+    @mkdir($dest_dir, 0775, true);
 }
 $dest = $dest_dir . $filename;
 
 if (move_uploaded_file($file['tmp_name'], $dest)) {
     // Confirm the file actually exists after moving
     if (!file_exists($dest)) {
+        if (ob_get_length()) ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Failed to verify file upload. File is missing.']);
         exit;
     }
@@ -84,9 +93,12 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
     $ai_msg = "";
     $ai_success = false;
     
-    // Execute Python script
-    $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " 2>&1";
-    $output = shell_exec($command);
+    // Execute Python script safely checking if shell_exec is disabled
+    $output = null;
+    if (function_exists('shell_exec') && !in_array('shell_exec', array_map('trim', explode(',', ini_get('disable_functions'))))) {
+        $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " 2>&1";
+        $output = @shell_exec($command);
+    }
     
     if ($output === null || empty(trim($output))) {
         // Python missing or command failed
@@ -142,6 +154,7 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
         ]);
 
         // Output response
+        if (ob_get_length()) ob_end_clean();
         echo json_encode([
             'success' => true,
             'message' => $ai_success ? $ai_msg : $ai_msg,
@@ -157,9 +170,11 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
             ]
         ]);
     } catch (PDOException $e) {
+        if (ob_get_length()) ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
     }
 } else {
+    if (ob_get_length()) ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Failed to save image. Check uploads directory permissions.']);
 }
 exit;

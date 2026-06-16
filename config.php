@@ -4,6 +4,30 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// Polyfill for getallheaders() if it doesn't exist (e.g. non-Apache or cloud hosting like Railway)
+if (!function_exists('getallheaders')) {
+    function getallheaders() {
+        $headers = [];
+        foreach ($_SERVER as $name => $value) {
+            if (substr($name, 0, 5) == 'HTTP_') {
+                $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+                $headers[$key] = $value;
+                // Add common casings to prevent lookup mismatch
+                if (strtolower($key) === 'x-csrf-token') {
+                    $headers['X-CSRF-Token'] = $value;
+                    $headers['x-csrf-token'] = $value;
+                }
+            } elseif ($name === 'CONTENT_TYPE') {
+                $headers['Content-Type'] = $value;
+            } elseif ($name === 'CONTENT_LENGTH') {
+                $headers['Content-Length'] = $value;
+            }
+        }
+        return $headers;
+    }
+}
+
 require_once __DIR__ . '/auth_timeout.php';
 
 if (empty($_SESSION['csrf_token'])) {

@@ -78,10 +78,7 @@ try {
                 <form id="form-upload-fingerprint">
                     <!-- Camera-Based Evaluation Preview Panel -->
                     <div class="camera-preview-panel" style="background: #fff; text-align: center; margin-bottom: 1.5rem;">
-                        <!-- Preview Only chip -->
-                        <div style="display: inline-block; background: #e2f0d9; color: #385723; font-size: 0.72rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; margin-bottom: 0.85rem; letter-spacing: 0.05em; border: 1px solid rgba(56,87,35,0.15);">
-                            PREVIEW ONLY
-                        </div>
+
                         
                         <!-- Title & Subtitle -->
                         <h2 style="font-size: 1.5rem; font-weight: 800; color: #1e392a; margin: 0 0 8px 0; font-family: 'Inter', system-ui, sans-serif;">Camera-Based Evaluation Preview</h2>

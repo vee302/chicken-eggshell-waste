@@ -226,6 +226,42 @@ try {
         <p class="camera-subtitle">Align the latent fingerprint inside the guide.</p>
     </div>
 
+    <!-- Auto-Capture Control Widget -->
+    <div class="autocapture-container">
+        <div class="autocapture-row">
+            <div class="autocapture-label-group">
+                <span class="autocapture-title-text">Auto-Capture</span>
+                <div>
+                    <span id="autoCaptureStatus" class="autocapture-status-badge">Off</span>
+                </div>
+            </div>
+            <label class="switch-toggle" title="Toggle Auto-Capture">
+                <input type="checkbox" id="chkAutoCapture" checked>
+                <span class="switch-slider"></span>
+            </label>
+        </div>
+        
+        <!-- Clarity Meter -->
+        <div class="clarity-meter-wrap">
+            <div class="clarity-meter-header">
+                <span>Print Clarity</span>
+                <span id="clarityValue">0%</span>
+            </div>
+            <div class="clarity-meter-bg">
+                <div id="clarityMeterFill" class="clarity-meter-fill"></div>
+            </div>
+        </div>
+
+        <!-- Sensitivity Controller -->
+        <div class="sensitivity-control">
+            <div class="sensitivity-header">
+                <span>Capture Sensitivity</span>
+                <span id="sensitivityValue">50%</span>
+            </div>
+            <input type="range" id="rangeSensitivity" class="sensitivity-slider" min="20" max="80" value="50" step="5">
+        </div>
+    </div>
+
     <!-- Controls Row -->
     <div class="camera-controls">
         <!-- Close/Cancel Button -->
@@ -265,6 +301,52 @@ let cameraStream = null;
 let currentFacingMode = 'environment';
 let isCameraProcessing = false;
 
+// Auto-Capture state variables
+let autoCaptureLoopId = null;
+let lastProcessingTime = 0;
+let stableFocusFrames = 0;
+let isCaptureTriggered = false;
+
+// DOM elements for Auto-Capture
+const chkAutoCapture = document.getElementById('chkAutoCapture');
+const autoCaptureStatus = document.getElementById('autoCaptureStatus');
+const clarityMeterFill = document.getElementById('clarityMeterFill');
+const clarityValue = document.getElementById('clarityValue');
+const rangeSensitivity = document.getElementById('rangeSensitivity');
+const sensitivityValue = document.getElementById('sensitivityValue');
+
+// Update Auto-Capture toggle visual style and text state
+function updateAutoCaptureUI() {
+    if (chkAutoCapture.checked) {
+        autoCaptureStatus.textContent = "Active";
+        autoCaptureStatus.className = "autocapture-status-badge active";
+        document.querySelector('.clarity-meter-wrap').style.opacity = "1";
+        document.querySelector('.sensitivity-control').style.opacity = "1";
+    } else {
+        autoCaptureStatus.textContent = "Off";
+        autoCaptureStatus.className = "autocapture-status-badge";
+        document.querySelector('.clarity-meter-wrap').style.opacity = "0.5";
+        document.querySelector('.sensitivity-control').style.opacity = "0.5";
+        
+        // Reset progress bar values
+        clarityMeterFill.style.width = "0%";
+        clarityMeterFill.classList.remove('focused');
+        clarityValue.textContent = "0%";
+        
+        // Remove clear detected glow state from the oval focus guide
+        const oval = document.querySelector('.focus-guide-oval');
+        if (oval) {
+            oval.classList.remove('clear-detected');
+        }
+    }
+}
+
+// Bind event listeners for auto-capture settings
+chkAutoCapture.addEventListener('change', updateAutoCaptureUI);
+rangeSensitivity.addEventListener('input', () => {
+    sensitivityValue.textContent = `${rangeSensitivity.value}%`;
+});
+
 // Stop and release camera tracks
 function stopWebcam() {
     if (cameraStream) {
@@ -274,6 +356,18 @@ function stopWebcam() {
     const video = document.getElementById('cameraVideo');
     if (video) {
         video.srcObject = null;
+    }
+    
+    // Stop the auto-capture frame analysis loop
+    if (autoCaptureLoopId) {
+        cancelAnimationFrame(autoCaptureLoopId);
+        autoCaptureLoopId = null;
+    }
+    
+    // Remove clarity overlay focus indicators
+    const oval = document.querySelector('.focus-guide-oval');
+    if (oval) {
+        oval.classList.remove('clear-detected');
     }
 }
 
@@ -305,6 +399,15 @@ async function startWebcam() {
         cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = cameraStream;
         modal.style.display = 'flex';
+        
+        // Start processing frames when video metadata loads
+        video.onloadedmetadata = () => {
+            startAutoCaptureLoop();
+        };
+        // Fallback in case metadata is already loaded
+        if (video.videoWidth > 0) {
+            startAutoCaptureLoop();
+        }
     } catch (err) {
         console.error("Camera access error: ", err);
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
@@ -315,10 +418,215 @@ async function startWebcam() {
                 cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 video.srcObject = cameraStream;
                 modal.style.display = 'flex';
+                
+                video.onloadedmetadata = () => {
+                    startAutoCaptureLoop();
+                };
+                if (video.videoWidth > 0) {
+                    startAutoCaptureLoop();
+                }
             } catch (fallbackErr) {
                 alert("Camera is not available on this device. Please upload a file instead.");
             }
         }
+    }
+}
+
+// Start auto capture processing frame loop
+function startAutoCaptureLoop() {
+    stableFocusFrames = 0;
+    isCaptureTriggered = false;
+    lastProcessingTime = 0;
+    
+    updateAutoCaptureUI();
+    sensitivityValue.textContent = `${rangeSensitivity.value}%`;
+
+    const video = document.getElementById('cameraVideo');
+    const oval = document.querySelector('.focus-guide-oval');
+
+    // Create offscreen analysis canvas to compute sharpness metrics
+    const analysisCanvas = document.createElement('canvas');
+    analysisCanvas.width = 150;
+    analysisCanvas.height = 225;
+    const analysisCtx = analysisCanvas.getContext('2d');
+
+    function processFrame(timestamp) {
+        if (!cameraStream || isCameraProcessing || isCaptureTriggered) {
+            autoCaptureLoopId = requestAnimationFrame(processFrame);
+            return;
+        }
+
+        // Run approximately every 150ms to keep it extremely lightweight on mobile
+        if (timestamp - lastProcessingTime < 150) {
+            autoCaptureLoopId = requestAnimationFrame(processFrame);
+            return;
+        }
+        lastProcessingTime = timestamp;
+
+        if (!chkAutoCapture.checked) {
+            autoCaptureLoopId = requestAnimationFrame(processFrame);
+            return;
+        }
+
+        const videoW = video.videoWidth;
+        const videoH = video.videoHeight;
+        const viewW = window.innerWidth;
+        const viewH = window.innerHeight;
+
+        if (!videoW || !videoH) {
+            autoCaptureLoopId = requestAnimationFrame(processFrame);
+            return;
+        }
+
+        // Bounding box of the center guide (matches crop dimensions)
+        const width = 0.40 * viewH;
+        const height = 0.60 * viewH;
+        const left = (viewW - width) / 2;
+        const top = (viewH - height) / 2;
+
+        const scale = Math.max(viewW / videoW, viewH / videoH);
+        const offsetX = (videoW * scale - viewW) / 2;
+        const offsetY = (videoH * scale - viewH) / 2;
+
+        const cropX = (left + offsetX) / scale;
+        const cropY = (top + offsetY) / scale;
+        const cropW = width / scale;
+        const cropH = height / scale;
+
+        // Draw cropped guide area onto analysis canvas
+        analysisCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, 150, 225);
+
+        // Get image analysis metrics
+        const analysis = getClarityMetrics(analysisCtx, 150, 225);
+
+        // Map slider sensitivity (20 to 80) to target sharpness threshold
+        // Sensitivity 20: Threshold = 60 (Extreme sharpness)
+        // Sensitivity 50: Threshold = 30 (Normal balanced focus)
+        // Sensitivity 80: Threshold = 10 (Triggers easily on low-end cameras)
+        const sensitivity = parseInt(rangeSensitivity.value, 10);
+        const threshold = 80 - sensitivity; 
+
+        let relativeClarity = 0;
+        
+        // We require standard deviation of pixel values > 15 (variance > 225)
+        // This ensures an actual textured pattern is inside the guide and not empty/flat background.
+        if (analysis.contrastStdDev > 15) {
+            relativeClarity = Math.min(100, Math.round((analysis.sharpness / threshold) * 100));
+        }
+
+        // Update Clarity Meter visual states
+        clarityMeterFill.style.width = `${relativeClarity}%`;
+        clarityValue.textContent = `${relativeClarity}%`;
+
+        if (relativeClarity >= 100) {
+            clarityMeterFill.classList.add('focused');
+            stableFocusFrames++;
+
+            // Require 3 consecutive frames of stable clear focus (~450ms) to trigger auto-capture
+            if (stableFocusFrames >= 3) {
+                isCaptureTriggered = true;
+                autoCaptureStatus.textContent = "Capturing...";
+                autoCaptureStatus.className = "autocapture-status-badge capturing";
+                
+                if (oval) {
+                    oval.classList.add('clear-detected');
+                }
+                
+                // Play focus confirmation beep
+                playBeep();
+
+                // Wait 250ms for visual focus animation frame before triggering capture click
+                setTimeout(() => {
+                    document.getElementById('btnCapturePhoto').click();
+                }, 250);
+            }
+        } else {
+            clarityMeterFill.classList.remove('focused');
+            stableFocusFrames = 0;
+            if (oval) {
+                oval.classList.remove('clear-detected');
+            }
+        }
+
+        autoCaptureLoopId = requestAnimationFrame(processFrame);
+    }
+
+    autoCaptureLoopId = requestAnimationFrame(processFrame);
+}
+
+// Compute contrast standard deviation and spatial gradient variance (variance of Laplacian)
+function getClarityMetrics(ctx, w, h) {
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+    const len = data.length;
+    
+    // Grayscale mapping
+    const gray = new Float32Array(w * h);
+    let sum = 0;
+    for (let i = 0; i < len; i += 4) {
+        const val = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+        gray[i / 4] = val;
+        sum += val;
+    }
+    const mean = sum / gray.length;
+
+    // Contrast standard deviation
+    let varianceSum = 0;
+    for (let i = 0; i < gray.length; i++) {
+        const diff = gray[i] - mean;
+        varianceSum += diff * diff;
+    }
+    const contrastStdDev = Math.sqrt(varianceSum / gray.length);
+
+    // Variance of Laplacian filter (measure of edge focus sharpness)
+    // Kernel:
+    // [ 0,  1,  0]
+    // [ 1, -4,  1]
+    // [ 0,  1,  0]
+    let lapSum = 0;
+    let lapSqSum = 0;
+    let count = 0;
+
+    for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+            const idx = y * w + x;
+            const val = gray[idx];
+            const left = gray[idx - 1];
+            const right = gray[idx + 1];
+            const top = gray[idx - w];
+            const bottom = gray[idx + w];
+            
+            const lap = left + right + top + bottom - 4 * val;
+            lapSum += lap;
+            lapSqSum += lap * lap;
+            count++;
+        }
+    }
+
+    const lapMean = lapSum / count;
+    const lapVar = (lapSqSum / count) - (lapMean * lapMean);
+
+    return {
+        contrastStdDev: contrastStdDev,
+        sharpness: lapVar
+    };
+}
+
+// Sound feedback on clear focus trigger using Web Audio API
+function playBeep() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime); // 1000 Hz beep tone
+        gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime); // keep volume subtle
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.12); // play for 120ms
+    } catch (e) {
+        console.warn("Audio Context audio feedback not supported or blocked by browser policies.");
     }
 }
 

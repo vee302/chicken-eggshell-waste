@@ -310,35 +310,48 @@ function setIdleState() {
 }
 
 function capturePhoto() {
-    // Capture stream frame to canvas
-    webcamCanvas.width = webcamVideo.videoWidth || 640;
-    webcamCanvas.height = webcamVideo.videoHeight || 480;
-    const ctx = webcamCanvas.getContext('2d');
-    ctx.drawImage(webcamVideo, 0, 0, webcamCanvas.width, webcamCanvas.height);
-    
-    const dataUrl = webcamCanvas.toDataURL('image/png');
-    
-    // Stop camera stream
-    stopWebcam();
-    
-    // Show image preview
-    webcamVideo.style.display = 'none';
-    webcamCapturePreview.src = dataUrl;
-    webcamCapturePreview.style.display = 'block';
-    
-    // Reset buttons back to start state
-    setIdleState();
-    
-    // Bind to the file input
     try {
+        let width = webcamVideo.videoWidth;
+        let height = webcamVideo.videoHeight;
+        
+        // Safe fallback if video elements dimensions are not loaded yet
+        if (!width || !height) {
+            width = webcamVideo.clientWidth || 640;
+            height = webcamVideo.clientHeight || 480;
+        }
+
+        webcamCanvas.width = width;
+        webcamCanvas.height = height;
+        
+        const ctx = webcamCanvas.getContext('2d');
+        ctx.drawImage(webcamVideo, 0, 0, webcamCanvas.width, webcamCanvas.height);
+        
+        const dataUrl = webcamCanvas.toDataURL('image/png');
+        if (!dataUrl || dataUrl === 'data:,') {
+            throw new Error("Canvas generated empty image data.");
+        }
+        
+        // Stop camera stream
+        stopWebcam();
+        
+        // Show image preview
+        webcamVideo.style.display = 'none';
+        webcamCapturePreview.src = dataUrl;
+        webcamCapturePreview.style.display = 'block';
+        
+        // Reset buttons back to start state
+        setIdleState();
+        
+        // Bind to the file input
         const file = dataURLtoFile(dataUrl, 'webcam_capture.png');
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         inp.files = dataTransfer.files;
         
         chosen.textContent = "webcam_capture.png (Captured from Webcam)";
-    } catch (e) {
-        console.error("Error creating File from capture: ", e);
+    } catch (err) {
+        alert("Camera capture failed: " + err.message);
+        console.error("Camera capture failed:", err);
     }
 }
 
@@ -389,12 +402,20 @@ inp.addEventListener('change', () => {
 });
 
 function dataURLtoFile(dataurl, filename) {
-    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-    while(n--){
-        u8arr[n] = bstr.charCodeAt(n);
+    try {
+        var arr = dataurl.split(',');
+        if (arr.length < 2) throw new Error("Invalid base64 format");
+        var mimeMatch = arr[0].match(/:(.*?);/);
+        var mime = mimeMatch ? mimeMatch[1] : 'image/png';
+        var bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+        while(n--){
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, {type:mime});
+    } catch (e) {
+        alert("Error converting photo data: " + e.message);
+        throw e;
     }
-    return new File([u8arr], filename, {type:mime});
 }
 
 // AJAX file upload logic

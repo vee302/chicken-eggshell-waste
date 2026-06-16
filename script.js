@@ -606,6 +606,139 @@ if (window.innerWidth <= 768) {
             }
         }
 
+        // Horizontal Swipe & Drag-to-Scroll Benefits with Auto-Scroll Loop (Desktop Only)
+        const bContainer = document.querySelector(".benefits-container");
+        const bTrack = document.querySelector(".benefits-track");
+        if (bContainer && bTrack && window.innerWidth > 1024) {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+            let velocity = 0;
+            let lastX = 0;
+            let lastTime = 0;
+
+            let autoScrollTween = null;
+            let resumeTimeout = null;
+            const speed = 0.20; // 40px per second (elegant, slow-motion speed)
+
+            function stopAutoScroll() {
+                if (autoScrollTween) {
+                    autoScrollTween.kill();
+                    autoScrollTween = null;
+                }
+                if (resumeTimeout) {
+                    clearTimeout(resumeTimeout);
+                    resumeTimeout = null;
+                }
+            }
+
+            function startAutoScroll(fromLeft = bContainer.scrollLeft, goingRight = true) {
+                stopAutoScroll();
+
+                const maxScroll = bContainer.scrollWidth - bContainer.clientWidth;
+                if (maxScroll <= 0) return;
+
+                const target = goingRight ? maxScroll : 0;
+                const distance = Math.abs(target - fromLeft);
+                const duration = distance / (speed * 1000); // dynamic duration based on remaining distance
+
+                autoScrollTween = gsap.to(bContainer, {
+                    scrollLeft: target,
+                    duration: duration > 0 ? duration : 1,
+                    ease: "sine.inOut", // smooth gliding movement
+                    onComplete: () => {
+                        // Reverse direction infinitely at the scroll boundary (loop)
+                        startAutoScroll(bContainer.scrollLeft, !goingRight);
+                    }
+                });
+            }
+
+            // Initialize auto-scroll 1 second after page load for smooth entry
+            setTimeout(() => {
+                startAutoScroll(0, true);
+            }, 1000);
+
+
+            bContainer.addEventListener("mousedown", (e) => {
+                isDown = true;
+                bContainer.style.cursor = "grabbing";
+                startX = e.pageX - bContainer.offsetLeft;
+                scrollLeft = bContainer.scrollLeft;
+
+                stopAutoScroll();
+                gsap.killTweensOf(bContainer); // Terminate active momentum glides
+
+                lastX = e.pageX;
+                lastTime = Date.now();
+                velocity = 0;
+            });
+
+            bContainer.addEventListener("mouseleave", () => {
+                if (!isDown) return;
+                isDown = false;
+                bContainer.style.cursor = "grab";
+                applyMomentumAndResume();
+            });
+
+            bContainer.addEventListener("mouseup", () => {
+                if (!isDown) return;
+                isDown = false;
+                bContainer.style.cursor = "grab";
+                applyMomentumAndResume();
+            });
+
+            bContainer.addEventListener("mousemove", (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - bContainer.offsetLeft;
+
+                // Drag distance
+                const walk = (x - startX) * 1.5; // Drag speed multiplier
+                bContainer.scrollLeft = scrollLeft - walk;
+
+                // Track instant drag velocity for momentum physics
+                const now = Date.now();
+                const elapsed = now - lastTime;
+                if (elapsed > 0) {
+                    const deltaX = e.pageX - lastX;
+                    velocity = deltaX / elapsed;
+                    lastX = e.pageX;
+                    lastTime = now;
+                }
+            });
+
+            function applyMomentumAndResume() {
+                const maxScroll = bContainer.scrollWidth - bContainer.clientWidth;
+                if (Math.abs(velocity) > 0.15) {
+                    const targetScroll = Math.max(0, Math.min(maxScroll, bContainer.scrollLeft - (velocity * 240))); // 240ms deceleration slide projection
+
+                    gsap.to(bContainer, {
+                        scrollLeft: targetScroll,
+                        duration: 0.95,
+                        ease: "power2.out",
+                        overwrite: "auto",
+                        onComplete: () => {
+                            // Queue auto-scroll restart after momentum resolves
+                            queueAutoScrollResume();
+                        }
+                    });
+                } else {
+                    queueAutoScrollResume();
+                }
+            }
+
+            function queueAutoScrollResume() {
+                stopAutoScroll();
+                // Resume gentle auto-scroll after 3 seconds of idle time
+                resumeTimeout = setTimeout(() => {
+                    const maxScroll = bContainer.scrollWidth - bContainer.clientWidth;
+                    // Intelligently decide scroll direction depending on which half the timeline currently is in
+                    const goingRight = bContainer.scrollLeft < maxScroll / 2;
+                    startAutoScroll(bContainer.scrollLeft, goingRight);
+                }, 3000);
+            }
+        }
+
         // Secondary Effects
         gsap.to("#maskRect", {
             attr: { height: 200 },
@@ -781,7 +914,7 @@ if (window.innerWidth <= 768) {
             stagger: 0.1,
             ease: "power2.out",
             scrollTrigger: {
-                trigger: '.benefits-grid',
+                trigger: '.benefits-container',
                 start: 'top 70%',
                 toggleActions: 'play none none none'
             }

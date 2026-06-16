@@ -611,7 +611,7 @@ if (window.innerWidth > 768) {
             stagger: 0.1,
             ease: "power2.out",
             scrollTrigger: {
-                trigger: '.benefits-grid',
+                trigger: '.benefits-container',
                 start: 'top 70%',
                 toggleActions: 'play none none none'
             }
@@ -871,31 +871,6 @@ if (window.innerWidth > 768) {
     }
 
     // ===================================
-    // BENEFITS ACCORDION
-    // ===================================
-
-    function initBenefitsAccordion() {
-        const triggers = document.querySelectorAll('.benefit-accordion-trigger');
-
-        triggers.forEach(trigger => {
-            trigger.addEventListener('click', () => {
-                const item = trigger.closest('.benefit-accordion-item');
-                const isOpen = item.classList.contains('is-open');
-
-                // Close all items first (single-open accordion behavior)
-                document.querySelectorAll('.benefit-accordion-item.is-open').forEach(openItem => {
-                    openItem.classList.remove('is-open');
-                });
-
-                // Toggle clicked item
-                if (!isOpen) {
-                    item.classList.add('is-open');
-                }
-            });
-        });
-    }
-
-    // ===================================
     // INITIALIZE ALL SYSTEMS
     // ===================================
 
@@ -906,7 +881,6 @@ if (window.innerWidth > 768) {
         initSectionReveals();
         initSmoothScroll();
         initCameraCapture();
-        initBenefitsAccordion();
         ScrollTrigger.refresh();
     }
 

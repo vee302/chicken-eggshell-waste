@@ -1155,33 +1155,78 @@ section {
     gap: 2rem;
 }
 
+.benefits-container {
+    position: relative;
+    padding: 2rem 0;
+}
+
+.benefits-track {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    position: relative;
+}
+
+.benefits-track::before {
+    content: '';
+    position: absolute;
+    left: 50px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+}
+
 .benefit-card {
-    padding: 2.5rem;
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    padding: 2.2rem 1.8rem;
     background: var(--white);
     border: 1px solid var(--border-color);
     border-radius: 20px;
-    text-align: center;
+    text-align: left;
     transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .benefit-card:hover {
     border-color: var(--dark-green);
-    transform: translateY(-10px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    transform: translateY(-8px);
+    box-shadow: 0 16px 40px rgba(47, 79, 58, 0.08);
 }
 
-.benefit-icon {
-    font-size: 3rem;
-    margin-bottom: 1.5rem;
+.benefit-marker {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    background: var(--white);
+    border: 3px solid var(--dark-green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
 }
 
-.benefit-card h3 {
+.benefit-number {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--dark-green);
+    font-family: var(--font-display);
+}
+
+.benefit-card-content {
+    flex: 1;
+}
+
+.benefit-card-content h3 {
     font-size: 1.5rem;
     color: var(--dark-green);
     margin-bottom: 1rem;
 }
 
-.benefit-card p {
+.benefit-card-content p {
     color: var(--gray);
     line-height: 1.7;
     font-size: 1.05rem;
@@ -1756,11 +1801,85 @@ section {
         width: 100%;
     }
 
-    /* Benefits padding for floating product visual (jar on the right at 26vw) */
-    .benefits-grid {
-        padding-right: 32% !important;
-        padding-left: 0 !important;
-        grid-template-columns: repeat(2, 1fr) !important;
+    /* Benefits horizontal scrolling (matching timeline layout) */
+    .benefits-section {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        padding: 6rem 0;
+    }
+
+    .benefits-section .container-full {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    .benefits-section .section-header {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+
+    .benefits-container {
+        width: 100%;
+        position: relative;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        /* Firefox */
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .benefits-container::-webkit-scrollbar {
+        display: none;
+        /* Chrome, Safari, Opera */
+    }
+
+    .benefits-container:active {
+        cursor: grabbing;
+    }
+
+    .benefits-track {
+        flex-direction: row !important;
+        display: flex !important;
+        align-items: stretch;
+        gap: 4rem;
+        width: max-content;
+        padding-left: calc((100vw - 380px) / 2);
+        padding-right: calc((100vw - 380px) / 2);
+        position: relative;
+    }
+
+    .benefits-track::before {
+        left: 0;
+        top: 50px;
+        width: 100%;
+        height: 2px;
+        bottom: auto;
+    }
+
+    .benefit-card {
+        flex-direction: column;
+        align-items: center;
+        width: 380px;
+        flex: 0 0 380px;
+        opacity: 1 !important;
+        transform: none !important;
+        text-align: center;
+    }
+
+    .benefit-marker {
+        margin-bottom: 1.5rem;
+    }
+
+    .benefit-card-content {
+        text-align: center;
+        width: 100%;
     }
 
     /* CTA alignment for floating product visual (jar on the right at 18vw) */

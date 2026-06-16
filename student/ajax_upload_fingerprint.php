@@ -62,7 +62,20 @@ if ($file['size'] > $max_bytes) {
     exit;
 }
 
-$filename = 'fp_' . $student_id . '_' . time() . '.' . $ext;
+// Generate a unique trial_id early to use as the filename
+try {
+    $stmt = $pdo->prepare("SELECT MAX(id) FROM fingerprint_tests");
+    $stmt->execute();
+    $max_id = $stmt->fetchColumn() ?: 0;
+    $next_id = $max_id + 1;
+    $trial_id = 'TR-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
+} catch (PDOException $e) {
+    if (ob_get_length()) ob_end_clean();
+    echo json_encode(['success' => false, 'message' => 'Database error generating ID: ' . $e->getMessage()]);
+    exit;
+}
+
+$filename = $trial_id . '.' . $ext;
 $dest_dir = dirname(__DIR__) . '/uploads/fingerprints/';
 if (!is_dir($dest_dir)) {
     @mkdir($dest_dir, 0777, true);
@@ -135,12 +148,6 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
     }
 
     try {
-        // Generate a unique trial_id
-        $stmt = $pdo->prepare("SELECT MAX(id) FROM fingerprint_tests");
-        $stmt->execute();
-        $max_id = $stmt->fetchColumn() ?: 0;
-        $next_id = $max_id + 1;
-        $trial_id = 'TR-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
 
         // Insert trial record
         $stmt = $pdo->prepare("

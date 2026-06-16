@@ -62,6 +62,17 @@ try {
     $stmt->execute($params);
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    foreach ($records as &$rec) {
+        $rec['image_exists'] = false;
+        if (!empty($rec['image_path'])) {
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $rec['image_path'];
+            if (file_exists($filePath)) {
+                $rec['image_exists'] = true;
+            }
+        }
+    }
+    unset($rec);
+
     echo json_encode([
         'success' => true,
         'message' => 'Trial records retrieved successfully.',

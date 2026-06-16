@@ -8,7 +8,16 @@ $faculty_name = $_SESSION['user_name'] ?? 'Faculty Researcher';
 $faculty_id   = $_SESSION['user_id']  ?? 0;
 $message = $error = '';
 
-// Handle Approve / Reject / Needs Revision POST
+// Summary counts
+$total_submissions = $pending = $approved = $rejected = 0;
+try {
+    $total_submissions = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests")->fetchColumn();
+    $pending           = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='pending_validation'")->fetchColumn();
+    $approved          = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='approved'")->fetchColumn();
+    $rejected          = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='rejected'")->fetchColumn();
+} catch (PDOException $e) {}
+
+// Handle Approve / Reject / Needs Revision POST (Fallback if non-JS/direct submit happens, but mainly handled via AJAX)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['test_id'])) {
     $test_id  = (int) $_POST['test_id'];
     $action   = $_POST['action'];
@@ -50,6 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['tes
                 
                 $pdo->commit();
                 $message = 'Submission approved and scored successfully.';
+                // Redirect to avoid double post on manual refresh
+                header("Location: validate_accuracy.php?success=1");
+                exit;
             } catch (PDOException $e) { 
                 $pdo->rollBack();
                 $error = 'Database error: ' . $e->getMessage(); 
@@ -81,12 +93,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['tes
                 
                 $pdo->commit();
                 $message = $success_text;
+                header("Location: validate_accuracy.php?success=2");
+                exit;
             } catch (PDOException $e) { 
                 $pdo->rollBack();
                 $error = 'Database error: ' . $e->getMessage(); 
             }
         }
     }
+}
+
+if (isset($_GET['success'])) {
+    if ($_GET['success'] == 1) $message = 'Submission approved and scored successfully.';
+    if ($_GET['success'] == 2) $message = 'Submission status updated successfully.';
 }
 
 $submissions = [];
@@ -132,6 +151,9 @@ try {
         .alert-msg { padding:.85rem 1.2rem; border-radius:10px; margin-bottom:1.5rem; font-weight:600; font-size:.9rem; }
         .alert-success { background:rgba(82,183,136,.12); color:#2d6a4f; border:1px solid rgba(82,183,136,.3); }
         .alert-error   { background:rgba(224,122,95,.12);  color:#c0392b; border:1px solid rgba(224,122,95,.3); }
+        .stat-card.pending-card::after  { background: #f4a261; }
+        .stat-card.approved-card::after { background: #52b788; }
+        .stat-card.rejected-card::after { background: #e07a5f; }
     </style>
 </head>
 <body>
@@ -179,7 +201,51 @@ try {
                 </div>
             </div>
 
-            <div id="alertContainer"></div>
+            <!-- Initial display of PHP messages if any -->
+            <div id="alertContainer">
+                <?php if ($message): ?>
+                    <div class="alert-msg alert-success"><?= htmlspecialchars($message) ?></div>
+                <?php endif; ?>
+                <?php if ($error): ?>
+                    <div class="alert-msg alert-error"><?= htmlspecialchars($error) ?></div>
+                <?php endif; ?>
+            </div>
+
+            <!-- SUMMARY CARDS -->
+            <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Total Submissions</span>
+                        <div class="stat-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                    </div>
+                    <div class="stat-value" id="val-total-submissions"><?= $total_submissions ?></div>
+                    <div class="stat-desc">Student trial submissions</div>
+                </div>
+                <div class="stat-card pending-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Pending Validation</span>
+                        <div class="stat-icon" style="background:rgba(244,162,97,.12);color:#c97d2a;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                    </div>
+                    <div class="stat-value" id="val-pending" style="color:#c97d2a;"><?= $pending ?></div>
+                    <div class="stat-desc">Awaiting faculty review</div>
+                </div>
+                <div class="stat-card approved-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Approved Records</span>
+                        <div class="stat-icon" style="background:rgba(82,183,136,.12);color:#2d6a4f;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    </div>
+                    <div class="stat-value" id="val-approved" style="color:#2d6a4f;"><?= $approved ?></div>
+                    <div class="stat-desc">Validated and confirmed</div>
+                </div>
+                <div class="stat-card rejected-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Rejected Records</span>
+                        <div class="stat-icon" style="background:rgba(224,122,95,.12);color:#c0392b;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+                    </div>
+                    <div class="stat-value" id="val-rejected" style="color:#c0392b;"><?= $rejected ?></div>
+                    <div class="stat-desc">Returned for revision</div>
+                </div>
+            </div>
 
             <div class="dashboard-card">
                 <div class="table-responsive">
@@ -223,9 +289,9 @@ try {
                                 <td><span class="badge badge-pending">Pending Validation</span></td>
                                 <td style="text-align: right;">
                                     <div class="btn-group" style="display:inline-flex; gap:6px;">
-                                        <button class="btn btn-primary btn-sm" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'approve')">Approve</button>
-                                        <button class="btn btn-danger btn-sm" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'reject')">Reject</button>
-                                        <button class="btn btn-secondary btn-sm" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'needs_revision')">Needs Revision</button>
+                                        <button class="btn btn-primary btn-sm btn-approve-action" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'approve')">Approve</button>
+                                        <button class="btn btn-danger btn-sm btn-reject-action" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'reject')">Reject</button>
+                                        <button class="btn btn-secondary btn-sm btn-revision-action" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'needs_revision')">Needs Revision</button>
                                     </div>
                                 </td>
                             </tr>
@@ -328,6 +394,18 @@ try {
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 let isSubmitting = false;
 
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 function openModal(row, action) {
     const id = row.id;
     document.getElementById('modalTestId').value = id;
@@ -378,7 +456,7 @@ function openModal(row, action) {
         document.getElementById('ai_contrast_lbl').textContent = row.contrast_score !== null ? parseFloat(row.contrast_score).toFixed(1) + '%' : 'N/A';
         document.getElementById('ai_overall_lbl').textContent = row.accuracy_score !== null ? parseFloat(row.accuracy_score).toFixed(1) + '%' : 'N/A';
         
-        const evalDate = row.ai_evaluated_at ? new Date(row.ai_evaluated_at).toLocaleString() : 'N/A';
+        const evalDate = row.ai_evaluated_at ? new Date(row.ai_evaluated_at.replace(/-/g, "/")).toLocaleString() : 'N/A';
         document.getElementById('ai_evaluated_date_lbl').textContent = 'AI evaluation source: ' + (row.evaluation_source || 'AI Preliminary') + ' | Processed: ' + evalDate;
         
         clarityInp.required = true;
@@ -450,7 +528,7 @@ document.getElementById('validationForm').addEventListener('submit', function(e)
     }
 
     const originalText = btn.textContent;
-    btn.textContent = 'Saving...';
+    btn.textContent = action === 'approve' ? 'Approving...' : 'Saving...';
     btn.disabled = true;
     isSubmitting = true;
 
@@ -470,6 +548,7 @@ document.getElementById('validationForm').addEventListener('submit', function(e)
             showNotification('success', data.message);
             closeModal();
             removeTrialRow(testId);
+            refreshFacultyStats();
         } else {
             showNotification('danger', data.message);
         }
@@ -507,7 +586,7 @@ function isAutoRefreshPaused() {
     return isModalActive || isUserTyping || isSubmitting;
 }
 
-function autoRefreshTrials() {
+function refreshPendingTrials() {
     if (isAutoRefreshPaused()) return;
 
     fetch('ajax_get_pending_trials.php')
@@ -529,12 +608,43 @@ function autoRefreshTrials() {
                     }
                 });
 
-                // Add or update rows
+                // Add or update rows without duplicates
                 submissions.forEach(s => {
                     let row = tbody.querySelector(`tr[data-trial-db-id="${s.id}"]`);
+                    
+                    let imageHtml = `
+                        <div style="width:50px;height:50px;border-radius:8px;background:#f4f6f0;display:flex;align-items:center;justify-content:center;">
+                            <span style="font-size:0.65rem;color:var(--danger);font-weight:600;text-align:center;padding:2px;">Image not found</span>
+                        </div>`;
+                    if (s.image_path && s.image_exists) {
+                        imageHtml = `
+                            <a href="../view_fingerprint.php?test_id=${s.id}" target="_blank" class="fp-image-link">
+                                <img src="../view_fingerprint.php?test_id=${s.id}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
+                            </a>`;
+                    }
+
+                    const rowHtml = `
+                        <td style="font-weight: 700; color: var(--dark-green);">${s.trial_id || 'TR-' + String(s.id).padStart(4, '0')}</td>
+                        <td>${escapeHtml(s.student_name || '—')}</td>
+                        <td>${imageHtml}</td>
+                        <td>${escapeHtml(s.image_label || 'Untitled')}</td>
+                        <td style="text-transform:capitalize;">${escapeHtml(s.powder_type || '')}</td>
+                        <td style="text-transform:capitalize;">${escapeHtml(s.surface_type || '')}</td>
+                        <td>${new Date(s.submitted_at.replace(/-/g, "/")).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(s.submitted_at.replace(/-/g, "/")).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
+                        <td><span class="badge badge-pending">Pending Validation</span></td>
+                        <td style="text-align: right;">
+                            <div class="btn-group" style="display:inline-flex; gap:6px;">
+                                <button class="btn btn-primary btn-sm btn-approve-action">Approve</button>
+                                <button class="btn btn-danger btn-sm btn-reject-action">Reject</button>
+                                <button class="btn btn-secondary btn-sm btn-revision-action" style="background:#e07a5f; border-color:#e07a5f; color:#fff;">Needs Revision</button>
+                            </div>
+                        </td>
+                    `;
+
                     if (row) {
-                        // Row exists: update label, powder, surface
+                        // Update existing row
                         row.children[1].textContent = s.student_name || '—';
+                        row.children[2].innerHTML = imageHtml;
                         row.children[3].textContent = s.image_label || 'Untitled';
                         row.children[4].textContent = s.powder_type || '';
                         row.children[5].textContent = s.surface_type || '';
@@ -542,39 +652,19 @@ function autoRefreshTrials() {
                         // Insert new row
                         const tr = document.createElement('tr');
                         tr.setAttribute('data-trial-db-id', s.id);
+                        tr.innerHTML = rowHtml;
                         
-                        let imageHtml = `
-                            <div style="width:50px;height:50px;border-radius:8px;background:#f4f6f0;display:flex;align-items:center;justify-content:center;">
-                                <span style="font-size:0.65rem;color:var(--danger);font-weight:600;text-align:center;padding:2px;">Image not found</span>
-                            </div>`;
-                        if (s.image_path && s.image_exists) {
-                            imageHtml = `
-                                <a href="../view_fingerprint.php?test_id=${s.id}" target="_blank" class="fp-image-link">
-                                    <img src="../view_fingerprint.php?test_id=${s.id}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
-                                </a>`;
-                        }
-
-                        tr.innerHTML = `
-                            <td style="font-weight: 700; color: var(--dark-green);">${s.trial_id || 'TR-' + String(s.id).padStart(4, '0')}</td>
-                            <td>${s.student_name || '—'}</td>
-                            <td>${imageHtml}</td>
-                            <td>${s.image_label || 'Untitled'}</td>
-                            <td style="text-transform:capitalize;">${s.powder_type || ''}</td>
-                            <td style="text-transform:capitalize;">${s.surface_type || ''}</td>
-                            <td>${new Date(s.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(s.submitted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
-                            <td><span class="badge badge-pending">Pending Validation</span></td>
-                            <td style="text-align: right;">
-                                <div class="btn-group" style="display:inline-flex; gap:6px;">
-                                    <button class="btn btn-primary btn-sm" onclick='openModal(${JSON.stringify(s)}, "approve")'>Approve</button>
-                                    <button class="btn btn-danger btn-sm" onclick='openModal(${JSON.stringify(s)}, "reject")'>Reject</button>
-                                    <button class="btn btn-secondary btn-sm" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick='openModal(${JSON.stringify(s)}, "needs_revision")'>Needs Revision</button>
-                                </div>
-                            </td>
-                        `;
-                        // Prepend
                         const noData = tbody.querySelector('.no-data-row');
                         if (noData) noData.remove();
                         tbody.insertBefore(tr, tbody.firstChild);
+                    }
+                    
+                    // Re-bind actions to new or updated buttons
+                    const curr = tbody.querySelector(`tr[data-trial-db-id="${s.id}"]`);
+                    if (curr) {
+                        curr.querySelector('.btn-approve-action').onclick = () => openModal(s, 'approve');
+                        curr.querySelector('.btn-reject-action').onclick = () => openModal(s, 'reject');
+                        curr.querySelector('.btn-revision-action').onclick = () => openModal(s, 'needs_revision');
                     }
                 });
 
@@ -585,13 +675,34 @@ function autoRefreshTrials() {
         });
 }
 
+function refreshFacultyStats() {
+    fetch('ajax_get_faculty_dashboard_stats.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const stats = data.data;
+                const totalVal = document.getElementById('val-total-submissions');
+                const pendingVal = document.getElementById('val-pending');
+                const approvedVal = document.getElementById('val-approved');
+                const rejectedVal = document.getElementById('val-rejected');
+                
+                if (totalVal) totalVal.textContent = stats.total_submissions;
+                if (pendingVal) pendingVal.textContent = stats.pending;
+                if (approvedVal) approvedVal.textContent = stats.approved;
+                if (rejectedVal) rejectedVal.textContent = stats.rejected;
+            }
+        })
+        .catch(err => console.error("Error refreshing stats:", err));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
     const toggle  = document.getElementById('sidebarCollapse');
     if (toggle && sidebar) toggle.addEventListener('click', () => sidebar.classList.toggle('active'));
     
     // Start auto-refresh
-    setInterval(autoRefreshTrials, 10000);
+    setInterval(refreshPendingTrials, 10000);
+    setInterval(refreshFacultyStats, 10000);
 });
 </script>
 </body>

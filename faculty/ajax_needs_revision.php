@@ -22,6 +22,7 @@ if (empty($csrf_token) || !hash_equals($_SESSION['csrf_token'] ?? '', $csrf_toke
 $test_id  = isset($_POST['test_id']) ? (int)$_POST['test_id'] : 0;
 $remarks  = trim($_POST['remarks'] ?? '');
 $faculty_id = $_SESSION['user_id'] ?? 0;
+$faculty_name = $_SESSION['user_name'] ?? 'Faculty Researcher';
 
 if ($test_id <= 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid test ID.']);
@@ -35,6 +36,15 @@ if (empty($remarks)) {
 
 try {
     $pdo->beginTransaction();
+
+    // Verify if test ID is valid
+    $check_stmt = $pdo->prepare("SELECT id FROM fingerprint_tests WHERE id = ?");
+    $check_stmt->execute([$test_id]);
+    if ($check_stmt->rowCount() === 0) {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'message' => 'Trial record not found.']);
+        exit;
+    }
 
     $stmt = $pdo->prepare("
         UPDATE fingerprint_tests 
@@ -51,18 +61,27 @@ try {
     ");
     $stmt->execute([$test_id, $faculty_id, $remarks]);
 
+    // Fetch validated_at timestamp from DB to align timezone/time precisely
+    $time_stmt = $pdo->prepare("SELECT validated_at FROM fingerprint_tests WHERE id = ?");
+    $time_stmt->execute([$test_id]);
+    $validated_at = $time_stmt->fetchColumn();
+
     $pdo->commit();
 
     echo json_encode([
         'success' => true,
-        'message' => 'Submission marked as needs revision and remarks saved.',
+        'message' => 'Trial marked as needs revision successfully.',
         'data' => [
             'test_id' => $test_id,
-            'status' => 'needs_revision'
+            'status' => 'needs_revision',
+            'validated_by' => $faculty_name,
+            'validated_at' => $validated_at
         ]
     ]);
 } catch (PDOException $e) {
-    $pdo->rollBack();
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
 }
 exit;

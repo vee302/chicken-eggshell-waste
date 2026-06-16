@@ -23,8 +23,9 @@ if ($filter_surface) { $where[] = 'ft.surface_type = ?'; $params[] = $filter_sur
 $records = [];
 try {
     $sql = "
-        SELECT ft.*, fr.remarks AS faculty_remarks 
+        SELECT ft.*, fr.remarks AS faculty_remarks, faculty.full_name AS faculty_validator
         FROM fingerprint_tests ft
+        LEFT JOIN users faculty ON ft.validated_by = faculty.id
         LEFT JOIN faculty_remarks fr ON fr.test_id = ft.id AND fr.id = (
             SELECT MAX(fr2.id) FROM faculty_remarks fr2 WHERE fr2.test_id = ft.id
         )
@@ -34,6 +35,16 @@ try {
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($records as &$row) {
+        $row['image_exists'] = false;
+        if (!empty($row['image_path'])) {
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $row['image_path'];
+            if (file_exists($filePath)) {
+                $row['image_exists'] = true;
+            }
+        }
+    }
+    unset($row);
 } catch (PDOException $e) {}
 ?>
 <!DOCTYPE html>
@@ -55,6 +66,31 @@ try {
         .badge-needs_revision { background:rgba(230,57,70,.12); color:#e63946; border:1px solid rgba(230,57,70,.2); }
         .badge-approved { background:rgba(82,183,136,.15); color:#2d6a4f; border:1px solid rgba(82,183,136,.25); }
         .badge-rejected { background:rgba(224,122,95,.15); color:#c0392b; border:1px solid rgba(224,122,95,.2); }
+        
+        .custom-table tbody tr { cursor: pointer; transition: background 0.2s; }
+        .custom-table tbody tr:hover { background: #f9fbf7; }
+
+        /* Detail Modal styling matching super admin */
+        .detail-overlay { display:none; position:fixed; inset:0; background:rgba(27, 67, 50, 0.45); backdrop-filter: blur(4px); z-index:9999; align-items:center; justify-content:center; }
+        .detail-overlay.open { display:flex; }
+        .detail-modal { background:#fff; border-radius:16px; max-width:600px; width:92%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.2); border: 1px solid rgba(27,67,50,0.1); }
+        .detail-modal-header { padding:1.25rem 1.5rem; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:var(--dark-green); color:#fff; }
+        .detail-modal-header h3 { color:#fff; font-size:1.05rem; font-weight:700; margin:0; }
+        .detail-modal-body { padding:1.5rem; }
+        .detail-row { display:flex; gap:.5rem; margin-bottom:.75rem; font-size:.85rem; }
+        .detail-label { min-width:160px; font-weight:600; color:var(--dark-green); }
+        .detail-value { color:#5f5f5f; flex:1; }
+        .modal-close-btn { background:none; border:none; font-size:1.4rem; cursor:pointer; color:#fff; opacity:0.8; line-height:1; }
+        .modal-close-btn:hover { opacity:1; }
+        .section-divider { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#6B8F71; border-bottom:1px solid #D2E2D5; padding-bottom:.35rem; margin:1.25rem 0 .6rem; }
+        .section-divider:first-child { margin-top: 0; }
+        
+        .score-box { background: var(--cream); border-radius:8px; padding:10px 15px; margin-bottom:1rem; border:1px solid rgba(45,106,79,0.08); }
+        .score-title { font-size:0.75rem; font-weight:700; color:var(--medium-green); margin-bottom:6px; text-transform:uppercase; }
+        .score-values { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; text-align:center; }
+        .score-val { font-size:1.15rem; font-weight:800; color:var(--dark-green); }
+        .score-lbl { font-size:0.65rem; color:var(--gray); font-weight:600; text-transform:uppercase; }
+
         @media print {
             .student-sidebar, .student-header, .filter-bar, .btn, .no-print { display:none !important; }
             .student-main { margin-left:0 !important; }
@@ -175,12 +211,12 @@ try {
                             </tr>
                         <?php else: ?>
                             <?php foreach ($records as $i => $r): ?>
-                            <tr data-trial-db-id="<?= $r['id'] ?>">
+                            <tr data-trial-db-id="<?= $r['id'] ?>" onclick='openDetailModal(<?= htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8") ?>)'>
                                 <td style="font-weight: 700; color: var(--dark-green);"><?= htmlspecialchars($r['trial_id'] ?: 'TR-'.str_pad($r['id'], 4, '0', STR_PAD_LEFT)) ?></td>
                                 <td>
                                     <?php if ($r['image_path']): ?>
-                                        <?php if (file_exists(dirname(__DIR__) . '/uploads/fingerprints/'.$r['image_path'])): ?>
-                                            <a href="../view_fingerprint.php?test_id=<?= $r['id'] ?>" target="_blank">
+                                        <?php if ($r['image_exists']): ?>
+                                            <a href="../view_fingerprint.php?test_id=<?= $r['id'] ?>" target="_blank" onclick="event.stopPropagation();">
                                                 <img src="../view_fingerprint.php?test_id=<?= $r['id'] ?>" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
                                             </a>
                                         <?php else: ?>
@@ -236,6 +272,70 @@ try {
         </div>
     </main>
 </div>
+
+<!-- VIEW DETAILS MODAL -->
+<div class="detail-overlay" id="detailOverlay">
+    <div class="detail-modal">
+        <div class="detail-modal-header">
+            <h3 id="modalDetailTitle">Trial Submission Details</h3>
+            <button class="modal-close-btn" onclick="closeDetailModal()">&times;</button>
+        </div>
+        <div class="detail-modal-body">
+            <p class="section-divider">Forensic Submission Details</p>
+            <div class="detail-row"><span class="detail-label">Trial ID</span><span class="detail-value" id="det-trial-id"></span></div>
+            <div class="detail-row"><span class="detail-label">Powder Type Used</span><span class="detail-value" id="det-powder" style="text-transform: capitalize; font-weight: 600;"></span></div>
+            <div class="detail-row"><span class="detail-label">Surface Material Type</span><span class="detail-value" id="det-surface" style="text-transform: capitalize; font-weight: 600;"></span></div>
+            <div class="detail-row"><span class="detail-label">Image Label</span><span class="detail-value" id="det-label"></span></div>
+            <div class="detail-row"><span class="detail-label">Notes from Submission</span><span class="detail-value" id="det-notes"></span></div>
+            <div class="detail-row"><span class="detail-label">Date Submitted</span><span class="detail-value" id="det-submitted-at"></span></div>
+
+            <p class="section-divider">Fingerprint Image Asset</p>
+            <div style="text-align:center; margin-bottom:1rem; border:1px solid #e9ecef; padding:10px; border-radius:8px; background:#fafafa;" id="det-img-wrapper">
+                <img src="" style="max-height:220px; max-width:100%; object-fit:contain; border-radius:6px; border:1px solid #ddd;" alt="Fingerprint" id="det-img">
+            </div>
+
+            <p class="section-divider">Evaluation & Scores</p>
+            <div class="score-box" id="det-score-box">
+                <div class="score-title">Forensic Performance Metrics</div>
+                <div class="score-values">
+                    <div>
+                        <div class="score-val" id="det-clarity">—</div>
+                        <div class="score-lbl">Clarity</div>
+                    </div>
+                    <div>
+                        <div class="score-val" id="det-visibility">—</div>
+                        <div class="score-lbl">Visibility</div>
+                    </div>
+                    <div>
+                        <div class="score-val" id="det-adhesion">—</div>
+                        <div class="score-lbl">Adhesion</div>
+                    </div>
+                    <div>
+                        <div class="score-val" id="det-contrast">—</div>
+                        <div class="score-lbl">Contrast</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-row" id="det-ai-row" style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green); margin-bottom: 0.5rem;">
+                <span class="detail-label" style="font-weight: 700;">AI Preliminary Score</span>
+                <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;" id="det-ai-score">—</span>
+            </div>
+            
+            <div class="detail-row" id="det-faculty-row" style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green);">
+                <span class="detail-label" style="font-weight: 700;">Faculty Final Score</span>
+                <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;" id="det-faculty-score">—</span>
+            </div>
+
+            <p class="section-divider" id="det-validation-divider">Validation Details</p>
+            <div class="detail-row" id="det-status-row"><span class="detail-label">Validation Status</span><span class="detail-value" id="det-status"></span></div>
+            <div class="detail-row" id="det-reviewer-row"><span class="detail-label">Faculty Reviewer</span><span class="detail-value" id="det-reviewer" style="font-weight: 600;"></span></div>
+            <div class="detail-row" id="det-validated-date-row"><span class="detail-label">Review Date</span><span class="detail-value" id="det-validated-at"></span></div>
+            <div class="detail-row" id="det-remarks-row"><span class="detail-label">Remarks from Reviewer</span><span class="detail-value" id="det-remarks" style="font-style: italic;"></span></div>
+        </div>
+    </div>
+</div>
+
 <?php require_once '_sidebar_js.php'; ?>
 <script>
 let isFetching = false;
@@ -249,7 +349,7 @@ function escapeHtml(text) {
         '"': '&quot;',
         "'": '&#039;'
     };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
 function getBadgeClass(status) {
@@ -348,7 +448,7 @@ function renderRecordsTable(records) {
         if (r.image_path) {
             if (r.image_exists) {
                 imageHtml = `
-                    <a href="../view_fingerprint.php?test_id=${r.id}" target="_blank">
+                    <a href="../view_fingerprint.php?test_id=${r.id}" target="_blank" onclick="event.stopPropagation();">
                         <img src="../view_fingerprint.php?test_id=${r.id}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
                     </a>`;
             } else {
@@ -369,6 +469,7 @@ function renderRecordsTable(records) {
 
         if (row) {
             // Update row fields
+            row.children[1].innerHTML = imageHtml;
             row.children[2].textContent = r.image_label || 'Untitled';
             row.children[3].textContent = r.powder_type || '';
             row.children[4].textContent = r.surface_type || '';
@@ -390,24 +491,100 @@ function renderRecordsTable(records) {
                 <td><strong>${scoreText}</strong></td>
                 <td style="min-width:120px;">${scoreBarHtml}</td>
                 <td><span class="badge ${getBadgeClass(r.status)}">${getStatusLabel(r.status)}</span></td>
-                <td>${new Date(r.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(r.submitted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
+                <td>${new Date(r.submitted_at.replace(/-/g, "/")).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(r.submitted_at.replace(/-/g, "/")).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
                 <td style="font-size:.82rem; color:#5f5f5f; max-width:180px;">${remarksHtml}</td>
             `;
             const noData = tbody.querySelector('.no-data-row');
             if (noData) noData.remove();
             tbody.insertBefore(tr, tbody.firstChild);
         }
+        
+        // Update/bind row click listener
+        const trNode = tbody.querySelector(`tr[data-trial-db-id="${r.id}"]`);
+        if (trNode) {
+            trNode.onclick = () => openDetailModal(r);
+        }
     });
 }
 
+function openDetailModal(row) {
+    document.getElementById('det-trial-id').textContent = row.trial_id || 'TR-' + String(row.id).padStart(4, '0');
+    document.getElementById('det-powder').textContent = row.powder_type || '';
+    document.getElementById('det-surface').textContent = row.surface_type || '';
+    document.getElementById('det-label').textContent = row.image_label || 'Untitled';
+    document.getElementById('det-notes').innerHTML = row.notes ? escapeHtml(row.notes).replace(/\n/g, '<br>') : 'No notes provided.';
+    document.getElementById('det-submitted-at').textContent = new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString();
+
+    const imgWrapper = document.getElementById('det-img-wrapper');
+    const img = document.getElementById('det-img');
+    if (row.image_path && row.image_exists) {
+        img.src = '../view_fingerprint.php?test_id=' + row.id;
+        imgWrapper.style.display = 'block';
+    } else {
+        imgWrapper.style.display = 'none';
+    }
+
+    // Performance Metrics
+    document.getElementById('det-clarity').textContent = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score).toFixed(1) + '%' : '—';
+    document.getElementById('det-visibility').textContent = row.visibility_score !== null ? parseFloat(row.visibility_score).toFixed(1) + '%' : '—';
+    document.getElementById('det-adhesion').textContent = row.adhesion_score !== null ? parseFloat(row.adhesion_score).toFixed(1) + '%' : '—';
+    document.getElementById('det-contrast').textContent = row.contrast_score !== null ? parseFloat(row.contrast_score).toFixed(1) + '%' : '—';
+
+    // AI score
+    document.getElementById('det-ai-score').textContent = row.ai_accuracy_score !== null ? parseFloat(row.ai_accuracy_score).toFixed(1) + '%' : 'Awaiting AI Evaluation';
+    
+    // Faculty Final Score
+    if (row.status === 'approved' && row.faculty_final_score !== null) {
+        document.getElementById('det-faculty-score').textContent = parseFloat(row.faculty_final_score).toFixed(1) + '%';
+        document.getElementById('det-faculty-row').style.display = 'flex';
+    } else if (row.status === 'pending_validation') {
+        document.getElementById('det-faculty-score').textContent = 'Awaiting Validation';
+        document.getElementById('det-faculty-row').style.display = 'flex';
+    } else {
+        document.getElementById('det-faculty-row').style.display = 'none';
+    }
+
+    // Validation Details
+    document.getElementById('det-status').innerHTML = `<span class="badge ${getBadgeClass(row.status)}">${getStatusLabel(row.status)}</span>`;
+    
+    const reviewerRow = document.getElementById('det-reviewer-row');
+    const validatedDateRow = document.getElementById('det-validated-date-row');
+    const remarksRow = document.getElementById('det-remarks-row');
+
+    if (row.status === 'pending_validation') {
+        reviewerRow.style.display = 'none';
+        validatedDateRow.style.display = 'none';
+        remarksRow.style.display = 'none';
+    } else {
+        reviewerRow.style.display = 'flex';
+        validatedDateRow.style.display = 'flex';
+        remarksRow.style.display = 'flex';
+
+        document.getElementById('det-reviewer').textContent = row.faculty_validator || 'Faculty Reviewer';
+        document.getElementById('det-validated-at').textContent = row.validated_at ? new Date(row.validated_at.replace(/-/g, "/")).toLocaleString() : '—';
+        document.getElementById('det-remarks').innerHTML = row.faculty_remarks ? escapeHtml(row.faculty_remarks).replace(/\n/g, '<br>') : 'No evaluation remarks submitted.';
+    }
+
+    document.getElementById('detailOverlay').classList.add('open');
+}
+
+function closeDetailModal() {
+    document.getElementById('detailOverlay').classList.remove('open');
+}
+
+// Close modal when clicking outside content
+document.getElementById('detailOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('detailOverlay')) closeDetailModal();
+});
+
 function isAutoRefreshPaused() {
-    // Pause if user is interacting with filters
+    const isModalOpen = document.getElementById('detailOverlay').classList.contains('open');
     const isUserTyping = document.activeElement && (
         document.activeElement.tagName === 'INPUT' || 
         document.activeElement.tagName === 'TEXTAREA' || 
         document.activeElement.tagName === 'SELECT'
     );
-    return isUserTyping || isFetching;
+    return isModalOpen || isUserTyping || isFetching;
 }
 
 function autoRefreshStudentRecords() {
@@ -438,6 +615,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('filter-powder').value = '';
         document.getElementById('filter-surface').value = '';
         fetchFilteredRecords();
+    });
+
+    // Initialize click handlers on page load
+    const rows = document.querySelectorAll('#recordsTableBody tr[data-trial-db-id]');
+    rows.forEach(r => {
+        const rowData = <?php echo json_encode($records); ?>;
+        const id = parseInt(r.getAttribute('data-trial-db-id'));
+        const matchingRec = rowData.find(item => parseInt(item.id) === id);
+        if (matchingRec) {
+            r.onclick = () => openDetailModal(matchingRec);
+        }
     });
 
     // 10s auto-refresh

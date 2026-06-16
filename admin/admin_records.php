@@ -58,7 +58,18 @@ $stmt = $pdo->prepare($query_str);
 $stmt->execute($params);
 $trial_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// View detail of a single record
+foreach ($trial_records as &$rec) {
+    $rec['image_exists'] = false;
+    if (!empty($rec['image_path'])) {
+        $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $rec['image_path'];
+        if (file_exists($filePath)) {
+            $rec['image_exists'] = true;
+        }
+    }
+}
+unset($rec);
+
+// View detail of a single record (Initial URL check)
 $view_record = null;
 if (isset($_GET['view'])) {
     $v_id = intval($_GET['view']);
@@ -110,6 +121,9 @@ if (isset($_GET['view'])) {
         .score-lbl { font-size:0.65rem; color:var(--gray); font-weight:600; text-transform:uppercase; }
 
         .warning-banner { background:rgba(244,162,97,0.12); color:#c87b1c; padding:10px 15px; border-radius:8px; border:1.5px solid rgba(244,162,97,0.2); font-size:0.8rem; font-weight:600; margin-bottom:1.25rem; display:flex; gap:8px; align-items:center; }
+        
+        #adminRecordsTableBody tr { cursor: pointer; }
+        #adminRecordsTableBody tr:hover { background-color: #f8faf6; }
     </style>
 </head>
 
@@ -173,7 +187,7 @@ if (isset($_GET['view'])) {
 
                 <!-- SEARCH AND FILTERS -->
                 <div class="dashboard-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-                    <form id="filterForm" class="search-filter-bar" onsubmit="event.preventDefault(); fetchFilteredRecords();">
+                    <form id="filterForm" class="search-filter-bar">
                         <div class="bar-left">
                             <input type="text" name="student" id="filter-student" class="form-control-inline"
                                 placeholder="Filter by Student Name..."
@@ -228,10 +242,10 @@ if (isset($_GET['view'])) {
                                     <th style="text-align: right;">Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="adminRecordsTableBody">
                                 <?php if (count($trial_records) > 0): ?>
                                     <?php foreach ($trial_records as $rec): ?>
-                                        <tr>
+                                        <tr data-trial-db-id="<?php echo $rec['id']; ?>">
                                             <td style="font-weight: 700; color: var(--dark-green);"><?php echo htmlspecialchars($rec['trial_id'] ?: 'TR-'.str_pad($rec['id'], 4, '0', STR_PAD_LEFT)); ?></td>
                                             <td style="font-weight: 600;"><?php echo htmlspecialchars($rec['student_name']); ?></td>
                                             <td>
@@ -243,8 +257,8 @@ if (isset($_GET['view'])) {
                                             <td>
                                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                                     <div style="width: 32px; height: 32px; border-radius: 4px; background: #e9ecef; border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                                        <?php if (!empty($rec['image_path']) && file_exists(dirname(__DIR__) . '/uploads/fingerprints/' . $rec['image_path'])): ?>
-                                                            <a href="../view_fingerprint.php?test_id=<?php echo $rec['id']; ?>" target="_blank">
+                                                        <?php if (!empty($rec['image_path']) && $rec['image_exists']): ?>
+                                                            <a href="../view_fingerprint.php?test_id=<?php echo $rec['id']; ?>" target="_blank" onclick="event.stopPropagation();">
                                                                 <img src="../view_fingerprint.php?test_id=<?php echo $rec['id']; ?>" style="width: 100%; height: 100%; object-fit: cover;" alt="Fingerprint">
                                                             </a>
                                                         <?php else: ?>
@@ -294,19 +308,14 @@ if (isset($_GET['view'])) {
                                                 </span>
                                             </td>
                                             <td style="text-align: right;">
-                                                <a href="admin_records.php?view=<?php echo $rec['id']; ?><?php 
-                                                    echo !empty($search_student) ? '&student='.urlencode($search_student) : '';
-                                                    echo !empty($filter_powder) ? '&powder='.urlencode($filter_powder) : '';
-                                                    echo !empty($filter_surface) ? '&surface='.urlencode($filter_surface) : '';
-                                                    echo !empty($filter_status) ? '&status='.urlencode($filter_status) : '';
-                                                ?>" class="btn btn-secondary btn-sm">
+                                                <button type="button" class="btn btn-secondary btn-sm btn-view-details">
                                                     <span>View Details</span>
-                                                </a>
+                                                </button>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <tr>
+                                    <tr class="no-data-row">
                                         <td colspan="10" style="text-align: center; color: var(--gray); padding: 2rem;">No trial records match filter options.</td>
                                     </tr>
                                 <?php endif; ?>
@@ -319,12 +328,11 @@ if (isset($_GET['view'])) {
     </div>
 
     <!-- VIEW RECORD MODAL -->
-    <?php if ($view_record): ?>
-    <div class="detail-overlay open" id="recordOverlay">
+    <div class="detail-overlay <?php echo $view_record ? 'open' : ''; ?>" id="recordOverlay">
         <div class="detail-modal">
             <div class="detail-modal-header">
-                <h3>Trial Record Details: ID #<?php echo htmlspecialchars($view_record['trial_id'] ?: 'TR-'.str_pad($view_record['id'], 4, '0', STR_PAD_LEFT)); ?></h3>
-                <button class="modal-close-btn" onclick="document.getElementById('recordOverlay').classList.remove('open')">&times;</button>
+                <h3 id="det-modal-title">Trial Record Details</h3>
+                <button class="modal-close-btn" onclick="closeDetailModal()">&times;</button>
             </div>
             <div class="detail-modal-body">
                 <div class="warning-banner">
@@ -337,22 +345,16 @@ if (isset($_GET['view'])) {
                 </div>
 
                 <p class="section-divider">Forensic Submission Details</p>
-                <div class="detail-row"><span class="detail-label">Student Submitter</span><span class="detail-value"><?php echo htmlspecialchars($view_record['student_name']); ?></span></div>
-                <div class="detail-row"><span class="detail-label">Powder Type Used</span><span class="detail-value" style="text-transform: capitalize; font-weight: 600;"><?php echo htmlspecialchars($view_record['powder_type']); ?></span></div>
-                <div class="detail-row"><span class="detail-label">Surface Material Type</span><span class="detail-value" style="text-transform: capitalize; font-weight: 600;"><?php echo htmlspecialchars($view_record['surface_type']); ?></span></div>
-                <div class="detail-row"><span class="detail-label">Image Label</span><span class="detail-value"><?php echo htmlspecialchars($view_record['image_label'] ?: 'Untitled'); ?></span></div>
-                <div class="detail-row"><span class="detail-label">Notes from Submission</span><span class="detail-value"><?php echo nl2br(htmlspecialchars($view_record['notes'] ?: 'No notes provided.')); ?></span></div>
-                <div class="detail-row"><span class="detail-label">Date Submitted</span><span class="detail-value"><?php echo date('F d, Y g:i A', strtotime($view_record['submitted_at'])); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Student Submitter</span><span class="detail-value" id="det-student">—</span></div>
+                <div class="detail-row"><span class="detail-label">Powder Type Used</span><span class="detail-value" id="det-powder" style="text-transform: capitalize; font-weight: 600;">—</span></div>
+                <div class="detail-row"><span class="detail-label">Surface Material Type</span><span class="detail-value" id="det-surface" style="text-transform: capitalize; font-weight: 600;">—</span></div>
+                <div class="detail-row"><span class="detail-label">Image Label</span><span class="detail-value" id="det-label">—</span></div>
+                <div class="detail-row"><span class="detail-label">Notes from Submission</span><span class="detail-value" id="det-notes">—</span></div>
+                <div class="detail-row"><span class="detail-label">Date Submitted</span><span class="detail-value" id="det-submitted-at">—</span></div>
 
                 <p class="section-divider">Fingerprint Image Asset</p>
-                <div style="text-align:center; margin-bottom:1rem; border:1px solid #e9ecef; padding:10px; border-radius:8px; background:#fafafa;">
-                    <?php if (!empty($view_record['image_path']) && file_exists(dirname(__DIR__) . '/uploads/fingerprints/'.$view_record['image_path'])): ?>
-                        <a href="../view_fingerprint.php?test_id=<?php echo $view_record['id']; ?>" target="_blank">
-                            <img src="../view_fingerprint.php?test_id=<?php echo $view_record['id']; ?>" style="max-height:220px; max-width:100%; object-fit:contain; border-radius:6px; border:1px solid #ddd;" alt="Fingerprint Image Asset">
-                        </a>
-                    <?php else: ?>
-                        <div style="padding:2rem; background:#f4f6f0; border-radius:6px; font-weight:600; color:var(--danger);">Image not found</div>
-                    <?php endif; ?>
+                <div style="text-align:center; margin-bottom:1rem; border:1px solid #e9ecef; padding:10px; border-radius:8px; background:#fafafa;" id="det-img-wrapper">
+                    <img src="" style="max-height:220px; max-width:100%; object-fit:contain; border-radius:6px; border:1px solid #ddd;" alt="Fingerprint Image Asset" id="det-img">
                 </div>
 
                 <p class="section-divider">Automated Image Evaluation Scores</p>
@@ -360,56 +362,306 @@ if (isset($_GET['view'])) {
                     <div class="score-title">Individual Forensic Performance Metrics</div>
                     <div class="score-values">
                         <div>
-                            <div class="score-val"><?php echo $view_record['ridge_clarity_score'] !== null ? number_format($view_record['ridge_clarity_score'], 1) . '%' : '—'; ?></div>
+                            <div class="score-val" id="det-clarity">—</div>
                             <div class="score-lbl">Clarity</div>
                         </div>
                         <div>
-                            <div class="score-val"><?php echo $view_record['visibility_score'] !== null ? number_format($view_record['visibility_score'], 1) . '%' : '—'; ?></div>
+                            <div class="score-val" id="det-visibility">—</div>
                             <div class="score-lbl">Visibility</div>
                         </div>
                         <div>
-                            <div class="score-val"><?php echo $view_record['adhesion_score'] !== null ? number_format($view_record['adhesion_score'], 1) . '%' : '—'; ?></div>
+                            <div class="score-val" id="det-adhesion">—</div>
                             <div class="score-lbl">Adhesion</div>
                         </div>
                         <div>
-                            <div class="score-val"><?php echo $view_record['contrast_score'] !== null ? number_format($view_record['contrast_score'], 1) . '%' : '—'; ?></div>
+                            <div class="score-val" id="det-contrast">—</div>
                             <div class="score-lbl">Contrast</div>
                         </div>
                     </div>
                 </div>
                 <div class="detail-row" style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green); margin-bottom: 0.5rem;">
                     <span class="detail-label" style="font-weight: 700;">AI Preliminary Score</span>
-                    <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;"><?php echo $view_record['ai_accuracy_score'] !== null ? number_format($view_record['ai_accuracy_score'], 1) . '%' : 'Awaiting AI Evaluation'; ?></span>
+                    <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;" id="det-ai-score">—</span>
                 </div>
                 <div class="detail-row" style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green);">
                     <span class="detail-label" style="font-weight: 700;">Faculty Final Score</span>
-                    <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;"><?php echo $view_record['faculty_final_score'] !== null ? number_format($view_record['faculty_final_score'], 1) . '%' : ($view_record['status'] === 'pending_validation' ? 'Awaiting Validation' : '—'); ?></span>
+                    <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;" id="det-faculty-score">—</span>
                 </div>
 
                 <p class="section-divider">Validation Details</p>
-                <div class="detail-row"><span class="detail-label">Validation Status</span><span class="detail-value">
-                    <span class="badge-<?php echo $view_record['status']; ?>">
-                        <?php 
-                            if ($view_record['status'] === 'pending_validation') {
-                                echo 'Pending Validation';
-                            } elseif ($view_record['status'] === 'needs_revision') {
-                                echo 'Needs Revision';
-                            } else {
-                                echo ucfirst($view_record['status']);
-                            }
-                        ?>
-                    </span>
-                </span></div>
-                <div class="detail-row"><span class="detail-label">Faculty Reviewer</span><span class="detail-value" style="font-weight: 600;"><?php echo htmlspecialchars($view_record['validator_name'] ?: 'Awaiting Review'); ?></span></div>
-                <div class="detail-row"><span class="detail-label">Review Date</span><span class="detail-value"><?php echo $view_record['validation_date'] ? date('F d, Y g:i A', strtotime($view_record['validation_date'])) : '—'; ?></span></div>
-                <div class="detail-row"><span class="detail-label">Remarks from Reviewer</span><span class="detail-value" style="font-style: italic;"><?php echo nl2br(htmlspecialchars($view_record['validation_remarks'] ?: 'No evaluation remarks submitted yet.')); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Validation Status</span><span class="detail-value" id="det-status">—</span></div>
+                <div class="detail-row"><span class="detail-label">Faculty Reviewer</span><span class="detail-value" id="det-reviewer" style="font-weight: 600;">—</span></div>
+                <div class="detail-row"><span class="detail-label">Review Date</span><span class="detail-value" id="det-validated-at">—</span></div>
+                <div class="detail-row"><span class="detail-label">Remarks from Reviewer</span><span class="detail-value" id="det-remarks" style="font-style: italic;">—</span></div>
             </div>
         </div>
     </div>
-    <?php endif; ?>
 
     <!-- JS Toggles -->
     <script>
+        let currentRecords = <?php echo json_encode($trial_records); ?>;
+        let isFetching = false;
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        function getStatusLabel(status) {
+            if (status === 'pending_validation') return 'Pending Validation';
+            if (status === 'needs_revision') return 'Needs Revision';
+            return status.charAt(0).toUpperCase() + status.slice(1);
+        }
+
+        function fetchFilteredRecords() {
+            if (isFetching) return;
+            
+            const student = document.getElementById('filter-student').value;
+            const powder = document.getElementById('filter-powder').value;
+            const surface = document.getElementById('filter-surface').value;
+            const status = document.getElementById('filter-status').value;
+            
+            // Toggle Clear Filters button visibility
+            const clearBtn = document.getElementById('btnClearFilters');
+            if (student || powder || surface || status) {
+                clearBtn.style.display = 'inline-block';
+            } else {
+                clearBtn.style.display = 'none';
+            }
+
+            isFetching = true;
+            
+            // Update Address Bar Query Params
+            const url = new URL(window.location);
+            if (student) url.searchParams.set('student', student); else url.searchParams.delete('student');
+            if (powder) url.searchParams.set('powder', powder); else url.searchParams.delete('powder');
+            if (surface) url.searchParams.set('surface', surface); else url.searchParams.delete('surface');
+            if (status) url.searchParams.set('status', status); else url.searchParams.delete('status');
+            window.history.pushState({}, '', url);
+
+            fetch(`ajax_get_trial_records.php?student=${encodeURIComponent(student)}&powder=${encodeURIComponent(powder)}&surface=${encodeURIComponent(surface)}&status=${encodeURIComponent(status)}`)
+                .then(res => res.json())
+                .then(data => {
+                    isFetching = false;
+                    if (data.success) {
+                        currentRecords = data.data.records;
+                        renderRecordsTable(currentRecords);
+                    }
+                })
+                .catch(err => {
+                    isFetching = false;
+                });
+        }
+
+        function renderRecordsTable(records) {
+            const tbody = document.getElementById('adminRecordsTableBody');
+            
+            if (records.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="no-data-row">
+                        <td colspan="10" style="text-align: center; color: var(--gray); padding: 2rem;">No trial records match filter options.</td>
+                    </tr>`;
+                return;
+            }
+
+            const existingRows = Array.from(tbody.querySelectorAll('tr[data-trial-db-id]'));
+            const existingIds = existingRows.map(row => parseInt(row.getAttribute('data-trial-db-id')));
+            const newIds = records.map(r => parseInt(r.id));
+
+            // Remove rows no longer matching
+            existingRows.forEach(row => {
+                const id = parseInt(row.getAttribute('data-trial-db-id'));
+                if (!newIds.includes(id)) {
+                    row.remove();
+                }
+            });
+
+            // Add or update rows
+            records.forEach(r => {
+                let row = tbody.querySelector(`tr[data-trial-db-id="${r.id}"]`);
+                
+                let imageHtml = '<div style="font-size:0.55rem;color:var(--danger);font-weight:700;text-align:center;padding:1px;line-height:1.1;">Not found</div>';
+                if (r.image_path) {
+                    if (r.image_exists) {
+                        imageHtml = `
+                            <a href="../view_fingerprint.php?test_id=${r.id}" target="_blank" onclick="event.stopPropagation();">
+                                <img src="../view_fingerprint.php?test_id=${r.id}" style="width: 100%; height: 100%; object-fit: cover;" alt="Fingerprint">
+                            </a>`;
+                    }
+                }
+
+                let accuracyHtml = '<span style="font-size:0.75rem; color:var(--gray); font-style:italic;">N/A</span>';
+                if (r.status === 'approved' && r.accuracy_score !== null) {
+                    const pct = parseFloat(r.accuracy_score);
+                    const color = (pct >= 90) ? 'var(--medium-green)' : ((pct >= 80) ? 'var(--accent-green)' : 'var(--warning)');
+                    accuracyHtml = `
+                        <div style="width: 50px; background-color: var(--light-gray); height: 6px; border-radius: 3px; overflow:hidden;">
+                            <div style="width: ${pct}%; height: 100%; background-color: ${color};"></div>
+                        </div>
+                        <span style="font-weight: 700; color: var(--dark-green);">${pct.toFixed(1)}%</span>`;
+                } else if (r.status === 'pending_validation') {
+                    accuracyHtml = '<span style="font-size:0.75rem; color:var(--gray); font-style:italic;">Awaiting Validation</span>';
+                } else if (r.status === 'needs_revision') {
+                    accuracyHtml = '<span style="font-size:0.75rem; color:var(--gray); font-style:italic;">Needs Revision</span>';
+                } else if (r.status === 'rejected') {
+                    accuracyHtml = '<span style="font-size:0.75rem; color:var(--gray); font-style:italic;">Rejected</span>';
+                }
+
+                const powderColor = (r.powder_type === 'eggshell') ? 'var(--medium-green)' : 'var(--gray)';
+
+                const trHtml = `
+                    <td style="font-weight: 700; color: var(--dark-green);">${r.trial_id || 'TR-' + String(r.id).padStart(4, '0')}</td>
+                    <td style="font-weight: 600;">${escapeHtml(r.student_name)}</td>
+                    <td>
+                        <span style="color: ${powderColor}; font-weight: 600; text-transform: capitalize;">
+                            ${escapeHtml(r.powder_type)}
+                        </span>
+                    </td>
+                    <td style="text-transform: capitalize; font-weight: 500;">${escapeHtml(r.surface_type)}</td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 32px; height: 32px; border-radius: 4px; background: #e9ecef; border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                ${imageHtml}
+                            </div>
+                            <span style="font-family: monospace; font-size: 0.75rem; color: var(--gray);">
+                                ${escapeHtml(r.image_path || 'placeholder.jpg')}
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            ${accuracyHtml}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge-${r.status}">
+                            ${getStatusLabel(r.status)}
+                        </span>
+                    </td>
+                    <td>${new Date(r.submitted_at.replace(/-/g, "/")).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(r.submitted_at.replace(/-/g, "/")).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
+                    <td>
+                        <span style="font-weight: 600; color: #5f5f5f;">
+                            ${escapeHtml(r.validator_name || 'Not yet validated')}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <button type="button" class="btn btn-secondary btn-sm btn-view-details">
+                            <span>View Details</span>
+                        </button>
+                    </td>
+                `;
+
+                if (row) {
+                    row.innerHTML = trHtml;
+                } else {
+                    const tr = document.createElement('tr');
+                    tr.setAttribute('data-trial-db-id', r.id);
+                    tr.innerHTML = trHtml;
+                    
+                    const noData = tbody.querySelector('.no-data-row');
+                    if (noData) noData.remove();
+                    tbody.insertBefore(tr, tbody.firstChild);
+                }
+                
+                // Bind click actions
+                const trNode = tbody.querySelector(`tr[data-trial-db-id="${r.id}"]`);
+                if (trNode) {
+                    trNode.onclick = () => openDetailModal(r);
+                    trNode.querySelector('.btn-view-details').onclick = (e) => {
+                        e.stopPropagation();
+                        openDetailModal(r);
+                    };
+                }
+            });
+        }
+
+        function openDetailModal(row) {
+            document.getElementById('det-modal-title').textContent = 'Trial Record Details: ID #' + (row.trial_id || 'TR-' + String(row.id).padStart(4, '0'));
+            document.getElementById('det-student').textContent = row.student_name || '—';
+            document.getElementById('det-powder').textContent = row.powder_type || '—';
+            document.getElementById('det-surface').textContent = row.surface_type || '—';
+            document.getElementById('det-label').textContent = row.image_label || 'Untitled';
+            document.getElementById('det-notes').innerHTML = row.notes ? escapeHtml(row.notes).replace(/\n/g, '<br>') : 'No notes provided.';
+            document.getElementById('det-submitted-at').textContent = new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString();
+
+            const imgWrapper = document.getElementById('det-img-wrapper');
+            const img = document.getElementById('det-img');
+            if (row.image_path && row.image_exists) {
+                img.src = '../view_fingerprint.php?test_id=' + row.id;
+                imgWrapper.style.display = 'block';
+            } else {
+                imgWrapper.style.display = 'none';
+            }
+
+            // Metrics
+            document.getElementById('det-clarity').textContent = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score).toFixed(1) + '%' : '—';
+            document.getElementById('det-visibility').textContent = row.visibility_score !== null ? parseFloat(row.visibility_score).toFixed(1) + '%' : '—';
+            document.getElementById('det-adhesion').textContent = row.adhesion_score !== null ? parseFloat(row.adhesion_score).toFixed(1) + '%' : '—';
+            document.getElementById('det-contrast').textContent = row.contrast_score !== null ? parseFloat(row.contrast_score).toFixed(1) + '%' : '—';
+
+            document.getElementById('det-ai-score').textContent = row.ai_accuracy_score !== null ? parseFloat(row.ai_accuracy_score).toFixed(1) + '%' : 'Awaiting AI Evaluation';
+            
+            if (row.status === 'approved' && row.faculty_final_score !== null) {
+                document.getElementById('det-faculty-score').textContent = parseFloat(row.faculty_final_score).toFixed(1) + '%';
+            } else if (row.status === 'pending_validation') {
+                document.getElementById('det-faculty-score').textContent = 'Awaiting Validation';
+            } else {
+                document.getElementById('det-faculty-score').textContent = '—';
+            }
+
+            // Validation Details
+            document.getElementById('det-status').innerHTML = `<span class="badge-${row.status}">${getStatusLabel(row.status)}</span>`;
+            document.getElementById('det-reviewer').textContent = row.validator_name || 'Awaiting Review';
+            document.getElementById('det-validated-at').textContent = row.validation_date ? new Date(row.validation_date.replace(/-/g, "/")).toLocaleString() : '—';
+            document.getElementById('det-remarks').innerHTML = row.validation_remarks ? escapeHtml(row.validation_remarks).replace(/\n/g, '<br>') : 'No evaluation remarks submitted yet.';
+
+            document.getElementById('recordOverlay').classList.add('open');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('recordOverlay').classList.remove('open');
+        }
+
+        // Close modal when clicking outside content
+        document.getElementById('recordOverlay').addEventListener('click', e => {
+            if (e.target === document.getElementById('recordOverlay')) closeDetailModal();
+        });
+
+        function isAutoRefreshPaused() {
+            const isModalOpen = document.getElementById('recordOverlay').classList.contains('open');
+            const isUserTyping = document.activeElement && (
+                document.activeElement.tagName === 'INPUT' || 
+                document.activeElement.tagName === 'TEXTAREA' || 
+                document.activeElement.tagName === 'SELECT'
+            );
+            return isModalOpen || isUserTyping || isFetching;
+        }
+
+        function autoRefreshAdminRecords() {
+            if (isAutoRefreshPaused()) return;
+            
+            const student = document.getElementById('filter-student').value;
+            const powder = document.getElementById('filter-powder').value;
+            const surface = document.getElementById('filter-surface').value;
+            const status = document.getElementById('filter-status').value;
+
+            fetch(`ajax_get_trial_records.php?student=${encodeURIComponent(student)}&powder=${encodeURIComponent(powder)}&surface=${encodeURIComponent(surface)}&status=${encodeURIComponent(status)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        currentRecords = data.data.records;
+                        renderRecordsTable(currentRecords);
+                    }
+                });
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             const sidebar = document.getElementById("sidebar");
             const toggleBtn = document.getElementById("sidebarCollapse");
@@ -428,6 +680,46 @@ if (isset($_GET['view'])) {
                     }
                 });
             }
+
+            // Hook filters form submission
+            document.getElementById('filterForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                fetchFilteredRecords();
+            });
+
+            // Handle clear filters
+            document.getElementById('btnClearFilters').addEventListener('click', () => {
+                document.getElementById('filter-student').value = '';
+                document.getElementById('filter-powder').value = '';
+                document.getElementById('filter-surface').value = '';
+                document.getElementById('filter-status').value = '';
+                fetchFilteredRecords();
+            });
+
+            // Bind click handlers to initial rows on page load
+            const rows = document.querySelectorAll('#adminRecordsTableBody tr[data-trial-db-id]');
+            rows.forEach(r => {
+                const id = parseInt(r.getAttribute('data-trial-db-id'));
+                const rec = currentRecords.find(item => parseInt(item.id) === id);
+                if (rec) {
+                    r.onclick = () => openDetailModal(rec);
+                    r.querySelector('.btn-view-details').onclick = (e) => {
+                        e.stopPropagation();
+                        openDetailModal(rec);
+                    };
+                }
+            });
+
+            // If a detail check query param view is present, open modal
+            <?php if ($view_record): ?>
+                const initialViewRec = currentRecords.find(item => parseInt(item.id) === <?php echo $view_record['id']; ?>);
+                if (initialViewRec) {
+                    openDetailModal(initialViewRec);
+                }
+            <?php endif; ?>
+
+            // Start 10s auto-refresh
+            setInterval(autoRefreshAdminRecords, 10000);
         });
     </script>
 </body>

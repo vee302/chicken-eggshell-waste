@@ -79,17 +79,55 @@ try {
                     <h3>Upload New Image</h3>
                 </div>
                 <form id="form-upload-fingerprint">
-                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fingerprint_image').click()">
-                        <div class="upload-zone-icon">
-                            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="16 16 12 12 8 16"/>
-                                <line x1="12" y1="12" x2="12" y2="21"/>
-                                <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-                            </svg>
+                    <!-- Webcam / Upload Container -->
+                    <div class="upload-options-container" style="position: relative; margin-bottom: 1.25rem;">
+                        <!-- Drag & Drop Zone -->
+                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fingerprint_image').click()">
+                            <div class="upload-zone-icon">
+                                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="16 16 12 12 8 16"/>
+                                    <line x1="12" y1="12" x2="12" y2="21"/>
+                                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                                </svg>
+                            </div>
+                            <h4>Click to browse or drag &amp; drop</h4>
+                            <p>Supports JPG, PNG, WebP — max 5 MB</p>
+                            <p id="file-chosen" style="margin-top:.5rem;font-weight:600;color:var(--medium-green);"></p>
                         </div>
-                        <h4>Click to browse or drag &amp; drop</h4>
-                        <p>Supports JPG, PNG, WebP — max 5 MB</p>
-                        <p id="file-chosen" style="margin-top:.5rem;font-weight:600;color:var(--medium-green);"></p>
+
+                        <!-- Webcam Interface Zone (Hidden initially) -->
+                        <div id="webcamZone" style="display: none; border: 2px dashed var(--medium-green); border-radius: 12px; padding: 1.5rem; background: var(--cream); text-align: center; position: relative;">
+                            <h4 style="margin-bottom: 1rem; color: var(--dark-green); display: flex; align-items: center; justify-content: center; gap: 8px; font-weight:700;">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--medium-green);"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                Live Webcam Feed
+                            </h4>
+                            
+                            <!-- Video feed wrapper -->
+                            <div style="position: relative; max-width: 400px; margin: 0 auto 1rem; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center; min-height: 250px;">
+                                <video id="webcamVideo" autoplay playsinline style="width: 100%; max-height: 300px; display: block; object-fit: cover;"></video>
+                                <canvas id="webcamCanvas" style="display: none;"></canvas>
+                                <img id="webcamCapturePreview" style="display: none; width: 100%; max-height: 300px; object-fit: cover;" alt="Captured Photo">
+                            </div>
+
+                            <!-- Buttons -->
+                            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                                <button type="button" class="btn btn-primary" id="btnCapturePhoto" style="padding: 0.5rem 1rem; font-size: 0.85rem; font-weight:600;">Capture Photo</button>
+                                <button type="button" class="btn btn-secondary" id="btnRetakePhoto" style="display: none; padding: 0.5rem 1rem; font-size: 0.85rem; font-weight:600; background: #f59e0b; border-color:#f59e0b; color:#fff;">Retake</button>
+                                <button type="button" class="btn btn-secondary" id="btnCancelWebcam" style="padding: 0.5rem 1rem; font-size: 0.85rem; font-weight:600; background: #dc2626; border-color: #dc2626; color: #fff;">Close Camera</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Toggle Button Row -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;" class="no-print">
+                        <button type="button" class="btn btn-secondary" id="btnStartWebcam" style="font-size: 0.82rem; font-weight: 600; display: flex; align-items: center; gap: 6px; padding: 0.4rem 0.8rem; background: var(--cream); border: 1px solid var(--light-gray); color: var(--dark-green);">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                            Use Webcam
+                        </button>
+                        <span id="selected-source-label" style="font-size: 0.78rem; font-weight: 600; color: var(--gray);">Source: File Upload</span>
                     </div>
                     <input type="file" name="fingerprint_image" id="fingerprint_image"
                            accept="image/jpeg,image/png,image/webp" style="display:none;" required>
@@ -176,9 +214,32 @@ try {
 <script>
 const inp = document.getElementById('fingerprint_image');
 const chosen = document.getElementById('file-chosen');
+
+let stream = null;
+
+const uploadZone = document.getElementById('uploadZone');
+const webcamZone = document.getElementById('webcamZone');
+const btnStartWebcam = document.getElementById('btnStartWebcam');
+const btnCancelWebcam = document.getElementById('btnCancelWebcam');
+const btnCapturePhoto = document.getElementById('btnCapturePhoto');
+const btnRetakePhoto = document.getElementById('btnRetakePhoto');
+const webcamVideo = document.getElementById('webcamVideo');
+const webcamCanvas = document.getElementById('webcamCanvas');
+const webcamCapturePreview = document.getElementById('webcamCapturePreview');
+const sourceLabel = document.getElementById('selected-source-label');
+
 inp.addEventListener('change', () => {
     chosen.textContent = inp.files[0] ? inp.files[0].name : '';
+    // If a manual file is uploaded, stop the webcam and show the file zone
+    if (inp.files[0] && inp.files[0].name !== 'webcam_capture.png') {
+        stopWebcam();
+        webcamZone.style.display = 'none';
+        uploadZone.style.display = 'block';
+        btnStartWebcam.style.display = 'inline-block';
+        sourceLabel.textContent = "Source: File Upload";
+    }
 });
+
 const zone = document.getElementById('uploadZone');
 zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
 zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
@@ -187,8 +248,103 @@ zone.addEventListener('drop', e => {
     if (e.dataTransfer.files.length) {
         inp.files = e.dataTransfer.files;
         chosen.textContent = inp.files[0].name;
+        
+        // If a file is dropped, stop the webcam and show the file zone
+        stopWebcam();
+        webcamZone.style.display = 'none';
+        uploadZone.style.display = 'block';
+        btnStartWebcam.style.display = 'inline-block';
+        sourceLabel.textContent = "Source: File Upload";
     }
 });
+
+btnStartWebcam.addEventListener('click', async () => {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        webcamVideo.srcObject = stream;
+        webcamVideo.style.display = 'block';
+        webcamCapturePreview.style.display = 'none';
+        
+        uploadZone.style.display = 'none';
+        webcamZone.style.display = 'block';
+        btnStartWebcam.style.display = 'none';
+        
+        btnCapturePhoto.style.display = 'inline-block';
+        btnRetakePhoto.style.display = 'none';
+        
+        sourceLabel.textContent = "Source: Live Webcam Feed";
+    } catch (err) {
+        alert("Unable to access the webcam. Please check your camera permissions.");
+        console.error(err);
+    }
+});
+
+function stopWebcam() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+}
+
+btnCancelWebcam.addEventListener('click', () => {
+    stopWebcam();
+    webcamZone.style.display = 'none';
+    uploadZone.style.display = 'block';
+    btnStartWebcam.style.display = 'inline-block';
+    sourceLabel.textContent = "Source: File Upload";
+    webcamVideo.srcObject = null;
+});
+
+btnCapturePhoto.addEventListener('click', () => {
+    // Capture to canvas
+    webcamCanvas.width = webcamVideo.videoWidth || 640;
+    webcamCanvas.height = webcamVideo.videoHeight || 480;
+    const ctx = webcamCanvas.getContext('2d');
+    ctx.drawImage(webcamVideo, 0, 0, webcamCanvas.width, webcamCanvas.height);
+    
+    const dataUrl = webcamCanvas.toDataURL('image/png');
+    
+    // Show preview
+    webcamVideo.style.display = 'none';
+    webcamCapturePreview.src = dataUrl;
+    webcamCapturePreview.style.display = 'block';
+    
+    btnCapturePhoto.style.display = 'none';
+    btnRetakePhoto.style.display = 'inline-block';
+    
+    // Set to file input
+    try {
+        const file = dataURLtoFile(dataUrl, 'webcam_capture.png');
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        inp.files = dataTransfer.files;
+        
+        chosen.textContent = "webcam_capture.png (Captured)";
+    } catch (e) {
+        console.error("Error setting file input: ", e);
+    }
+});
+
+btnRetakePhoto.addEventListener('click', () => {
+    webcamVideo.style.display = 'block';
+    webcamCapturePreview.style.display = 'none';
+    
+    btnCapturePhoto.style.display = 'inline-block';
+    btnRetakePhoto.style.display = 'none';
+    
+    // Clear input
+    inp.value = '';
+    chosen.textContent = '';
+});
+
+function dataURLtoFile(dataurl, filename) {
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, {type:mime});
+}
 
 // AJAX file upload logic
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

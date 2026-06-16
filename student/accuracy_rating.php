@@ -277,10 +277,7 @@ try {
                 <div class="detail-row"><span class="detail-label">Powder Type</span><span class="detail-value" id="inspect-powder" style="text-transform: capitalize; font-weight:600;"></span></div>
                 <div class="detail-row"><span class="detail-label">Surface Type</span><span class="detail-value" id="inspect-surface" style="text-transform: capitalize; font-weight:600;"></span></div>
                 <div class="detail-row"><span class="detail-label">Image Label</span><span class="detail-value" id="inspect-label"></span></div>
-                <div class="detail-row"><span class="detail-label">Date Submitted</span><span class="detail-value" id="inspect-submitted-at"></span></div>
-                <div class="detail-row"><span class="detail-label">Validation Status</span><span class="detail-value" id="inspect-status"></span></div>
-                <div class="detail-row" id="row-inspect-reviewer"><span class="detail-label">Faculty Reviewer</span><span class="detail-value" id="inspect-reviewer" style="font-weight:600;"></span></div>
-                <div class="detail-row" id="row-inspect-validated-at"><span class="detail-label">Validation Date</span><span class="detail-value" id="inspect-validated-at"></span></div>
+                <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" id="inspect-status"></span></div>
 
                 <p class="section-divider">Quality Metrics</p>
                 <div class="score-box">
@@ -348,10 +345,11 @@ try {
 
                 <p class="section-divider">Lab Analysis Notes</p>
                 <div class="detail-row"><span class="detail-label">AI Preliminary Score</span><span class="detail-value" id="inspect-ai-score" style="font-weight: 700;"></span></div>
-                <div class="detail-row" id="row-inspect-faculty-score"><span class="detail-label">Faculty Final Score</span><span class="detail-value" id="inspect-faculty-score" style="font-weight: 700; color: var(--dark-green);"></span></div>
-                <div class="detail-row"><span class="detail-label">Evaluation Source</span><span class="detail-value" id="inspect-source"></span></div>
-                <div class="detail-row"><span class="detail-label">AI Evaluated At</span><span class="detail-value" id="inspect-ai-evaluated-at"></span></div>
-                <div class="detail-row" id="row-inspect-remarks"><span class="detail-label">Remarks from Reviewer</span><span class="detail-value" id="inspect-remarks" style="font-style: italic;"></span></div>
+                <div class="detail-row" id="row-inspect-faculty-score"><span class="detail-label" id="inspect-faculty-score-label">Faculty Final Score</span><span class="detail-value" id="inspect-faculty-score" style="font-weight: 700; color: var(--dark-green);"></span></div>
+                <div class="detail-row" id="row-inspect-reviewer"><span class="detail-label">Faculty Reviewer</span><span class="detail-value" id="inspect-reviewer" style="font-weight:600;"></span></div>
+                <div class="detail-row" id="row-inspect-remarks"><span class="detail-label" id="inspect-remarks-label">Faculty Remarks</span><span class="detail-value" id="inspect-remarks" style="font-style: italic;"></span></div>
+                <div class="detail-row"><span class="detail-label">Evaluation Date</span><span class="detail-value" id="inspect-evaluation-date"></span></div>
+                <div class="detail-row" id="row-inspect-validated-at"><span class="detail-label">Validation Date</span><span class="detail-value" id="inspect-validated-at"></span></div>
 
                 <div style="display:flex; gap:10px; margin-top:2rem;" class="no-print">
                     <button type="button" class="btn btn-secondary" onclick="closeInspectionModal()" style="flex:1;">Close</button>
@@ -430,7 +428,10 @@ function populateInspectionPanel(row) {
     document.getElementById('inspect-powder').textContent = row.powder_type || '';
     document.getElementById('inspect-surface').textContent = row.surface_type || '';
     document.getElementById('inspect-label').textContent = row.image_label || 'Untitled';
-    document.getElementById('inspect-submitted-at').textContent = new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString();
+    
+    // Evaluation Date mapping
+    const evalDate = row.ai_evaluated_at ? new Date(row.ai_evaluated_at.replace(/-/g, "/")).toLocaleString() : (row.submitted_at ? new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString() : '—');
+    document.getElementById('inspect-evaluation-date').textContent = evalDate;
 
     // Image viewer logic
     const img = document.getElementById('inspect-img');
@@ -472,8 +473,6 @@ function populateInspectionPanel(row) {
 
     // Lab Analysis Notes mapping
     document.getElementById('inspect-ai-score').textContent = row.ai_accuracy_score !== null ? parseFloat(row.ai_accuracy_score).toFixed(1) + '%' : 'Awaiting AI Evaluation';
-    document.getElementById('inspect-source').textContent = row.evaluation_source || 'AI Preliminary';
-    document.getElementById('inspect-ai-evaluated-at').textContent = row.ai_evaluated_at ? new Date(row.ai_evaluated_at.replace(/-/g, "/")).toLocaleString() : '—';
 
     // Conditional elements based on status
     const statusVal = document.getElementById('inspect-status');
@@ -487,10 +486,13 @@ function populateInspectionPanel(row) {
         reviewerRow.style.display = 'none';
         validatedAtRow.style.display = 'none';
         facultyScoreRow.style.display = 'flex';
+        
+        document.getElementById('inspect-faculty-score-label').textContent = 'Accuracy';
         document.getElementById('inspect-faculty-score').textContent = 'Awaiting Faculty Validation';
         
         remarksRow.style.display = 'flex';
-        document.getElementById('inspect-remarks').innerHTML = 'Notes: This record is still awaiting faculty review.';
+        document.getElementById('inspect-remarks-label').textContent = 'Notes';
+        document.getElementById('inspect-remarks').innerHTML = 'This record is still awaiting faculty review.';
     } else {
         reviewerRow.style.display = 'flex';
         validatedAtRow.style.display = 'flex';
@@ -498,11 +500,14 @@ function populateInspectionPanel(row) {
         
         document.getElementById('inspect-reviewer').textContent = row.faculty_reviewer || 'Faculty Reviewer';
         document.getElementById('inspect-validated-at').textContent = row.validated_at ? new Date(row.validated_at.replace(/-/g, "/")).toLocaleString() : '—';
+        
+        document.getElementById('inspect-remarks-label').textContent = 'Faculty Remarks';
         document.getElementById('inspect-remarks').innerHTML = row.faculty_remarks ? escapeHtml(row.faculty_remarks).replace(/\n/g, '<br>') : 'No remarks provided.';
 
         if (row.status === 'approved') {
             statusVal.innerHTML = '<span class="badge badge-approved">Approved</span>';
             facultyScoreRow.style.display = 'flex';
+            document.getElementById('inspect-faculty-score-label').textContent = 'Faculty Final Score';
             document.getElementById('inspect-faculty-score').textContent = row.faculty_final_score !== null ? parseFloat(row.faculty_final_score).toFixed(1) + '%' : '—';
         } else if (row.status === 'rejected') {
             statusVal.innerHTML = '<span class="badge badge-rejected">Rejected</span>';

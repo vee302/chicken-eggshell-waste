@@ -546,9 +546,9 @@ function startAutoCaptureLoop() {
 
         let relativeClarity = 0;
         
-        // We require standard deviation of pixel values > 15 (variance > 225)
-        // This ensures an actual textured pattern is inside the guide and not empty/flat background.
-        if (analysis.contrastStdDev > 15) {
+        // We require standard deviation of pixel values > 30 (variance > 900)
+        // This ensures an actual high-contrast pattern is inside the guide and not empty/flat background.
+        if (analysis.contrastStdDev > 30) {
             relativeClarity = Math.min(100, Math.round((analysis.sharpness / threshold) * 100));
         }
 
@@ -657,8 +657,24 @@ function validateFingerprintPattern(ctx, w, h) {
     
     // Grayscale mapping
     const gray = new Float32Array(w * h);
+    let sum = 0;
     for (let i = 0; i < data.length; i += 4) {
-        gray[i / 4] = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+        const val = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+        gray[i / 4] = val;
+        sum += val;
+    }
+    const mean = sum / gray.length;
+
+    // Check global contrast standard deviation to reject flat white/dim backgrounds instantly
+    let varianceSum = 0;
+    for (let i = 0; i < gray.length; i++) {
+        const diff = gray[i] - mean;
+        varianceSum += diff * diff;
+    }
+    const globalStdDev = Math.sqrt(varianceSum / gray.length);
+    
+    if (globalStdDev < 30) {
+        return { isValid: false, ridgeRatio: 0 };
     }
     
     // Compute pixel gradients gx and gy
@@ -698,9 +714,12 @@ function validateFingerprintPattern(ctx, w, h) {
             }
             
             const blockContrast = maxVal - minVal;
+            const gradientSum = vxx + vyy;
             
-            // Only evaluate blocks with decent texture / visible ridges
-            if (blockContrast > 30) {
+            // We require:
+            // 1. Moderate local block contrast (> 40)
+            // 2. High cumulative gradient magnitude (> 8000) to filter out camera noise
+            if (blockContrast > 40 && gradientSum > 8000) {
                 // Coherence: measures gradient alignment. High coherence (0 to 1) means parallel ridges
                 const coherence = Math.sqrt(Math.pow(vxx - vyy, 2) + 4 * vxy * vxy) / (vxx + vyy + 0.001);
                 if (coherence > 0.45) {
@@ -710,10 +729,10 @@ function validateFingerprintPattern(ctx, w, h) {
         }
     }
     
-    // Latent fingerprint requires at least 22% of the blocks to contain valid parallel ridge flows
+    // Latent fingerprint requires at least 15% of the blocks to contain valid parallel ridge flows
     const ridgeRatio = validRidgeBlocks / totalBlocks;
     return {
-        isValid: ridgeRatio > 0.22,
+        isValid: ridgeRatio > 0.15,
         ridgeRatio: ridgeRatio
     };
 }

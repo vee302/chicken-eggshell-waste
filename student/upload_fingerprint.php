@@ -244,7 +244,7 @@ btnUploadTrigger.addEventListener('click', () => {
 // Start Camera or Capture Photo
 btnStartWebcam.addEventListener('click', async () => {
     if (isCameraActive) {
-        // CAPTURE PHOTO action
+        // TAKE PHOTO action
         capturePhoto();
     } else {
         // START CAMERA action
@@ -261,7 +261,7 @@ btnStartWebcam.addEventListener('click', async () => {
             isCameraActive = true;
             
             // Toggle button texts
-            btnCameraText.textContent = "CAPTURE PHOTO";
+            btnCameraText.textContent = "TAKE PHOTO";
             btnUploadText.textContent = "CLOSE CAMERA";
             
             // Update button icons

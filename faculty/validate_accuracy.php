@@ -223,9 +223,6 @@ try {
                                 <td><span class="badge badge-pending">Pending Validation</span></td>
                                 <td style="text-align: right;">
                                     <div class="btn-group" style="display:inline-flex; gap:6px;">
-                                        <?php if ($row['image_path'] && $row['image_exists']): ?>
-                                            <a href="../view_fingerprint.php?test_id=<?= $row['id'] ?>" target="_blank" class="btn btn-secondary btn-sm">View Image</a>
-                                        <?php endif; ?>
                                         <button class="btn btn-primary btn-sm" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'approve')">Approve</button>
                                         <button class="btn btn-danger btn-sm" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'reject')">Reject</button>
                                         <button class="btn btn-secondary btn-sm" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'needs_revision')">Needs Revision</button>
@@ -550,13 +547,11 @@ function autoRefreshTrials() {
                             <div style="width:50px;height:50px;border-radius:8px;background:#f4f6f0;display:flex;align-items:center;justify-content:center;">
                                 <span style="font-size:0.65rem;color:var(--danger);font-weight:600;text-align:center;padding:2px;">Image not found</span>
                             </div>`;
-                        let viewImageBtn = '';
                         if (s.image_path && s.image_exists) {
                             imageHtml = `
                                 <a href="../view_fingerprint.php?test_id=${s.id}" target="_blank" class="fp-image-link">
                                     <img src="../view_fingerprint.php?test_id=${s.id}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
                                 </a>`;
-                            viewImageBtn = `<a href="../view_fingerprint.php?test_id=${s.id}" target="_blank" class="btn btn-secondary btn-sm">View Image</a>`;
                         }
 
                         tr.innerHTML = `
@@ -570,7 +565,6 @@ function autoRefreshTrials() {
                             <td><span class="badge badge-pending">Pending Validation</span></td>
                             <td style="text-align: right;">
                                 <div class="btn-group" style="display:inline-flex; gap:6px;">
-                                    ${viewImageBtn}
                                     <button class="btn btn-primary btn-sm" onclick='openModal(${JSON.stringify(s)}, "approve")'>Approve</button>
                                     <button class="btn btn-danger btn-sm" onclick='openModal(${JSON.stringify(s)}, "reject")'>Reject</button>
                                     <button class="btn btn-secondary btn-sm" style="background:#e07a5f; border-color:#e07a5f; color:#fff;" onclick='openModal(${JSON.stringify(s)}, "needs_revision")'>Needs Revision</button>

@@ -314,6 +314,7 @@ let autoCaptureLoopId = null;
 let lastProcessingTime = 0;
 let stableFocusFrames = 0;
 let isCaptureTriggered = false;
+let cameraStartTime = 0;
 
 // DOM elements for Auto-Capture
 const chkAutoCapture = document.getElementById('chkAutoCapture');
@@ -451,6 +452,7 @@ function startAutoCaptureLoop() {
     stableFocusFrames = 0;
     isCaptureTriggered = false;
     lastProcessingTime = 0;
+    cameraStartTime = Date.now(); // Record webcam start timestamp to allow sensor stabilization
     
     updateAutoCaptureUI();
     sensitivityValue.textContent = `${rangeSensitivity.value}%`;
@@ -466,6 +468,12 @@ function startAutoCaptureLoop() {
 
     function processFrame(timestamp) {
         if (!cameraStream || isCameraProcessing || isCaptureTriggered) {
+            autoCaptureLoopId = requestAnimationFrame(processFrame);
+            return;
+        }
+
+        // Wait 800ms after camera opens to let autofocus/white balance stabilize
+        if (Date.now() - cameraStartTime < 800) {
             autoCaptureLoopId = requestAnimationFrame(processFrame);
             return;
         }
@@ -538,11 +546,11 @@ function startAutoCaptureLoop() {
         const analysis = getClarityMetrics(analysisCtx, 150, 225);
 
         // Map slider sensitivity (20 to 80) to target sharpness threshold
-        // Sensitivity 20: Threshold = 60 (Extreme sharpness)
-        // Sensitivity 50: Threshold = 30 (Normal balanced focus)
-        // Sensitivity 80: Threshold = 10 (Triggers easily on low-end cameras)
+        // Sensitivity 20: Threshold = 140 (Extreme sharpness)
+        // Sensitivity 50: Threshold = 80 (Normal balanced focus)
+        // Sensitivity 80: Threshold = 20 (Triggers easily on low-end cameras)
         const sensitivity = parseInt(rangeSensitivity.value, 10);
-        const threshold = 80 - sensitivity; 
+        const threshold = 180 - (sensitivity * 2); 
 
         let relativeClarity = 0;
         

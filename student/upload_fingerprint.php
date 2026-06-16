@@ -227,7 +227,7 @@ try {
     </div>
 
     <!-- Auto-Capture Control Widget -->
-    <div class="autocapture-container">
+    <div class="autocapture-container" style="display: none;">
         <div class="autocapture-row">
             <div class="autocapture-label-group">
                 <span class="autocapture-title-text">Auto-Capture</span>

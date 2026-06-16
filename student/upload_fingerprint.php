@@ -75,59 +75,63 @@ try {
 
             <!-- Upload Form -->
             <div class="dashboard-card" style="max-width:680px;">
-                <div class="card-title-wrap">
-                    <h3>Upload New Image</h3>
-                </div>
                 <form id="form-upload-fingerprint">
-                    <!-- Webcam / Upload Container -->
-                    <div class="upload-options-container" style="position: relative; margin-bottom: 1.25rem;">
-                        <!-- Drag & Drop Zone -->
-                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fingerprint_image').click()">
-                            <div class="upload-zone-icon">
-                                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Camera-Based Evaluation Preview Panel -->
+                    <div class="camera-preview-panel" style="background: #fff; text-align: center; margin-bottom: 1.5rem;">
+                        <!-- Preview Only chip -->
+                        <div style="display: inline-block; background: #e2f0d9; color: #385723; font-size: 0.72rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; margin-bottom: 0.85rem; letter-spacing: 0.05em; border: 1px solid rgba(56,87,35,0.15);">
+                            PREVIEW ONLY
+                        </div>
+                        
+                        <!-- Title & Subtitle -->
+                        <h2 style="font-size: 1.5rem; font-weight: 800; color: #1e392a; margin: 0 0 8px 0; font-family: 'Inter', system-ui, sans-serif;">Camera-Based Evaluation Preview</h2>
+                        <p style="font-size: 0.88rem; color: #5f6368; margin: 0 0 1.5rem 0;">Visual preview of the secured student dashboard feature.</p>
+
+                        <!-- Dashed Box Container (Visual Area) -->
+                        <div id="previewContainer" style="border: 2px dashed #c3d9c3; border-radius: 12px; padding: 2.5rem 2rem; background: #fafdfa; min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; margin-bottom: 1.5rem; transition: all 0.3s ease;">
+                            
+                            <!-- Video feed (Hidden initially) -->
+                            <video id="webcamVideo" autoplay playsinline style="display: none; width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px;"></video>
+                            <canvas id="webcamCanvas" style="display: none;"></canvas>
+                            
+                            <!-- Captured or Uploaded Image Preview (Hidden initially) -->
+                            <img id="webcamCapturePreview" style="display: none; width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px;" alt="Preview Image">
+
+                            <!-- Idle Placeholder (Shown initially) -->
+                            <div id="previewPlaceholder" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #6e8c78;">
+                                <div style="margin-bottom: 0.85rem; color: #b4d2b4;">
+                                    <!-- Camera SVG Icon -->
+                                    <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                        <circle cx="12" cy="13" r="4"/>
+                                    </svg>
+                                </div>
+                                <h4 style="font-size: 1.1rem; font-weight: 700; color: #2d4c38; margin: 0 0 6px 0;">Camera Preview / Uploaded Image</h4>
+                                <p style="font-size: 0.82rem; color: #88a68f; margin: 0; font-weight: 600;">Preview Mode Only</p>
+                            </div>
+                        </div>
+
+                        <!-- Buttons Row -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="no-print">
+                            <!-- Start/Capture Camera Button -->
+                            <button type="button" class="btn" id="btnStartWebcam" style="background: #e2ebe4; border: 1px solid #ccdcd0; color: #1b4332; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.03em;">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #1b4332;">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                    <circle cx="12" cy="13" r="4"/>
+                                </svg>
+                                <span id="btnCameraText">START CAMERA</span>
+                            </button>
+
+                            <!-- Upload File Button -->
+                            <button type="button" class="btn" id="btnUploadTrigger" style="background: #fff; border: 1px solid #ccdcd0; color: #2d4c38; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.03em;">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #2d4c38;">
                                     <polyline points="16 16 12 12 8 16"/>
                                     <line x1="12" y1="12" x2="12" y2="21"/>
                                     <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
                                 </svg>
-                            </div>
-                            <h4>Click to browse or drag &amp; drop</h4>
-                            <p>Supports JPG, PNG, WebP — max 5 MB</p>
-                            <p id="file-chosen" style="margin-top:.5rem;font-weight:600;color:var(--medium-green);"></p>
+                                <span id="btnUploadText">UPLOAD FILE</span>
+                            </button>
                         </div>
-
-                        <!-- Webcam Interface Zone (Hidden initially) -->
-                        <div id="webcamZone" style="display: none; border: 2px dashed var(--medium-green); border-radius: 12px; padding: 1.5rem; background: var(--cream); text-align: center; position: relative;">
-                            <h4 style="margin-bottom: 1rem; color: var(--dark-green); display: flex; align-items: center; justify-content: center; gap: 8px; font-weight:700;">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--medium-green);"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                                Live Webcam Feed
-                            </h4>
-                            
-                            <!-- Video feed wrapper -->
-                            <div style="position: relative; max-width: 400px; margin: 0 auto 1rem; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center; min-height: 250px;">
-                                <video id="webcamVideo" autoplay playsinline style="width: 100%; max-height: 300px; display: block; object-fit: cover;"></video>
-                                <canvas id="webcamCanvas" style="display: none;"></canvas>
-                                <img id="webcamCapturePreview" style="display: none; width: 100%; max-height: 300px; object-fit: cover;" alt="Captured Photo">
-                            </div>
-
-                            <!-- Buttons -->
-                            <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                                <button type="button" class="btn btn-primary" id="btnCapturePhoto" style="padding: 0.5rem 1rem; font-size: 0.85rem; font-weight:600;">Capture Photo</button>
-                                <button type="button" class="btn btn-secondary" id="btnRetakePhoto" style="display: none; padding: 0.5rem 1rem; font-size: 0.85rem; font-weight:600; background: #f59e0b; border-color:#f59e0b; color:#fff;">Retake</button>
-                                <button type="button" class="btn btn-secondary" id="btnCancelWebcam" style="padding: 0.5rem 1rem; font-size: 0.85rem; font-weight:600; background: #dc2626; border-color: #dc2626; color: #fff;">Close Camera</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Toggle Button Row -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;" class="no-print">
-                        <button type="button" class="btn btn-secondary" id="btnStartWebcam" style="font-size: 0.82rem; font-weight: 600; display: flex; align-items: center; gap: 6px; padding: 0.4rem 0.8rem; background: var(--cream); border: 1px solid var(--light-gray); color: var(--dark-green);">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                <circle cx="12" cy="13" r="4"/>
-                            </svg>
-                            Use Webcam
-                        </button>
-                        <span id="selected-source-label" style="font-size: 0.78rem; font-weight: 600; color: var(--gray);">Source: File Upload</span>
                     </div>
                     <input type="file" name="fingerprint_image" id="fingerprint_image"
                            accept="image/jpeg,image/png,image/webp" style="display:none;" required>
@@ -160,13 +164,12 @@ try {
                                placeholder="e.g. Eggshell on Glass — Trial 3">
                     </div>
 
-                    <button type="submit" class="btn btn-primary" id="btn-upload-image">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="16 16 12 12 8 16"/>
-                            <line x1="12" y1="12" x2="12" y2="21"/>
-                            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                    <button type="submit" class="btn btn-primary" id="btn-upload-image" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: center; gap: 8px; background: #224229 !important; border-color: #224229 !important; border-radius: 8px; color: #fff;">
+                        <span id="btnText">Evaluate Print Clarity</span>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #fff;">
+                            <line x1="7" y1="17" x2="17" y2="7"/>
+                            <polyline points="7 7 17 7 17 17"/>
                         </svg>
-                        <span id="btnText">Upload Image</span>
                     </button>
                 </form>
             </div>
@@ -216,66 +219,67 @@ const inp = document.getElementById('fingerprint_image');
 const chosen = document.getElementById('file-chosen');
 
 let stream = null;
+let isCameraActive = false;
 
-const uploadZone = document.getElementById('uploadZone');
-const webcamZone = document.getElementById('webcamZone');
-const btnStartWebcam = document.getElementById('btnStartWebcam');
-const btnCancelWebcam = document.getElementById('btnCancelWebcam');
-const btnCapturePhoto = document.getElementById('btnCapturePhoto');
-const btnRetakePhoto = document.getElementById('btnRetakePhoto');
+const previewContainer = document.getElementById('previewContainer');
+const previewPlaceholder = document.getElementById('previewPlaceholder');
 const webcamVideo = document.getElementById('webcamVideo');
 const webcamCanvas = document.getElementById('webcamCanvas');
 const webcamCapturePreview = document.getElementById('webcamCapturePreview');
-const sourceLabel = document.getElementById('selected-source-label');
 
-inp.addEventListener('change', () => {
-    chosen.textContent = inp.files[0] ? inp.files[0].name : '';
-    // If a manual file is uploaded, stop the webcam and show the file zone
-    if (inp.files[0] && inp.files[0].name !== 'webcam_capture.png') {
+const btnStartWebcam = document.getElementById('btnStartWebcam');
+const btnCameraText = document.getElementById('btnCameraText');
+const btnUploadTrigger = document.getElementById('btnUploadTrigger');
+const btnUploadText = document.getElementById('btnUploadText');
+
+// Trigger local file selection when clicking "UPLOAD FILE"
+btnUploadTrigger.addEventListener('click', () => {
+    if (isCameraActive) {
+        // CLOSE CAMERA action
         stopWebcam();
-        webcamZone.style.display = 'none';
-        uploadZone.style.display = 'block';
-        btnStartWebcam.style.display = 'inline-block';
-        sourceLabel.textContent = "Source: File Upload";
+        setIdleState();
+    } else {
+        // UPLOAD FILE action
+        inp.click();
     }
 });
 
-const zone = document.getElementById('uploadZone');
-zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('drag-over');
-    if (e.dataTransfer.files.length) {
-        inp.files = e.dataTransfer.files;
-        chosen.textContent = inp.files[0].name;
-        
-        // If a file is dropped, stop the webcam and show the file zone
-        stopWebcam();
-        webcamZone.style.display = 'none';
-        uploadZone.style.display = 'block';
-        btnStartWebcam.style.display = 'inline-block';
-        sourceLabel.textContent = "Source: File Upload";
-    }
-});
-
+// Start Camera or Capture Photo
 btnStartWebcam.addEventListener('click', async () => {
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        webcamVideo.srcObject = stream;
-        webcamVideo.style.display = 'block';
-        webcamCapturePreview.style.display = 'none';
-        
-        uploadZone.style.display = 'none';
-        webcamZone.style.display = 'block';
-        btnStartWebcam.style.display = 'none';
-        
-        btnCapturePhoto.style.display = 'inline-block';
-        btnRetakePhoto.style.display = 'none';
-        
-        sourceLabel.textContent = "Source: Live Webcam Feed";
-    } catch (err) {
-        alert("Unable to access the webcam. Please check your camera permissions.");
-        console.error(err);
+    if (isCameraActive) {
+        // CAPTURE PHOTO action
+        capturePhoto();
+    } else {
+        // START CAMERA action
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            webcamVideo.srcObject = stream;
+            
+            // Toggle view visibility
+            previewPlaceholder.style.display = 'none';
+            webcamCapturePreview.style.display = 'none';
+            webcamVideo.style.display = 'block';
+            
+            // Set state active
+            isCameraActive = true;
+            
+            // Toggle button texts
+            btnCameraText.textContent = "CAPTURE PHOTO";
+            btnUploadText.textContent = "CLOSE CAMERA";
+            
+            // Update button icons
+            btnStartWebcam.querySelector('svg').innerHTML = `
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="3"/>
+            `;
+            btnUploadTrigger.querySelector('svg').innerHTML = `
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            `;
+        } catch (err) {
+            alert("Unable to access the webcam. Please check your camera permissions.");
+            console.error(err);
+        }
     }
 });
 
@@ -284,19 +288,32 @@ function stopWebcam() {
         stream.getTracks().forEach(track => track.stop());
         stream = null;
     }
+    webcamVideo.srcObject = null;
+    isCameraActive = false;
 }
 
-btnCancelWebcam.addEventListener('click', () => {
-    stopWebcam();
-    webcamZone.style.display = 'none';
-    uploadZone.style.display = 'block';
-    btnStartWebcam.style.display = 'inline-block';
-    sourceLabel.textContent = "Source: File Upload";
-    webcamVideo.srcObject = null;
-});
+function setIdleState() {
+    webcamVideo.style.display = 'none';
+    webcamCapturePreview.style.display = 'none';
+    previewPlaceholder.style.display = 'flex';
+    
+    btnCameraText.textContent = "START CAMERA";
+    btnUploadText.textContent = "UPLOAD FILE";
+    
+    // Reset icons
+    btnStartWebcam.querySelector('svg').innerHTML = `
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+    `;
+    btnUploadTrigger.querySelector('svg').innerHTML = `
+        <polyline points="16 16 12 12 8 16"/>
+        <line x1="12" y1="12" x2="12" y2="21"/>
+        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+    `;
+}
 
-btnCapturePhoto.addEventListener('click', () => {
-    // Capture to canvas
+function capturePhoto() {
+    // Capture stream frame to canvas
     webcamCanvas.width = webcamVideo.videoWidth || 640;
     webcamCanvas.height = webcamVideo.videoHeight || 480;
     const ctx = webcamCanvas.getContext('2d');
@@ -304,37 +321,74 @@ btnCapturePhoto.addEventListener('click', () => {
     
     const dataUrl = webcamCanvas.toDataURL('image/png');
     
-    // Show preview
+    // Stop camera stream
+    stopWebcam();
+    
+    // Show image preview
     webcamVideo.style.display = 'none';
     webcamCapturePreview.src = dataUrl;
     webcamCapturePreview.style.display = 'block';
     
-    btnCapturePhoto.style.display = 'none';
-    btnRetakePhoto.style.display = 'inline-block';
+    // Reset buttons back to start state
+    setIdleState();
     
-    // Set to file input
+    // Bind to the file input
     try {
         const file = dataURLtoFile(dataUrl, 'webcam_capture.png');
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         inp.files = dataTransfer.files;
         
-        chosen.textContent = "webcam_capture.png (Captured)";
+        chosen.textContent = "webcam_capture.png (Captured from Webcam)";
     } catch (e) {
-        console.error("Error setting file input: ", e);
+        console.error("Error creating File from capture: ", e);
+    }
+}
+
+// Drag and drop events on previewContainer
+previewContainer.addEventListener('dragover', e => {
+    e.preventDefault();
+    previewContainer.style.borderColor = '#1b4332';
+    previewContainer.style.background = '#e6f4ea';
+});
+previewContainer.addEventListener('dragleave', () => {
+    previewContainer.style.borderColor = '#c3d9c3';
+    previewContainer.style.background = '#fafdfa';
+});
+previewContainer.addEventListener('drop', e => {
+    e.preventDefault();
+    previewContainer.style.borderColor = '#c3d9c3';
+    previewContainer.style.background = '#fafdfa';
+    
+    if (e.dataTransfer.files.length) {
+        inp.files = e.dataTransfer.files;
+        // Trigger change event to load preview
+        const event = new Event('change');
+        inp.dispatchEvent(event);
     }
 });
 
-btnRetakePhoto.addEventListener('click', () => {
-    webcamVideo.style.display = 'block';
-    webcamCapturePreview.style.display = 'none';
-    
-    btnCapturePhoto.style.display = 'inline-block';
-    btnRetakePhoto.style.display = 'none';
-    
-    // Clear input
-    inp.value = '';
-    chosen.textContent = '';
+// Handle local file uploads
+inp.addEventListener('change', () => {
+    if (inp.files && inp.files[0]) {
+        const file = inp.files[0];
+        chosen.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        
+        // Show file image preview
+        const reader = new FileReader();
+        reader.onload = e => {
+            stopWebcam();
+            webcamVideo.style.display = 'none';
+            webcamCapturePreview.src = e.target.result;
+            webcamCapturePreview.style.display = 'block';
+            previewPlaceholder.style.display = 'none';
+            setIdleState();
+        };
+        reader.readAsDataURL(file);
+    } else {
+        chosen.textContent = '';
+        setIdleState();
+    }
 });
 
 function dataURLtoFile(dataurl, filename) {

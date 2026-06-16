@@ -162,7 +162,7 @@ try {
         `status`              ENUM('pending_validation','approved','rejected','needs_revision') DEFAULT 'pending_validation',
         `submitted_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         `validated_by`        INT DEFAULT NULL,
-        `validated_at`        TIMESTAMP DEFAULT NULL,
+        `validated_at`        TIMESTAMP NULL DEFAULT NULL,
         FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
@@ -188,7 +188,7 @@ try {
     $addTestColumn('ai_accuracy_score', "`ai_accuracy_score` DECIMAL(5,2) DEFAULT NULL");
     $addTestColumn('status', "`status` VARCHAR(50) DEFAULT 'pending_validation'");
     $addTestColumn('validated_by', "`validated_by` INT DEFAULT NULL AFTER `submitted_at`");
-    $addTestColumn('validated_at', "`validated_at` TIMESTAMP DEFAULT NULL AFTER `validated_by`");
+    $addTestColumn('validated_at', "`validated_at` TIMESTAMP NULL DEFAULT NULL AFTER `validated_by`");
 
     // Copy legacy columns if they exist
     if (in_array('fingerprint_image', $testCols, true)) {

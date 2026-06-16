@@ -4,6 +4,8 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . '/auth_timeout.php';
+
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -422,31 +424,9 @@ register_shutdown_function(function() {
                           strpos($_SERVER['SCRIPT_NAME'], '/faculty/') !== false || 
                           strpos($_SERVER['SCRIPT_NAME'], '/student/') !== false || 
                           strpos($_SERVER['SCRIPT_NAME'], '/police-partner/') !== false);
-            $logout_url = $is_subdir ? '../logout.php?idle=1' : 'logout.php?idle=1';
+            $script_url = $is_subdir ? '../assets/js/session_timeout.js' : 'assets/js/session_timeout.js';
             ?>
-            <script>
-            (function() {
-                let idleTime = 0;
-                const idleLimit = 5 * 60; // 5 minutes
-
-                function resetTimer() {
-                    idleTime = 0;
-                }
-
-                const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-                events.forEach(name => {
-                    document.addEventListener(name, resetTimer, true);
-                });
-
-                const idleInterval = setInterval(() => {
-                    idleTime++;
-                    if (idleTime >= idleLimit) {
-                        clearInterval(idleInterval);
-                        window.location.href = "<?php echo $logout_url; ?>";
-                    }
-                }, 1000);
-            })();
-            </script>
+            <script src="<?php echo $script_url; ?>"></script>
             <?php
         }
     }

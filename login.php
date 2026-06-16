@@ -29,7 +29,7 @@ $error_message = "";
 $info_message = "";
 
 if (isset($_GET['idle']) && $_GET['idle'] === '1') {
-    $info_message = "You have been logged out due to 5 minutes of inactivity.";
+    $info_message = "You have been automatically logged out due to inactivity.";
 }
 
 // Process form data when post request is submitted

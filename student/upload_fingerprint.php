@@ -87,10 +87,6 @@ try {
                         <!-- Dashed Box Container (Visual Area) -->
                         <div id="previewContainer" style="border: 2px dashed #c3d9c3; border-radius: 12px; padding: 2.5rem 2rem; background: #fafdfa; min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; margin-bottom: 1.5rem; transition: all 0.3s ease;">
                             
-                            <!-- Video feed (Hidden initially) -->
-                            <video id="webcamVideo" autoplay playsinline style="display: none; width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px;"></video>
-                            <canvas id="webcamCanvas" style="display: none;"></canvas>
-                            
                             <!-- Captured or Uploaded Image Preview (Hidden initially) -->
                             <img id="webcamCapturePreview" style="display: none; width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px;" alt="Preview Image">
 
@@ -134,6 +130,7 @@ try {
                     </div>
                     <input type="file" name="fingerprint_image" id="fingerprint_image"
                            accept="image/jpeg,image/png,image/webp" style="display:none;" required>
+                    <input type="file" id="fingerprint_camera" accept="image/*" capture="environment" style="display:none;">
 
                     <div class="form-grid-2" style="margin-top: 1.25rem;">
                         <div class="form-group">
@@ -215,147 +212,65 @@ try {
 <?php require_once '_sidebar_js.php'; ?>
 <script>
 const inp = document.getElementById('fingerprint_image');
+const fingerprintCamera = document.getElementById('fingerprint_camera');
 const chosen = document.getElementById('file-chosen');
-
-let stream = null;
-let isCameraActive = false;
 
 const previewContainer = document.getElementById('previewContainer');
 const previewPlaceholder = document.getElementById('previewPlaceholder');
-const webcamVideo = document.getElementById('webcamVideo');
-const webcamCanvas = document.getElementById('webcamCanvas');
 const webcamCapturePreview = document.getElementById('webcamCapturePreview');
 
 const btnStartWebcam = document.getElementById('btnStartWebcam');
-const btnCameraText = document.getElementById('btnCameraText');
 const btnUploadTrigger = document.getElementById('btnUploadTrigger');
-const btnUploadText = document.getElementById('btnUploadText');
+
+// Trigger native mobile camera capture when clicking "START CAMERA"
+btnStartWebcam.addEventListener('click', () => {
+    fingerprintCamera.click();
+});
 
 // Trigger local file selection when clicking "UPLOAD FILE"
 btnUploadTrigger.addEventListener('click', () => {
-    if (isCameraActive) {
-        // CLOSE CAMERA action
-        stopWebcam();
-        setIdleState();
-    } else {
-        // UPLOAD FILE action
-        inp.click();
-    }
+    inp.click();
 });
 
-// Start Camera or Capture Photo
-btnStartWebcam.addEventListener('click', async () => {
-    if (isCameraActive) {
-        // TAKE PHOTO action
-        capturePhoto();
-    } else {
-        // START CAMERA action
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            webcamVideo.srcObject = stream;
-            
-            // Toggle view visibility
+// Handle camera capture file selection
+fingerprintCamera.addEventListener('change', () => {
+    if (fingerprintCamera.files && fingerprintCamera.files[0]) {
+        const file = fingerprintCamera.files[0];
+        
+        // Assign the captured file to the main file input
+        inp.files = fingerprintCamera.files;
+        
+        chosen.textContent = `${file.name} (Captured from Camera)`;
+        
+        const reader = new FileReader();
+        reader.onload = e => {
+            webcamCapturePreview.src = e.target.result;
+            webcamCapturePreview.style.display = 'block';
             previewPlaceholder.style.display = 'none';
-            webcamCapturePreview.style.display = 'none';
-            webcamVideo.style.display = 'block';
-            
-            // Set state active
-            isCameraActive = true;
-            
-            // Toggle button texts
-            btnCameraText.textContent = "TAKE PHOTO";
-            btnUploadText.textContent = "CLOSE CAMERA";
-            
-            // Update button icons
-            btnStartWebcam.querySelector('svg').innerHTML = `
-                <circle cx="12" cy="12" r="10"/>
-                <circle cx="12" cy="12" r="3"/>
-            `;
-            btnUploadTrigger.querySelector('svg').innerHTML = `
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-            `;
-        } catch (err) {
-            alert("Unable to access the webcam. Please check your camera permissions.");
-            console.error(err);
-        }
+        };
+        reader.readAsDataURL(file);
     }
 });
 
-function stopWebcam() {
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
+// Handle local file uploads
+inp.addEventListener('change', () => {
+    if (inp.files && inp.files[0]) {
+        const file = inp.files[0];
+        chosen.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        
+        const reader = new FileReader();
+        reader.onload = e => {
+            webcamCapturePreview.src = e.target.result;
+            webcamCapturePreview.style.display = 'block';
+            previewPlaceholder.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        chosen.textContent = '';
+        webcamCapturePreview.style.display = 'none';
+        previewPlaceholder.style.display = 'flex';
     }
-    webcamVideo.srcObject = null;
-    isCameraActive = false;
-}
-
-function setIdleState() {
-    webcamVideo.style.display = 'none';
-    webcamCapturePreview.style.display = 'none';
-    previewPlaceholder.style.display = 'flex';
-    
-    btnCameraText.textContent = "START CAMERA";
-    btnUploadText.textContent = "UPLOAD FILE";
-    
-    // Reset icons
-    btnStartWebcam.querySelector('svg').innerHTML = `
-        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-        <circle cx="12" cy="13" r="4"/>
-    `;
-    btnUploadTrigger.querySelector('svg').innerHTML = `
-        <polyline points="16 16 12 12 8 16"/>
-        <line x1="12" y1="12" x2="12" y2="21"/>
-        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-    `;
-}
-
-function capturePhoto() {
-    try {
-        let width = webcamVideo.videoWidth;
-        let height = webcamVideo.videoHeight;
-        
-        // Safe fallback if video elements dimensions are not loaded yet
-        if (!width || !height) {
-            width = webcamVideo.clientWidth || 640;
-            height = webcamVideo.clientHeight || 480;
-        }
-
-        webcamCanvas.width = width;
-        webcamCanvas.height = height;
-        
-        const ctx = webcamCanvas.getContext('2d');
-        ctx.drawImage(webcamVideo, 0, 0, webcamCanvas.width, webcamCanvas.height);
-        
-        const dataUrl = webcamCanvas.toDataURL('image/png');
-        if (!dataUrl || dataUrl === 'data:,') {
-            throw new Error("Canvas generated empty image data.");
-        }
-        
-        // Stop camera stream
-        stopWebcam();
-        
-        // Show image preview
-        webcamVideo.style.display = 'none';
-        webcamCapturePreview.src = dataUrl;
-        webcamCapturePreview.style.display = 'block';
-        
-        // Reset buttons back to start state
-        setIdleState();
-        
-        // Bind to the file input
-        const file = dataURLtoFile(dataUrl, 'webcam_capture.png');
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        inp.files = dataTransfer.files;
-        
-        chosen.textContent = "webcam_capture.png (Captured from Webcam)";
-    } catch (err) {
-        alert("Camera capture failed: " + err.message);
-        console.error("Camera capture failed:", err);
-    }
-}
+});
 
 // Drag and drop events on previewContainer
 previewContainer.addEventListener('dragover', e => {
@@ -380,45 +295,7 @@ previewContainer.addEventListener('drop', e => {
     }
 });
 
-// Handle local file uploads
-inp.addEventListener('change', () => {
-    if (inp.files && inp.files[0]) {
-        const file = inp.files[0];
-        chosen.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-        
-        // Show file image preview
-        const reader = new FileReader();
-        reader.onload = e => {
-            stopWebcam();
-            webcamVideo.style.display = 'none';
-            webcamCapturePreview.src = e.target.result;
-            webcamCapturePreview.style.display = 'block';
-            previewPlaceholder.style.display = 'none';
-            setIdleState();
-        };
-        reader.readAsDataURL(file);
-    } else {
-        chosen.textContent = '';
-        setIdleState();
-    }
-});
 
-function dataURLtoFile(dataurl, filename) {
-    try {
-        var arr = dataurl.split(',');
-        if (arr.length < 2) throw new Error("Invalid base64 format");
-        var mimeMatch = arr[0].match(/:(.*?);/);
-        var mime = mimeMatch ? mimeMatch[1] : 'image/png';
-        var bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-        while(n--){
-            u8arr[n] = bstr.charCodeAt(n);
-        }
-        return new File([u8arr], filename, {type:mime});
-    } catch (e) {
-        alert("Error converting photo data: " + e.message);
-        throw e;
-    }
-}
 
 // AJAX file upload logic
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

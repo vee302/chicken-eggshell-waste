@@ -745,6 +745,91 @@ function validateFingerprintPattern(ctx, w, h) {
     };
 }
 
+// Scan cropped canvas and return a new canvas cropped tightly around the detected print area
+function getTightFingerprintCrop(sourceCanvas) {
+    const w = sourceCanvas.width;
+    const h = sourceCanvas.height;
+    const ctx = sourceCanvas.getContext('2d');
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+
+    // Sample average background gray value from corners to detect paper cards vs dark surfaces
+    const corners = [
+        getPixelGray(data, w, 2, 2),
+        getPixelGray(data, w, w - 3, 2),
+        getPixelGray(data, w, 2, h - 3),
+        getPixelGray(data, w, w - 3, h - 3)
+    ];
+    const bgGray = corners.reduce((a, b) => a + b, 0) / 4;
+    
+    // Light background (white card) -> ridges are dark
+    // Dark background (glass/wood surface) -> ridges are light (developed white powder)
+    const isLightBg = bgGray > 128;
+    const diffThreshold = 40; // minimum difference from background
+
+    let minX = w, maxX = 0, minY = h, maxY = 0;
+    let found = false;
+
+    // Scan the canvas grid (stepping by 2 pixels for speed)
+    for (let y = 0; y < h; y += 2) {
+        for (let x = 0; x < w; x += 2) {
+            const idx = (y * w + x) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+            let isRidge = false;
+            if (isLightBg) {
+                isRidge = gray < bgGray - diffThreshold;
+            } else {
+                isRidge = gray > bgGray + diffThreshold;
+            }
+
+            if (isRidge) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+                found = true;
+            }
+        }
+    }
+
+    if (!found) {
+        return sourceCanvas; // Return original if no ridge coordinates matched
+    }
+
+    // Add safe padding margin of 20 pixels around print bounds
+    const margin = 20;
+    minX = Math.max(0, minX - margin);
+    maxX = Math.min(w, maxX + margin);
+    minY = Math.max(0, minY - margin);
+    maxY = Math.min(h, maxY + margin);
+
+    const cropW = maxX - minX;
+    const cropH = maxY - minY;
+
+    // Ensure tight cropped area is of sensible size
+    if (cropW < 50 || cropH < 50) {
+        return sourceCanvas;
+    }
+
+    const croppedCanvas = document.createElement('canvas');
+    croppedCanvas.width = cropW;
+    croppedCanvas.height = cropH;
+    const croppedCtx = croppedCanvas.getContext('2d');
+
+    // Draw only the bounding box to final canvas
+    croppedCtx.drawImage(sourceCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+    return croppedCanvas;
+}
+
+function getPixelGray(data, w, x, y) {
+    const idx = (y * w + x) * 4;
+    return 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
+}
+
 // Sound feedback on clear focus trigger using Web Audio API
 function playBeep() {
     try {
@@ -844,7 +929,10 @@ document.getElementById('btnCapturePhoto').addEventListener('click', () => {
     stopWebcam();
     document.getElementById('cameraModal').style.display = 'none';
 
-    canvas.toBlob(function(blob) {
+    // Crop canvas tightly around the fingerprint ridges to remove blank margins
+    const tightCanvas = getTightFingerprintCrop(canvas);
+
+    tightCanvas.toBlob(function(blob) {
         isCameraProcessing = false;
         if (!blob) {
             alert("Failed to capture fingerprint image.");

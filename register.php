@@ -64,18 +64,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "Please enter a valid email address.";
     } elseif (empty($requested_role)) {
         $error_message = "Requested Role is required.";
+    } elseif ($requested_role === 'super_admin') {
+        $error_message = "Super Administrator role is not available for public registration.";
     } elseif (!in_array($requested_role, ['criminology_student', 'faculty_researcher', 'alumni_police_partner'])) {
         $error_message = "Invalid requested role selected.";
     } elseif (empty($reason)) {
         $error_message = "Reason for Access is required.";
     } elseif (empty($password)) {
         $error_message = "Password is required.";
-    } elseif (strlen($password) < 6) {
-        $error_message = "Password must be at least 6 characters.";
+    } elseif (
+        strlen($password) < 8 ||
+        !preg_match('/[A-Z]/', $password) ||
+        !preg_match('/[a-z]/', $password) ||
+        !preg_match('/[0-9]/', $password) ||
+        !preg_match('/[^A-Za-z0-9]/', $password)
+    ) {
+        $error_message = "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special symbol.";
     } elseif (empty($confirm_pass)) {
         $error_message = "Confirm Password is required.";
     } elseif ($password !== $confirm_pass) {
-        $error_message = "Password and Confirm Password must match.";
+        $error_message = "Passwords do not match.";
     } else {
         // Process file upload if provided
         $proof_path = null;
@@ -359,6 +367,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         .btn-cancel:hover {
             background: rgba(0, 0, 0, 0.03);
         }
+
+        /* Password requirements checklist styling */
+        .password-requirements {
+            margin-top: 0.6rem;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: left;
+        }
+        .req-item {
+            transition: color 0.2s ease;
+        }
+        .req-item.invalid {
+            color: #6c757d; /* muted gray */
+        }
+        .req-item.valid {
+            color: #1b4332; /* dark green */
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -502,7 +531,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     <div class="form-group">
                         <label for="password">Password <span class="required-star">*</span></label>
                         <div class="password-wrapper">
-                            <input type="password" id="password" name="password" class="form-control-plain" placeholder="Minimum 6 characters">
+                            <input type="password" id="password" name="password" class="form-control-plain" placeholder="Minimum 8 characters">
                             <button type="button" class="password-toggle" data-password-toggle="password" aria-label="Show password" aria-pressed="false">
                                 <span class="icon-eye">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -519,6 +548,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                                     </svg>
                                 </span>
                             </button>
+                        </div>
+                        <div class="password-requirements" id="passwordRequirements">
+                            <div class="req-item invalid" id="req-length">&bull; At least 8 characters</div>
+                            <div class="req-item invalid" id="req-uppercase">&bull; One uppercase letter</div>
+                            <div class="req-item invalid" id="req-lowercase">&bull; One lowercase letter</div>
+                            <div class="req-item invalid" id="req-number">&bull; One number</div>
+                            <div class="req-item invalid" id="req-special">&bull; One special symbol</div>
                         </div>
                     </div>
 
@@ -609,6 +645,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     button.setAttribute("aria-pressed", shouldShow ? "true" : "false");
                 });
             });
+
+            // Real-time password validation while typing
+            const passwordInput = document.getElementById("password");
+            const reqLength = document.getElementById("req-length");
+            const reqUppercase = document.getElementById("req-uppercase");
+            const reqLowercase = document.getElementById("req-lowercase");
+            const reqNumber = document.getElementById("req-number");
+            const reqSpecial = document.getElementById("req-special");
+
+            if (passwordInput) {
+                const updateRequirement = (element, isValid) => {
+                    if (isValid) {
+                        element.classList.remove("invalid");
+                        element.classList.add("valid");
+                    } else {
+                        element.classList.remove("valid");
+                        element.classList.add("invalid");
+                    }
+                };
+
+                const validatePasswordInput = () => {
+                    const val = passwordInput.value;
+                    updateRequirement(reqLength, val.length >= 8);
+                    updateRequirement(reqUppercase, /[A-Z]/.test(val));
+                    updateRequirement(reqLowercase, /[a-z]/.test(val));
+                    updateRequirement(reqNumber, /[0-9]/.test(val));
+                    updateRequirement(reqSpecial, /[^A-Za-z0-9]/.test(val));
+                };
+
+                passwordInput.addEventListener("input", validatePasswordInput);
+            }
         });
 
         const clientErrorBox = document.getElementById("clientErrorBox");
@@ -701,9 +768,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             if (!role) { showClientError("Requested Role is required."); return false; }
             if (!reason) { showClientError("Reason for Access is required."); return false; }
             if (!pass) { showClientError("Password is required."); return false; }
-            if (pass.length < 6) { showClientError("Password must be at least 6 characters."); return false; }
+            
+            // Password validation rules
+            const isLengthValid = pass.length >= 8;
+            const isUppercaseValid = /[A-Z]/.test(pass);
+            const isLowercaseValid = /[a-z]/.test(pass);
+            const isNumberValid = /[0-9]/.test(pass);
+            const isSpecialValid = /[^A-Za-z0-9]/.test(pass);
+
+            if (!isLengthValid || !isUppercaseValid || !isLowercaseValid || !isNumberValid || !isSpecialValid) {
+                showClientError("Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special symbol.");
+                return false;
+            }
+            
             if (!conf) { showClientError("Confirm Password is required."); return false; }
-            if (pass !== conf) { showClientError("Password and Confirm Password must match."); return false; }
+            if (pass !== conf) { showClientError("Passwords do not match."); return false; }
 
             return true;
         }

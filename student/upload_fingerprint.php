@@ -154,10 +154,9 @@ try {
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-top:1.25rem;">
-                        <label for="image_label">Image Label / Description</label>
-                        <input type="text" name="image_label" id="image_label" class="form-control"
-                               placeholder="e.g. Eggshell on Glass — Trial 3">
+                    <!-- Non-biometric identification notice / disclaimer -->
+                    <div style="margin: 1.5rem 0; padding: 0.95rem 1.1rem; background: #f4f6f0; border-left: 4px solid var(--medium-green); border-radius: 4px; font-size: 0.78rem; color: #5f6368; line-height: 1.45;">
+                        <strong>Disclaimer / Notice:</strong> This feature is for educational and research evaluation only. It is not used for biometric identification. It is only designed for Camera-Based Latent Fingerprint Capture and AI-Assisted Image Quality Evaluation using Chicken Eggshell Waste powder.
                     </div>
 
                     <button type="submit" class="btn btn-primary" id="btn-upload-image" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: center; gap: 8px; background: #224229 !important; border-color: #224229 !important; border-radius: 8px; color: #fff;">
@@ -209,10 +208,50 @@ try {
         </div>
     </main>
 </div>
+
+<!-- Camera Capture Modal -->
+<div id="cameraModal" class="camera-modal" style="display: none;">
+    <!-- Live Video Stream -->
+    <video id="cameraVideo" class="camera-video" autoplay playsinline></video>
+
+    <!-- Blur/Dim Backdrop Mask -->
+    <div class="camera-blur-overlay"></div>
+
+    <!-- Center Oval Focus Guide -->
+    <div class="focus-guide-oval"></div>
+
+    <!-- Top Text Instructions -->
+    <div class="camera-header">
+        <h3 class="camera-title">Fingerprint Scan</h3>
+        <p class="camera-subtitle">Align the latent fingerprint inside the guide.</p>
+    </div>
+
+    <!-- Controls Row -->
+    <div class="camera-controls">
+        <!-- Close/Cancel Button -->
+        <button type="button" class="ctrl-btn btn-cancel" id="btnCancelCamera" title="Cancel Capture">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+
+        <!-- Capture Photo Button -->
+        <button type="button" class="ctrl-btn btn-capture" id="btnCapturePhoto" title="Capture Fingerprint">
+            <span class="capture-inner"></span>
+        </button>
+
+        <!-- Switch Front/Back Camera Button -->
+        <button type="button" class="ctrl-btn btn-switch" id="btnSwitchCamera" title="Switch Camera">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
 <?php require_once '_sidebar_js.php'; ?>
 <script>
 const inp = document.getElementById('fingerprint_image');
-const fingerprintCamera = document.getElementById('fingerprint_camera');
 const chosen = document.getElementById('file-chosen');
 
 const previewContainer = document.getElementById('previewContainer');
@@ -222,37 +261,166 @@ const webcamCapturePreview = document.getElementById('webcamCapturePreview');
 const btnStartWebcam = document.getElementById('btnStartWebcam');
 const btnUploadTrigger = document.getElementById('btnUploadTrigger');
 
-// Trigger native mobile camera capture when clicking "START CAMERA"
+let cameraStream = null;
+let currentFacingMode = 'environment';
+let isCameraProcessing = false;
+
+// Stop and release camera tracks
+function stopWebcam() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    const video = document.getElementById('cameraVideo');
+    if (video) {
+        video.srcObject = null;
+    }
+}
+
+// Stop tracks on page unload or visibility hidden to prevent background active camera
+window.addEventListener('beforeunload', stopWebcam);
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        stopWebcam();
+        document.getElementById('cameraModal').style.display = 'none';
+    }
+});
+
+// Launch custom fullscreen live camera overlay
+async function startWebcam() {
+    stopWebcam();
+    const modal = document.getElementById('cameraModal');
+    const video = document.getElementById('cameraVideo');
+    
+    const constraints = {
+        video: {
+            facingMode: currentFacingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+        },
+        audio: false
+    };
+
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = cameraStream;
+        modal.style.display = 'flex';
+    } catch (err) {
+        console.error("Camera access error: ", err);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            alert("Camera access was denied. Please allow camera permission or upload a file instead.");
+        } else {
+            // Try general webcam fallback
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                video.srcObject = cameraStream;
+                modal.style.display = 'flex';
+            } catch (fallbackErr) {
+                alert("Camera is not available on this device. Please upload a file instead.");
+            }
+        }
+    }
+}
+
+// Open camera modal triggers
 btnStartWebcam.addEventListener('click', () => {
-    fingerprintCamera.click();
+    startWebcam();
 });
 
-// Trigger local file selection when clicking "UPLOAD FILE"
-btnUploadTrigger.addEventListener('click', () => {
-    inp.click();
+// Cancel camera modal
+document.getElementById('btnCancelCamera').addEventListener('click', () => {
+    stopWebcam();
+    document.getElementById('cameraModal').style.display = 'none';
 });
 
-// Handle camera capture file selection
-fingerprintCamera.addEventListener('change', () => {
-    if (fingerprintCamera.files && fingerprintCamera.files[0]) {
-        const file = fingerprintCamera.files[0];
-        
-        // Assign the captured file to the main file input
-        inp.files = fingerprintCamera.files;
-        
-        chosen.textContent = `${file.name} (Captured from Camera)`;
-        
+// Toggle facingMode (front/back camera)
+document.getElementById('btnSwitchCamera').addEventListener('click', () => {
+    currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+    startWebcam();
+});
+
+// Capture frame and crop specifically inside the guide oval
+document.getElementById('btnCapturePhoto').addEventListener('click', () => {
+    if (!cameraStream || isCameraProcessing) return;
+
+    const video = document.getElementById('cameraVideo');
+    const videoW = video.videoWidth;
+    const videoH = video.videoHeight;
+    const viewW = window.innerWidth;
+    const viewH = window.innerHeight;
+
+    if (!videoW || !videoH) {
+        alert("Camera stream is not fully initialized. Please try again.");
+        return;
+    }
+
+    isCameraProcessing = true;
+    chosen.textContent = "Processing captured fingerprint...";
+
+    // Oval guide dimensions in viewport pixels (matching CSS: width: 40vh, height: 60vh)
+    const width = 0.40 * viewH;
+    const height = 0.60 * viewH;
+    const left = (viewW - width) / 2;
+    const top = (viewH - height) / 2;
+
+    // Cover scale factor & offsets mapping viewport space to video space
+    const scale = Math.max(viewW / videoW, viewH / videoH);
+    const offsetX = (videoW * scale - viewW) / 2;
+    const offsetY = (videoH * scale - viewH) / 2;
+
+    // Convert coordinates
+    const cropX = (left + offsetX) / scale;
+    const cropY = (top + offsetY) / scale;
+    const cropW = width / scale;
+    const cropH = height / scale;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = cropW;
+    canvas.height = cropH;
+    const ctx = canvas.getContext('2d');
+    
+    // Draw cropped region from video stream
+    ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+    // Release camera stream and hide modal immediately
+    stopWebcam();
+    document.getElementById('cameraModal').style.display = 'none';
+
+    canvas.toBlob(function(blob) {
+        isCameraProcessing = false;
+        if (!blob) {
+            alert("Failed to capture fingerprint image.");
+            chosen.textContent = "";
+            return;
+        }
+
+        const filename = "fingerprint_capture_" + Date.now() + ".jpg";
+        const capturedFile = new File([blob], filename, { type: 'image/jpeg' });
+
+        // Bind processed file to form input element
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(capturedFile);
+        inp.files = dataTransfer.files;
+
+        chosen.textContent = `${filename} (Camera Captured — Cropped)`;
+
+        // Load preview
         const reader = new FileReader();
         reader.onload = e => {
             webcamCapturePreview.src = e.target.result;
             webcamCapturePreview.style.display = 'block';
             previewPlaceholder.style.display = 'none';
         };
-        reader.readAsDataURL(file);
-    }
+        reader.readAsDataURL(capturedFile);
+    }, 'image/jpeg', 0.95);
 });
 
-// Handle local file uploads
+// Trigger local file selection
+btnUploadTrigger.addEventListener('click', () => {
+    inp.click();
+});
+
+// Preview selected local files
 inp.addEventListener('change', () => {
     if (inp.files && inp.files[0]) {
         const file = inp.files[0];
@@ -272,7 +440,7 @@ inp.addEventListener('change', () => {
     }
 });
 
-// Drag and drop events on previewContainer
+// Drag and drop setup on preview container
 previewContainer.addEventListener('dragover', e => {
     e.preventDefault();
     previewContainer.style.borderColor = '#1b4332';
@@ -289,13 +457,10 @@ previewContainer.addEventListener('drop', e => {
     
     if (e.dataTransfer.files.length) {
         inp.files = e.dataTransfer.files;
-        // Trigger change event to load preview
         const event = new Event('change');
         inp.dispatchEvent(event);
     }
 });
-
-
 
 // AJAX file upload logic
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -313,9 +478,13 @@ function showNotification(type, message) {
 document.getElementById('form-upload-fingerprint').addEventListener('submit', function(e) {
     e.preventDefault();
     if (isUploading) return;
+    if (isCameraProcessing) {
+        showNotification('error', 'Please wait until image capture is finished.');
+        return;
+    }
 
     if (!inp.files.length) {
-        showNotification('error', 'Please select a fingerprint image file to upload.');
+        showNotification('error', 'Please select or capture a fingerprint image to upload.');
         return;
     }
 
@@ -323,7 +492,7 @@ document.getElementById('form-upload-fingerprint').addEventListener('submit', fu
     const btnText = document.getElementById('btnText');
     const originalText = btnText.textContent;
     
-    btnText.textContent = 'Uploading...';
+    btnText.textContent = 'Uploading & Evaluating...';
     btn.disabled = true;
     isUploading = true;
 
@@ -350,6 +519,8 @@ document.getElementById('form-upload-fingerprint').addEventListener('submit', fu
             // Reset form
             document.getElementById('form-upload-fingerprint').reset();
             chosen.textContent = '';
+            webcamCapturePreview.style.display = 'none';
+            previewPlaceholder.style.display = 'flex';
         } else {
             showNotification('error', data.message);
         }

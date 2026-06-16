@@ -933,3 +933,143 @@ body {
         display: none;
     }
 }
+
+/* ============================================================
+   CAMERA MODAL REDESIGN
+   ============================================================ */
+.camera-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.camera-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.camera-blur-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(12px) brightness(0.7);
+    -webkit-backdrop-filter: blur(12px) brightness(0.7);
+    /* Creates an oval clear mask at the center */
+    mask-image: radial-gradient(ellipse 20vh 30vh at 50% 50%, transparent 99%, #000 100%);
+    -webkit-mask-image: radial-gradient(ellipse 20vh 30vh at 50% 50%, transparent 99%, #000 100%);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.focus-guide-oval {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 40vh;
+    height: 60vh;
+    border: 3px solid #74c69d;
+    border-radius: 50%;
+    box-shadow: 0 0 25px rgba(116, 198, 157, 0.75), inset 0 0 20px rgba(116, 198, 157, 0.4);
+    z-index: 11;
+    pointer-events: none;
+}
+
+.camera-header {
+    position: absolute;
+    top: 6vh;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #fff;
+    padding: 0 1.5rem;
+    z-index: 12;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.85);
+    pointer-events: none;
+}
+
+.camera-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.camera-subtitle {
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    max-width: 320px;
+    margin: 0 auto;
+    line-height: 1.4;
+}
+
+.camera-controls {
+    position: absolute;
+    bottom: 6vh;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 12;
+    padding: 0 2.5rem;
+}
+
+.ctrl-btn {
+    background: rgba(20, 20, 20, 0.75);
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: auto;
+    color: #fff;
+    padding: 0;
+}
+
+.ctrl-btn:hover {
+    background: rgba(45, 106, 79, 0.85);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.08);
+}
+
+.ctrl-btn:active {
+    transform: scale(0.92);
+}
+
+.btn-cancel, .btn-switch {
+    width: 54px;
+    height: 54px;
+}
+
+.btn-capture {
+    width: 80px;
+    height: 80px;
+    background: #fff;
+    border: 6px solid rgba(116, 198, 157, 0.4);
+    padding: 4px;
+}
+
+.btn-capture:hover {
+    background: #e2ebe4;
+    border-color: rgba(116, 198, 157, 0.6);
+}
+
+.capture-inner {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: 50%;
+    display: block;
+    border: 2px solid rgba(45, 106, 79, 0.3);
+}

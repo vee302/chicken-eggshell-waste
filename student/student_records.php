@@ -406,7 +406,7 @@ try {
                         </svg>
                         Print / Export
                     </button>
-                    <a href="submit_trial.php" class="btn btn-primary">+ New Submission</a>
+                    <a href="upload_fingerprint.php" class="btn btn-primary">+ New Submission</a>
                 </div>
             </div>
 

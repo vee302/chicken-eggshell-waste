@@ -76,12 +76,12 @@ try {
                     <h1>View Surface Performance</h1>
                     <p>Breakdown of your fingerprint accuracy scores by surface type and powder used.</p>
                 </div>
-                <a href="submit_trial.php" class="btn btn-primary">+ New Trial</a>
+                <a href="upload_fingerprint.php" class="btn btn-primary">+ New Trial</a>
             </div>
 
             <?php if (empty($surface_data)): ?>
                 <div class="dashboard-card" style="text-align:center;padding:3rem;">
-                    <p style="color:var(--gray);">No trial data yet. <a href="submit_trial.php" style="color:var(--medium-green);font-weight:600;">Submit a trial to see results.</a></p>
+                    <p style="color:var(--gray);">No trial data yet. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload a fingerprint to see results.</a></p>
                 </div>
             <?php else: ?>
                 <div class="surface-grid">

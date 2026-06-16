@@ -445,7 +445,7 @@ try {
                         </thead>
                         <tbody>
                         <?php if (empty($trials)): ?>
-                            <tr><td colspan="8" style="text-align:center;color:#6c757d;padding:2rem;">No trial records yet. <a href="submit_trial.php" style="color:var(--medium-green);font-weight:600;">Submit a trial →</a></td></tr>
+                            <tr><td colspan="8" style="text-align:center;color:#6c757d;padding:2rem;">No trial records yet. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload a fingerprint →</a></td></tr>
                         <?php else: ?>
                             <?php foreach ($trials as $i => $t): ?>
                             <tr data-trial-id="<?= $t['id'] ?>">

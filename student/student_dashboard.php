@@ -392,7 +392,7 @@ try {
                     <h1>Dashboard Overview</h1>
                     <p>Welcome back, <?= htmlspecialchars($student_name) ?>. Here is a summary of your forensic submissions.</p>
                 </div>
-                <a href="submit_trial.php" class="btn btn-primary" id="btn-submit-new">
+                <a href="upload_fingerprint.php" class="btn btn-primary" id="btn-submit-new">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
                          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -488,17 +488,6 @@ try {
                     </h3>
                 </div>
                 <div class="quicklinks-grid">
-                    <a href="submit_trial.php" class="quicklink-card" id="ql-submit-trial">
-                        <div class="quicklink-icon">
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="12" y1="11" x2="12" y2="17"/>
-                                <line x1="9"  y1="14" x2="15" y2="14"/>
-                            </svg>
-                        </div>
-                        <span class="quicklink-label">Submit Trial Data</span>
-                    </a>
                     <a href="upload_fingerprint.php" class="quicklink-card" id="ql-upload">
                         <div class="quicklink-icon">
                             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -577,7 +566,7 @@ try {
                         <?php if (empty($recent)): ?>
                             <tr>
                                 <td colspan="5" style="text-align:center;color:#6c757d;padding:2rem;">
-                                    No submissions yet. <a href="submit_trial.php" style="color:var(--medium-green);font-weight:600;">Submit your first trial →</a>
+                                    No submissions yet. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first fingerprint →</a>
                                 </td>
                             </tr>
                         <?php else: ?>
@@ -892,7 +881,7 @@ function renderRecentTable(records) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="5" style="text-align:center;color:#6c757d;padding:2rem;">
-                    No submissions yet. <a href="submit_trial.php" style="color:var(--medium-green);font-weight:600;">Submit your first trial →</a>
+                    No submissions yet. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first fingerprint →</a>
                 </td>
             </tr>`;
         return;

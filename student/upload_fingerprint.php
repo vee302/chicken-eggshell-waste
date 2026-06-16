@@ -129,6 +129,8 @@ try {
                                 <span id="btnUploadText">UPLOAD FILE</span>
                             </button>
                         </div>
+                        <!-- Filename display underneath -->
+                        <div id="file-chosen" style="font-size: 0.82rem; font-weight: 700; color: #2d6a4f; margin-top: 1rem; text-align: center; min-height: 1.2rem;"></div>
                     </div>
                     <input type="file" name="fingerprint_image" id="fingerprint_image"
                            accept="image/jpeg,image/png,image/webp" style="display:none;" required>

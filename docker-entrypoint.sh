@@ -4,6 +4,12 @@ set -e
 # Use PORT from environment, default to 8080 if not set
 PORT="${PORT:-8080}"
 
+# Ensure uploads directories exist and are writeable by Apache at runtime
+mkdir -p /var/www/html/uploads/fingerprints
+mkdir -p /var/www/html/uploads/proofs
+chown -R www-data:www-data /var/www/html/uploads
+chmod -R 777 /var/www/html/uploads
+
 echo "Starting Apache on port ${PORT}..."
 
 # Substitute the actual PORT into Apache's ports configuration

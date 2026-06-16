@@ -65,11 +65,14 @@ if ($file['size'] > $max_bytes) {
 $filename = 'fp_' . $student_id . '_' . time() . '.' . $ext;
 $dest_dir = dirname(__DIR__) . '/uploads/fingerprints/';
 if (!is_dir($dest_dir)) {
-    @mkdir($dest_dir, 0775, true);
+    @mkdir($dest_dir, 0777, true);
+} else {
+    @chmod($dest_dir, 0777);
 }
 $dest = $dest_dir . $filename;
 
 if (move_uploaded_file($file['tmp_name'], $dest)) {
+    @chmod($dest, 0777);
     // Confirm the file actually exists after moving
     if (!file_exists($dest)) {
         if (ob_get_length()) ob_end_clean();

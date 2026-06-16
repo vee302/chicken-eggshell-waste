@@ -147,6 +147,30 @@ if (isset($_GET['view'])) {
                     </div>
                 </div>
 
+                <?php
+                // Check if running on Railway and persistent volume is mounted
+                $is_railway = (getenv('RAILWAY_ENVIRONMENT') !== false || getenv('RAILWAY_STATIC_URL') !== false);
+                $is_volume_mounted = false;
+                if ($is_railway) {
+                    if (file_exists('/proc/mounts')) {
+                        $mounts = file_get_contents('/proc/mounts');
+                        if (strpos($mounts, '/var/www/html/uploads') !== false) {
+                            $is_volume_mounted = true;
+                        }
+                    }
+                }
+                if ($is_railway && !$is_volume_mounted):
+                ?>
+                <div class="warning-banner" style="background:rgba(224,122,95,0.12); color:#c0392b; border:1.5px solid rgba(224,122,95,0.2); margin-bottom:1.5rem; display:flex; gap:10px; align-items:center; padding:12px 18px; border-radius:10px; font-size:0.85rem; font-weight:600;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span><strong>Railway Container Warning:</strong> No persistent volume is detected mounted at `/var/www/html/uploads`. Uploaded fingerprint images will be lost when the container restarts. Please configure a Railway Volume mounted to `/var/www/html/uploads` to persist these assets.</span>
+                </div>
+                <?php endif; ?>
+
                 <!-- SEARCH AND FILTERS -->
                 <div class="dashboard-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
                     <form id="filterForm" class="search-filter-bar" onsubmit="event.preventDefault(); fetchFilteredRecords();">
@@ -219,18 +243,12 @@ if (isset($_GET['view'])) {
                                             <td>
                                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                                     <div style="width: 32px; height: 32px; border-radius: 4px; background: #e9ecef; border: 1px solid var(--light-gray); display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                                        <?php if (!empty($rec['image_path']) && file_exists('../uploads/fingerprints/' . $rec['image_path'])): ?>
-                                                            <img src="../uploads/fingerprints/<?php echo htmlspecialchars($rec['image_path']); ?>" style="width: 100%; height: 100%; object-fit: cover;" alt="Fingerprint">
+                                                        <?php if (!empty($rec['image_path']) && file_exists(dirname(__DIR__) . '/uploads/fingerprints/' . $rec['image_path'])): ?>
+                                                            <a href="../view_fingerprint.php?test_id=<?php echo $rec['id']; ?>" target="_blank">
+                                                                <img src="../view_fingerprint.php?test_id=<?php echo $rec['id']; ?>" style="width: 100%; height: 100%; object-fit: cover;" alt="Fingerprint">
+                                                            </a>
                                                         <?php else: ?>
-                                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--medium-green);">
-                                                                <path d="M12 2a10 10 0 0 0-7.3 16.8"></path>
-                                                                <path d="M12 2a10 10 0 0 1 7.3 16.8"></path>
-                                                                <path d="M12 6a6 6 0 0 0-4.4 10.1"></path>
-                                                                <path d="M12 6a6 6 0 0 1 4.4 10.1"></path>
-                                                                <path d="M12 10a2 2 0 0 0-1.5 3.4"></path>
-                                                                <path d="M12 10a2 2 0 0 1 1.5 3.4"></path>
-                                                                <path d="M12 14v4"></path>
-                                                            </svg>
+                                                            <div style="font-size:0.55rem;color:var(--danger);font-weight:700;text-align:center;padding:1px;line-height:1.1;">Not found</div>
                                                         <?php endif; ?>
                                                     </div>
                                                     <span style="font-family: monospace; font-size: 0.75rem; color: var(--gray);">
@@ -325,6 +343,17 @@ if (isset($_GET['view'])) {
                 <div class="detail-row"><span class="detail-label">Image Label</span><span class="detail-value"><?php echo htmlspecialchars($view_record['image_label'] ?: 'Untitled'); ?></span></div>
                 <div class="detail-row"><span class="detail-label">Notes from Submission</span><span class="detail-value"><?php echo nl2br(htmlspecialchars($view_record['notes'] ?: 'No notes provided.')); ?></span></div>
                 <div class="detail-row"><span class="detail-label">Date Submitted</span><span class="detail-value"><?php echo date('F d, Y g:i A', strtotime($view_record['submitted_at'])); ?></span></div>
+
+                <p class="section-divider">Fingerprint Image Asset</p>
+                <div style="text-align:center; margin-bottom:1rem; border:1px solid #e9ecef; padding:10px; border-radius:8px; background:#fafafa;">
+                    <?php if (!empty($view_record['image_path']) && file_exists(dirname(__DIR__) . '/uploads/fingerprints/'.$view_record['image_path'])): ?>
+                        <a href="../view_fingerprint.php?test_id=<?php echo $view_record['id']; ?>" target="_blank">
+                            <img src="../view_fingerprint.php?test_id=<?php echo $view_record['id']; ?>" style="max-height:220px; max-width:100%; object-fit:contain; border-radius:6px; border:1px solid #ddd;" alt="Fingerprint Image Asset">
+                        </a>
+                    <?php else: ?>
+                        <div style="padding:2rem; background:#f4f6f0; border-radius:6px; font-weight:600; color:var(--danger);">Image not found</div>
+                    <?php endif; ?>
+                </div>
 
                 <p class="section-divider">Automated Image Evaluation Scores</p>
                 <div class="score-box">

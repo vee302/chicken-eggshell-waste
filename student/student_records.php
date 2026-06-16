@@ -179,9 +179,9 @@ try {
                                 <td style="font-weight: 700; color: var(--dark-green);"><?= htmlspecialchars($r['trial_id'] ?: 'TR-'.str_pad($r['id'], 4, '0', STR_PAD_LEFT)) ?></td>
                                 <td>
                                     <?php if ($r['image_path']): ?>
-                                        <?php if (file_exists('../uploads/fingerprints/'.$r['image_path'])): ?>
-                                            <a href="../uploads/fingerprints/<?= htmlspecialchars($r['image_path']) ?>" target="_blank">
-                                                <img src="../uploads/fingerprints/<?= htmlspecialchars($r['image_path']) ?>" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
+                                        <?php if (file_exists(dirname(__DIR__) . '/uploads/fingerprints/'.$r['image_path'])): ?>
+                                            <a href="../view_fingerprint.php?test_id=<?= $r['id'] ?>" target="_blank">
+                                                <img src="../view_fingerprint.php?test_id=<?= $r['id'] ?>" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
                                             </a>
                                         <?php else: ?>
                                             <span style="font-size: 0.72rem; color: var(--danger); font-weight:600;">Image not found</span>
@@ -346,10 +346,14 @@ function renderRecordsTable(records) {
         
         let imageHtml = '<span style="font-size: 0.72rem; color: var(--gray); font-style:italic;">No image</span>';
         if (r.image_path) {
-            imageHtml = `
-                <a href="../uploads/fingerprints/${r.image_path}" target="_blank">
-                    <img src="../uploads/fingerprints/${r.image_path}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
-                </a>`;
+            if (r.image_exists) {
+                imageHtml = `
+                    <a href="../view_fingerprint.php?test_id=${r.id}" target="_blank">
+                        <img src="../view_fingerprint.php?test_id=${r.id}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
+                    </a>`;
+            } else {
+                imageHtml = '<span style="font-size: 0.72rem; color: var(--danger); font-weight:600;">Image not found</span>';
+            }
         }
 
         const isApproved = r.status === 'approved';

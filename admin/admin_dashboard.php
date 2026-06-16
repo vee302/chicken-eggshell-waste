@@ -406,6 +406,35 @@ if (empty($activities)) {
                                     <span><?php echo $maintenance_mode; ?></span>
                                 </div>
                             </li>
+                            <?php
+                            $is_railway = (getenv('RAILWAY_ENVIRONMENT') !== false || getenv('RAILWAY_STATIC_URL') !== false);
+                            $is_volume_mounted = false;
+                            if ($is_railway) {
+                                if (file_exists('/proc/mounts')) {
+                                    $mounts = file_get_contents('/proc/mounts');
+                                    if (strpos($mounts, '/var/www/html/uploads') !== false) {
+                                        $is_volume_mounted = true;
+                                    }
+                                }
+                            }
+                            ?>
+                            <li class="status-item">
+                                <span class="status-label">Persistent Volume</span>
+                                <div class="status-value-indicator">
+                                    <?php if ($is_railway): ?>
+                                        <?php if ($is_volume_mounted): ?>
+                                            <span class="dot dot-green"></span>
+                                            <span>ACTIVE (Railway)</span>
+                                        <?php else: ?>
+                                            <span class="dot dot-orange"></span>
+                                            <span style="color:#c0392b; font-weight:700;">MISSING WARNING</span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="dot dot-green"></span>
+                                        <span>LOCAL (Development)</span>
+                                    <?php endif; ?>
+                                </div>
+                            </li>
                         </ul>
                     </div>
                 </div>

@@ -145,8 +145,8 @@ try {
                     <div class="image-gallery">
                         <?php foreach ($images as $img): ?>
                         <div class="image-thumb">
-                            <?php if ($img['image_path'] && file_exists('../uploads/fingerprints/' . $img['image_path'])): ?>
-                                <img src="../uploads/fingerprints/<?= htmlspecialchars($img['image_path']) ?>" alt="Fingerprint image">
+                            <?php if ($img['image_path'] && file_exists(dirname(__DIR__) . '/uploads/fingerprints/' . $img['image_path'])): ?>
+                                <img src="../view_fingerprint.php?test_id=<?= $img['id'] ?>" alt="Fingerprint image">
                             <?php else: ?>
                                 <div style="height:130px; background:#f4f6f0; display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:0.75rem; font-weight:600;">Image not found</div>
                             <?php endif; ?>
@@ -273,7 +273,7 @@ function appendGalleryCard(data) {
     card.className = 'image-thumb';
     
     card.innerHTML = `
-        <img src="../uploads/fingerprints/${data.image_path}" alt="Fingerprint image">
+        <img src="../view_fingerprint.php?test_id=${data.id}" alt="Fingerprint image">
         <div class="image-thumb-info">
             <div class="image-thumb-label" style="font-size: 0.8rem; font-weight:700; color:var(--dark-green);">${data.trial_id}</div>
             <div class="image-thumb-label" title="${data.image_label || 'Untitled'}">${data.image_label || 'Untitled'}</div>

@@ -220,6 +220,17 @@ try {
     $stmt->execute();
     $all_approved_trials = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    foreach ($all_approved_trials as &$row) {
+        $row['image_exists'] = false;
+        if (!empty($row['image_path'])) {
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $row['image_path'];
+            if (file_exists($filePath)) {
+                $row['image_exists'] = true;
+            }
+        }
+    }
+    unset($row);
+
 } catch (PDOException $e) {
     $error = "Database error: " . $e->getMessage();
 }
@@ -646,13 +657,15 @@ try {
         // Image loading
         const modalImg = document.getElementById("modalImage");
         const modalFallback = document.getElementById("modalImageFallback");
-        if (row.image_path) {
-            modalImg.src = "../uploads/fingerprints/" + row.image_path;
+        if (row.image_path && row.image_exists) {
+            modalImg.src = "../view_fingerprint.php?test_id=" + row.id;
             modalImg.style.display = "inline-block";
             modalFallback.style.display = "none";
         } else {
             modalImg.style.display = "none";
+            modalFallback.textContent = "Image not found";
             modalFallback.style.display = "block";
+            modalFallback.style.color = "var(--danger)";
         }
 
         // Scores

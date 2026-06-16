@@ -24,6 +24,17 @@ try {
     $stmt->execute();
     $submissions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    foreach ($submissions as &$s) {
+        $s['image_exists'] = false;
+        if (!empty($s['image_path'])) {
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $s['image_path'];
+            if (file_exists($filePath)) {
+                $s['image_exists'] = true;
+            }
+        }
+    }
+    unset($s);
+
     echo json_encode([
         'success' => true,
         'message' => 'Pending submissions retrieved successfully.',

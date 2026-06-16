@@ -177,12 +177,12 @@ if (isset($_GET['view'])) {
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($r['powder_type']) ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($r['surface_type']) ?></td>
                                 <td>
-                                    <?php if ($r['image_path'] && file_exists('../uploads/fingerprints/'.$r['image_path'])): ?>
-                                        <a href="../uploads/fingerprints/<?= htmlspecialchars($r['image_path']) ?>" target="_blank">
-                                            <img src="../uploads/fingerprints/<?= htmlspecialchars($r['image_path']) ?>" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
+                                    <?php if ($r['image_path'] && file_exists(dirname(__DIR__) . '/uploads/fingerprints/'.$r['image_path'])): ?>
+                                        <a href="../view_fingerprint.php?test_id=<?= $r['id'] ?>" target="_blank">
+                                            <img src="../view_fingerprint.php?test_id=<?= $r['id'] ?>" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
                                         </a>
                                     <?php else: ?>
-                                        <div style="width:48px;height:48px;border-radius:8px;background:#f4f6f0;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#adb5bd" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+                                        <div style="width:48px;height:48px;border-radius:8px;background:#f4f6f0;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.65rem;color:var(--danger);font-weight:600;text-align:center;padding:2px;">Image not found</span></div>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -225,6 +225,17 @@ if (isset($_GET['view'])) {
             <div class="detail-row"><span class="detail-label">Image Label</span><span class="detail-value"><?= htmlspecialchars($view_record['image_label'] ?: 'Untitled') ?></span></div>
             <div class="detail-row"><span class="detail-label">Notes from Submission</span><span class="detail-value"><?= nl2br(htmlspecialchars($view_record['notes'] ?: 'No notes provided.')) ?></span></div>
             <div class="detail-row"><span class="detail-label">Date Submitted</span><span class="detail-value"><?= date('F d, Y g:i A', strtotime($view_record['submitted_at'])) ?></span></div>
+
+            <p class="section-divider">Fingerprint Image Asset</p>
+            <div style="text-align:center; margin-bottom:1rem; border:1px solid #e9ecef; padding:10px; border-radius:8px; background:#fafafa;">
+                <?php if (!empty($view_record['image_path']) && file_exists(dirname(__DIR__) . '/uploads/fingerprints/'.$view_record['image_path'])): ?>
+                    <a href="../view_fingerprint.php?test_id=<?= $view_record['id'] ?>" target="_blank">
+                        <img src="../view_fingerprint.php?test_id=<?= $view_record['id'] ?>" style="max-height:220px; max-width:100%; object-fit:contain; border-radius:6px; border:1px solid #ddd;" alt="Fingerprint Image Asset">
+                    </a>
+                <?php else: ?>
+                    <div style="padding:2rem; background:#f4f6f0; border-radius:6px; font-weight:600; color:var(--danger);">Image not found</div>
+                <?php endif; ?>
+            </div>
 
             <p class="section-divider">Automated Image Evaluation Scores</p>
             <div class="score-box">

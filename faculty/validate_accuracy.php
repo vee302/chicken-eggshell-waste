@@ -101,6 +101,16 @@ try {
         ORDER BY ft.submitted_at DESC
     ");
     $submissions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($submissions as &$row) {
+        $row['image_exists'] = false;
+        if (!empty($row['image_path'])) {
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $row['image_path'];
+            if (file_exists($filePath)) {
+                $row['image_exists'] = true;
+            }
+        }
+    }
+    unset($row);
 } catch (PDOException $e) {}
 ?>
 <!DOCTYPE html>
@@ -196,13 +206,13 @@ try {
                                 <td style="font-weight: 700; color: var(--dark-green);"><?= htmlspecialchars($row['trial_id'] ?: 'TR-'.str_pad($row['id'], 4, '0', STR_PAD_LEFT)) ?></td>
                                 <td><?= htmlspecialchars($row['student_name']) ?></td>
                                 <td>
-                                    <?php if ($row['image_path'] && file_exists('../uploads/fingerprints/'.$row['image_path'])): ?>
-                                        <a href="../uploads/fingerprints/<?= htmlspecialchars($row['image_path']) ?>" target="_blank" class="fp-image-link">
-                                            <img src="../uploads/fingerprints/<?= htmlspecialchars($row['image_path']) ?>" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
+                                    <?php if ($row['image_path'] && file_exists(dirname(__DIR__) . '/uploads/fingerprints/'.$row['image_path'])): ?>
+                                        <a href="../view_fingerprint.php?test_id=<?= $row['id'] ?>" target="_blank" class="fp-image-link">
+                                            <img src="../view_fingerprint.php?test_id=<?= $row['id'] ?>" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
                                         </a>
                                     <?php else: ?>
                                         <div style="width:50px;height:50px;border-radius:8px;background:#f4f6f0;display:flex;align-items:center;justify-content:center;">
-                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#adb5bd" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                            <span style="font-size:0.65rem;color:var(--danger);font-weight:600;text-align:center;padding:2px;">Image not found</span>
                                         </div>
                                     <?php endif; ?>
                                 </td>
@@ -213,8 +223,8 @@ try {
                                 <td><span class="badge badge-pending">Pending Validation</span></td>
                                 <td style="text-align: right;">
                                     <div class="btn-group" style="display:inline-flex; gap:6px;">
-                                        <?php if ($row['image_path']): ?>
-                                            <a href="../uploads/fingerprints/<?= htmlspecialchars($row['image_path']) ?>" target="_blank" class="btn btn-secondary btn-sm">View Image</a>
+                                        <?php if ($row['image_path'] && $row['image_exists']): ?>
+                                            <a href="../view_fingerprint.php?test_id=<?= $row['id'] ?>" target="_blank" class="btn btn-secondary btn-sm">View Image</a>
                                         <?php endif; ?>
                                         <button class="btn btn-primary btn-sm" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'approve')">Approve</button>
                                         <button class="btn btn-danger btn-sm" onclick="openModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>,'reject')">Reject</button>
@@ -342,8 +352,8 @@ function openModal(row, action) {
     // Image Preview setup
     const modalImgWrapper = document.getElementById('modalImgWrapper');
     const modalImgPreview = document.getElementById('modalImgPreview');
-    if (row.image_path) {
-        modalImgPreview.src = '../uploads/fingerprints/' + row.image_path;
+    if (row.image_path && row.image_exists) {
+        modalImgPreview.src = '../view_fingerprint.php?test_id=' + row.id;
         modalImgWrapper.style.display = 'block';
     } else {
         modalImgWrapper.style.display = 'none';
@@ -538,15 +548,15 @@ function autoRefreshTrials() {
                         
                         let imageHtml = `
                             <div style="width:50px;height:50px;border-radius:8px;background:#f4f6f0;display:flex;align-items:center;justify-content:center;">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#adb5bd" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                <span style="font-size:0.65rem;color:var(--danger);font-weight:600;text-align:center;padding:2px;">Image not found</span>
                             </div>`;
                         let viewImageBtn = '';
-                        if (s.image_path) {
+                        if (s.image_path && s.image_exists) {
                             imageHtml = `
-                                <a href="../uploads/fingerprints/${s.image_path}" target="_blank" class="fp-image-link">
-                                    <img src="../uploads/fingerprints/${s.image_path}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
+                                <a href="../view_fingerprint.php?test_id=${s.id}" target="_blank" class="fp-image-link">
+                                    <img src="../view_fingerprint.php?test_id=${s.id}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="Fingerprint">
                                 </a>`;
-                            viewImageBtn = `<a href="../uploads/fingerprints/${s.image_path}" target="_blank" class="btn btn-secondary btn-sm">View Image</a>`;
+                            viewImageBtn = `<a href="../view_fingerprint.php?test_id=${s.id}" target="_blank" class="btn btn-secondary btn-sm">View Image</a>`;
                         }
 
                         tr.innerHTML = `

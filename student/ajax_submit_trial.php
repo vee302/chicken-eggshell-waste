@@ -56,15 +56,20 @@ if ($file['size'] > $max_bytes) {
 }
 
 $filename = 'fp_' . $student_id . '_' . time() . '.' . $ext;
-$dest_dir = '../uploads/fingerprints/';
+$dest_dir = dirname(__DIR__) . '/uploads/fingerprints/';
 if (!is_dir($dest_dir)) {
-    mkdir($dest_dir, 0777, true);
+    mkdir($dest_dir, 0775, true);
 }
 $dest = $dest_dir . $filename;
 
 if (move_uploaded_file($file['tmp_name'], $dest)) {
+    // Confirm the file actually exists after moving
+    if (!file_exists($dest)) {
+        echo json_encode(['success' => false, 'message' => 'Failed to verify file upload. File is missing.']);
+        exit;
+    }
+
     // Determine absolute paths for Python script execution
-    $dest_abs = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
     $python_script = dirname(__DIR__) . '/python/evaluate_fingerprint.py';
     
     // Default score fields to NULL (Awaiting Faculty Validation)
@@ -81,7 +86,7 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
     $ai_success = false;
     
     // Execute Python script
-    $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest_abs) . " 2>&1";
+    $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " 2>&1";
     $output = shell_exec($command);
     
     if ($output === null || empty(trim($output))) {

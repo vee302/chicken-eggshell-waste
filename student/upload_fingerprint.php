@@ -223,7 +223,7 @@ try {
     <!-- Top Text Instructions -->
     <div class="camera-header">
         <h3 class="camera-title">Fingerprint Scan</h3>
-        <p class="camera-subtitle">Align the latent fingerprint inside the guide.</p>
+        <p class="camera-subtitle" id="cameraSubtitle">Align the latent fingerprint inside the guide.</p>
     </div>
 
     <!-- Auto-Capture Control Widget -->
@@ -447,15 +447,49 @@ async function startWebcam() {
     }
 }
 
+// Update Camera overlay subtitle message and auto-capture badge states
+function updateCameraStatus(state, message) {
+    const subtitle = document.getElementById('cameraSubtitle');
+    if (subtitle) {
+        subtitle.textContent = message;
+    }
+    const badge = document.getElementById('autoCaptureStatus');
+    if (badge) {
+        if (!chkAutoCapture.checked) {
+            badge.textContent = "Off";
+            badge.className = "autocapture-status-badge";
+        } else {
+            if (state === 'searching') {
+                badge.textContent = "Searching";
+                badge.className = "autocapture-status-badge";
+            } else if (state === 'pattern_detected') {
+                badge.textContent = "Detected";
+                badge.className = "autocapture-status-badge active";
+            } else if (state === 'blurry') {
+                badge.textContent = "Blurry";
+                badge.className = "autocapture-status-badge active";
+            } else if (state === 'ready') {
+                badge.textContent = "Ready";
+                badge.className = "autocapture-status-badge active";
+            } else if (state === 'captured') {
+                badge.textContent = "Captured";
+                badge.className = "autocapture-status-badge active";
+            } else if (state === 'invalid') {
+                badge.textContent = "Invalid";
+                badge.className = "autocapture-status-badge";
+            }
+        }
+    }
+}
+
 // Start auto capture processing frame loop
 function startAutoCaptureLoop() {
     stableFocusFrames = 0;
     isCaptureTriggered = false;
     lastProcessingTime = 0;
-    cameraStartTime = Date.now(); // Record webcam start timestamp to allow sensor stabilization
+    cameraStartTime = Date.now(); // Record start time for sensor stabilization
     
-    updateAutoCaptureUI();
-    sensitivityValue.textContent = `${rangeSensitivity.value}%`;
+    updateCameraStatus('searching', "Align the latent fingerprint inside the guide.");
 
     const video = document.getElementById('cameraVideo');
     const oval = document.querySelector('.focus-guide-oval');
@@ -486,6 +520,7 @@ function startAutoCaptureLoop() {
         lastProcessingTime = timestamp;
 
         if (!chkAutoCapture.checked) {
+            updateCameraStatus('off', "Align the latent fingerprint inside the guide.");
             autoCaptureLoopId = requestAnimationFrame(processFrame);
             return;
         }
@@ -518,13 +553,14 @@ function startAutoCaptureLoop() {
         // Draw cropped guide area onto analysis canvas
         analysisCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, 150, 225);
 
-        // Run Fingerprint Pattern Validation (gradient coherence analysis)
+        // Run Fingerprint Pattern Validation (gradient coherence, bounding box checks)
         const pattern = validateFingerprintPattern(analysisCtx, 150, 225);
         const warnBanner = document.getElementById('patternWarning');
 
         if (!pattern.isValid) {
             // Show warning banner prompting user to align fingerprint
             warnBanner.style.display = 'flex';
+            updateCameraStatus('searching', "Align the latent fingerprint inside the guide.");
             
             // Reset clarity meter progress
             clarityMeterFill.style.width = '0%';
@@ -538,7 +574,7 @@ function startAutoCaptureLoop() {
             autoCaptureLoopId = requestAnimationFrame(processFrame);
             return;
         } else {
-            // Hide warning banner since fingerprint pattern is detected
+            // Hide warning banner since fingerprint pattern is detected and positioned correctly
             warnBanner.style.display = 'none';
         }
 
@@ -564,15 +600,26 @@ function startAutoCaptureLoop() {
         clarityMeterFill.style.width = `${relativeClarity}%`;
         clarityValue.textContent = `${relativeClarity}%`;
 
-        if (relativeClarity >= 100) {
+        if (relativeClarity < 100) {
+            // State 3: Blurry. Message: “Hold steady. Image is not clear enough.”
+            updateCameraStatus('blurry', "Hold steady. Image is not clear enough.");
+            clarityMeterFill.classList.remove('focused');
+            stableFocusFrames = 0;
+            if (oval) {
+                oval.classList.remove('clear-detected');
+            }
+        } else {
+            // High clarity frame!
             clarityMeterFill.classList.add('focused');
             stableFocusFrames++;
 
-            // Require 3 consecutive frames of stable clear focus (~450ms) to trigger auto-capture
-            if (stableFocusFrames >= 3) {
+            if (stableFocusFrames < 10) {
+                // State 2: Pattern detected. Message: “Fingerprint pattern detected. Hold steady.”
+                updateCameraStatus('pattern_detected', "Fingerprint pattern detected. Hold steady.");
+            } else {
+                // State 4: Ready. Message: “Fingerprint aligned. Capturing...”
                 isCaptureTriggered = true;
-                autoCaptureStatus.textContent = "Capturing...";
-                autoCaptureStatus.className = "autocapture-status-badge capturing";
+                updateCameraStatus('ready', "Fingerprint aligned. Capturing...");
                 
                 if (oval) {
                     oval.classList.add('clear-detected');
@@ -583,14 +630,9 @@ function startAutoCaptureLoop() {
 
                 // Wait 250ms for visual focus animation frame before triggering capture click
                 setTimeout(() => {
+                    updateCameraStatus('captured', "Fingerprint image captured successfully.");
                     document.getElementById('btnCapturePhoto').click();
                 }, 250);
-            }
-        } else {
-            clarityMeterFill.classList.remove('focused');
-            stableFocusFrames = 0;
-            if (oval) {
-                oval.classList.remove('clear-detected');
             }
         }
 
@@ -658,12 +700,12 @@ function getClarityMetrics(ctx, w, h) {
     };
 }
 
-// Compute gradient coherence to identify parallel ridges of a fingerprint
+// Compute gradient coherence and bounding box coordinates to validate fingerprint shape
 function validateFingerprintPattern(ctx, w, h) {
     const imgData = ctx.getImageData(0, 0, w, h);
     const data = imgData.data;
     
-    // Grayscale mapping
+    // 1. Grayscale mapping
     const gray = new Float32Array(w * h);
     let sum = 0;
     for (let i = 0; i < data.length; i += 4) {
@@ -673,7 +715,7 @@ function validateFingerprintPattern(ctx, w, h) {
     }
     const mean = sum / gray.length;
 
-    // Check global contrast standard deviation to reject flat white/dim backgrounds instantly
+    // 2. Check global contrast standard deviation
     let varianceSum = 0;
     for (let i = 0; i < gray.length; i++) {
         const diff = gray[i] - mean;
@@ -682,9 +724,20 @@ function validateFingerprintPattern(ctx, w, h) {
     const globalStdDev = Math.sqrt(varianceSum / gray.length);
     
     if (globalStdDev < 30) {
-        return { isValid: false, ridgeRatio: 0 };
+        return { isValid: false, reason: "low_contrast", ridgeRatio: 0 };
     }
     
+    // 3. Corner-sampling background analysis to detect paper vs dark surfaces
+    const cornerPixels = [
+        gray[2 + 2 * w],
+        gray[(w - 3) + 2 * w],
+        gray[2 + (h - 3) * w],
+        gray[(w - 3) + (h - 3) * w]
+    ];
+    const bgGray = cornerPixels.reduce((a, b) => a + b, 0) / 4;
+    const isLightBg = bgGray > 128;
+    const diffThreshold = 40; // minimum difference from background to count as print ridge
+
     // Compute pixel gradients gx and gy
     const gx = new Float32Array(w * h);
     const gy = new Float32Array(w * h);
@@ -696,13 +749,19 @@ function validateFingerprintPattern(ctx, w, h) {
         }
     }
     
-    // Segment guide region into 15x15 blocks
+    // Segment guide region into 15x15 blocks (150 blocks total)
     const blockSize = 15;
     const cols = Math.floor(w / blockSize);
     const rows = Math.floor(h / blockSize);
     let validRidgeBlocks = 0;
     let totalBlocks = cols * rows;
-    
+    let sumCoherence = 0;
+    let evaluatedBlocks = 0;
+
+    // Bounding Box Engine variables
+    let xMin = w, xMax = 0, yMin = h, yMax = 0;
+    let foundRidgePixels = false;
+
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
             let vxx = 0, vyy = 0, vxy = 0;
@@ -718,18 +777,29 @@ function validateFingerprintPattern(ctx, w, h) {
                     vxx += gx[idx] * gx[idx];
                     vyy += gy[idx] * gy[idx];
                     vxy += gx[idx] * gy[idx];
+
+                    // Track individual ridge pixels for bounding box detection
+                    const isRidgePixel = isLightBg ? (val < bgGray - diffThreshold) : (val > bgGray + diffThreshold);
+                    if (isRidgePixel) {
+                        if (x < xMin) xMin = x;
+                        if (x > xMax) xMax = x;
+                        if (y < yMin) yMin = y;
+                        if (y > yMax) yMax = y;
+                        foundRidgePixels = true;
+                    }
                 }
             }
             
             const blockContrast = maxVal - minVal;
             const gradientSum = vxx + vyy;
             
-            // We require:
-            // 1. Moderate local block contrast (> 40)
-            // 2. High cumulative gradient magnitude (> 8000) to filter out camera noise
+            // Validate block properties
             if (blockContrast > 40 && gradientSum > 8000) {
-                // Coherence: measures gradient alignment. High coherence (0 to 1) means parallel ridges
+                // Coherence: measures gradient alignment. High coherence (0 to 1) means parallel lines (ridges)
                 const coherence = Math.sqrt(Math.pow(vxx - vyy, 2) + 4 * vxy * vxy) / (vxx + vyy + 0.001);
+                sumCoherence += coherence;
+                evaluatedBlocks++;
+
                 if (coherence > 0.45) {
                     validRidgeBlocks++;
                 }
@@ -737,11 +807,44 @@ function validateFingerprintPattern(ctx, w, h) {
         }
     }
     
-    // Latent fingerprint requires at least 15% of the blocks to contain valid parallel ridge flows
+    const avgCoherence = evaluatedBlocks > 0 ? (sumCoherence / evaluatedBlocks) : 0;
     const ridgeRatio = validRidgeBlocks / totalBlocks;
+
+    const bboxW = xMax - xMin;
+    const bboxH = yMax - yMin;
+
+    // Bounding Box Validation Rules:
+    // 1. Bounding Box must not touch the very margins of the 150x225 analysis canvas (ensure it is inside center oval guide)
+    const isBboxInside = foundRidgePixels && (xMin > 3 && xMax < w - 3 && yMin > 3 && yMax < h - 3);
+    // 2. Bounding Box must have a reasonable fingerprint-like size (Reject if too small or too large)
+    const isBboxSizeReasonable = foundRidgePixels && (bboxW >= 45 && bboxW <= 140 && bboxH >= 65 && bboxH <= 210);
+
+    let isValid = ridgeRatio > 0.15 && avgCoherence > 0.45;
+    let reason = "ok";
+
+    if (!isValid) {
+        reason = "no_ridge_pattern";
+    } else if (!isBboxInside) {
+        isValid = false;
+        reason = "outside_guide";
+    } else if (!isBboxSizeReasonable) {
+        isValid = false;
+        reason = "bad_size";
+    }
+
     return {
-        isValid: ridgeRatio > 0.15,
-        ridgeRatio: ridgeRatio
+        isValid: isValid,
+        reason: reason,
+        ridgeRatio: ridgeRatio,
+        avgCoherence: avgCoherence,
+        bbox: {
+            xMin: xMin,
+            xMax: xMax,
+            yMin: yMin,
+            yMax: yMax,
+            width: bboxW,
+            height: bboxH
+        }
     };
 }
 
@@ -917,10 +1020,17 @@ document.getElementById('btnCapturePhoto').addEventListener('click', () => {
 
     const pattern = validateFingerprintPattern(testCtx, 150, 225);
     if (!pattern.isValid) {
-        const proceed = confirm("Warning: No clear fingerprint ridge pattern detected in the captured area.\n\nAre you sure you want to capture and upload this anyway?");
+        updateCameraStatus('invalid', "No fingerprint ridge pattern detected. Please retake.");
+        
+        // Show fallback option: Submit anyway for faculty review
+        const proceed = confirm(
+            "No fingerprint ridge pattern detected. Please align the latent fingerprint inside the guide.\n\n" +
+            "Do you want to submit anyway for faculty review?"
+        );
         if (!proceed) {
             isCameraProcessing = false;
             chosen.textContent = "";
+            updateCameraStatus('searching', "Align the latent fingerprint inside the guide.");
             return;
         }
     }

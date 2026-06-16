@@ -85,16 +85,290 @@ try {
         .section-divider { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#6B8F71; border-bottom:1px solid #D2E2D5; padding-bottom:.35rem; margin:1.25rem 0 .6rem; }
         .section-divider:first-child { margin-top: 0; }
         
-        .score-box { background: var(--cream); border-radius:8px; padding:10px 15px; margin-bottom:1rem; border:1px solid rgba(45,106,79,0.08); }
-        .score-title { font-size:0.75rem; font-weight:700; color:var(--medium-green); margin-bottom:6px; text-transform:uppercase; }
-        .score-values { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; text-align:center; }
         .score-val { font-size:1.15rem; font-weight:800; color:var(--dark-green); }
         .score-lbl { font-size:0.65rem; color:var(--gray); font-weight:600; text-transform:uppercase; }
 
+        /* Dark theme Detailed Quality Inspection modal scoped under #detailOverlay */
+        #detailOverlay .detail-modal {
+            background: #111a2e !important; /* Deep dark navy background */
+            color: #f8fafc !important;
+            border: 1px solid #1e293b !important;
+            max-width: 800px !important;
+            width: 95% !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            border-radius: 16px !important;
+        }
+        #detailOverlay .detail-modal-header {
+            background: #1e293b !important;
+            border-bottom: 1px solid #334155 !important;
+            color: #f8fafc !important;
+            padding: 1.1rem 1.5rem !important;
+            border-top-left-radius: 15px !important;
+            border-top-right-radius: 15px !important;
+        }
+        #detailOverlay .detail-modal-header h3 {
+            color: #f8fafc !important;
+            font-size: 1.2rem !important;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            margin: 0;
+        }
+        #detailOverlay .modal-close-btn {
+            color: #94a3b8 !important;
+            background: none !important;
+            border: none !important;
+            font-size: 1.6rem !important;
+            cursor: pointer !important;
+            opacity: 0.8 !important;
+        }
+        #detailOverlay .modal-close-btn:hover {
+            color: #f8fafc !important;
+            opacity: 1 !important;
+        }
+        #detailOverlay .detail-modal-body {
+            padding: 1.5rem !important;
+        }
+
+        /* Layout Grid */
+        .inspect-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .inspect-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        /* Column Titles */
+        .column-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 0.5rem;
+        }
+
+        /* Image Preview Box */
+        .inspect-img-box {
+            background: #090d16;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+        }
+        .inspect-img-box img {
+            max-height: 250px;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        .inspect-img-caption {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-align: center;
+            line-height: 1.5;
+            margin-top: 0.5rem;
+        }
+
+        /* Coefficient Section */
+        .coefficient-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: #151e33;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: 1px solid #27354f;
+        }
+        .overall-score-huge {
+            font-size: 3.8rem;
+            font-weight: 800;
+            color: #10b981; /* Neon Green */
+            line-height: 1;
+            font-feature-settings: "tnum";
+        }
+        .overall-score-badge-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .quality-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            display: inline-block;
+            text-align: center;
+            width: fit-content;
+            letter-spacing: 0.05em;
+        }
+        .quality-badge-desc {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        /* Dark Progress Bars */
+        .metric-item {
+            margin-bottom: 1.25rem;
+        }
+        .metric-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 6px;
+        }
+        .metric-info span:last-child {
+            color: #10b981;
+        }
+        .metric-bar-track {
+            height: 6px;
+            background: #1e293b;
+            border-radius: 3px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .metric-bar-fill {
+            height: 100%;
+            background: #10b981;
+            border-radius: 3px;
+            transition: width 0.8s ease-out;
+            width: 0%;
+        }
+
+        /* Lab Analysis Notes Box */
+        .analysis-notes-box {
+            background: #151e33;
+            border: 1px solid #27354f;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .analysis-notes-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #27354f;
+            padding-bottom: 0.6rem;
+        }
+        .notes-content-wrap {
+            margin-bottom: 1.5rem;
+        }
+        .notes-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .notes-text {
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            line-height: 1.55;
+            background: #090d16;
+            padding: 0.85rem 1.1rem;
+            border-radius: 8px;
+            min-height: 45px;
+            border: 1px solid #27354f;
+        }
+
+        /* Info Details Grid */
+        .info-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem 2.5rem;
+            font-size: 0.82rem;
+        }
+        @media (max-width: 600px) {
+            .info-details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .info-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            align-items: center;
+        }
+        .info-detail-label {
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .info-detail-value {
+            color: #f1f5f9;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        /* Student chip */
+        .student-chip {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            text-transform: lowercase;
+        }
+        
         @media print {
             .student-sidebar, .student-header, .filter-bar, .btn, .no-print { display:none !important; }
             .student-main { margin-left:0 !important; }
             .student-content { padding:0; }
+            #detailOverlay {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: none !important;
+                backdrop-filter: none !important;
+                display: block !important;
+            }
+            .modal-close-btn {
+                display: none !important;
+            }
+            #detailOverlay .detail-modal {
+                box-shadow: none !important;
+                border: none !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #111a2e !important;
+                color: #f8fafc !important;
+            }
         }
     </style>
 </head>
@@ -277,61 +551,169 @@ try {
 <div class="detail-overlay" id="detailOverlay">
     <div class="detail-modal">
         <div class="detail-modal-header">
-            <h3 id="modalDetailTitle">Trial Submission Details</h3>
-            <button class="modal-close-btn" onclick="closeDetailModal()">&times;</button>
+            <h3>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981; margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Detailed Quality Inspection
+            </h3>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span class="student-chip" id="det-student-chip">student123</span>
+                <button class="modal-close-btn" onclick="closeDetailModal()">&times;</button>
+            </div>
         </div>
         <div class="detail-modal-body">
-            <p class="section-divider">Forensic Submission Details</p>
-            <div class="detail-row"><span class="detail-label">Trial ID</span><span class="detail-value" id="det-trial-id"></span></div>
-            <div class="detail-row"><span class="detail-label">Powder Type Used</span><span class="detail-value" id="det-powder" style="text-transform: capitalize; font-weight: 600;"></span></div>
-            <div class="detail-row"><span class="detail-label">Surface Material Type</span><span class="detail-value" id="det-surface" style="text-transform: capitalize; font-weight: 600;"></span></div>
-            <div class="detail-row"><span class="detail-label">Image Label</span><span class="detail-value" id="det-label"></span></div>
-            <div class="detail-row"><span class="detail-label">Notes from Submission</span><span class="detail-value" id="det-notes"></span></div>
-            <div class="detail-row"><span class="detail-label">Date Submitted</span><span class="detail-value" id="det-submitted-at"></span></div>
+            
+            <div id="modalContent">
+                <div class="inspect-grid">
+                    <!-- Left Column: Minutiae Mapping -->
+                    <div>
+                        <div class="column-title">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            MINUTIAE MAPPING
+                        </div>
+                        <div class="inspect-img-box" id="det-img-wrapper">
+                            <img src="" alt="Fingerprint Preview" id="det-img">
+                        </div>
+                        <div style="text-align:center; color: #ef4444; font-weight:600; margin-bottom:1rem; display:none;" id="det-img-missing">
+                            Image not found.
+                        </div>
+                        <div class="inspect-img-caption">
+                            Green indicators represent bifurcation/ridge ending coordinate clusters mapped by OpenCV.
+                        </div>
+                    </div>
 
-            <p class="section-divider">Fingerprint Image Asset</p>
-            <div style="text-align:center; margin-bottom:1rem; border:1px solid #e9ecef; padding:10px; border-radius:8px; background:#fafafa;" id="det-img-wrapper">
-                <img src="" style="max-height:220px; max-width:100%; object-fit:contain; border-radius:6px; border:1px solid #ddd;" alt="Fingerprint" id="det-img">
-            </div>
+                    <!-- Right Column: Evaluation Coefficient -->
+                    <div>
+                        <div class="column-title">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                            EVALUATION COEFFICIENT
+                        </div>
+                        
+                        <div class="coefficient-header">
+                            <div class="overall-score-huge" id="det-val-accuracy-huge">—</div>
+                            <div class="overall-score-badge-wrap">
+                                <span class="quality-badge" id="det-val-quality-badge">GOOD</span>
+                                <span class="quality-badge-desc">Overall Print Quality Standard</span>
+                            </div>
+                        </div>
 
-            <p class="section-divider">Evaluation & Scores</p>
-            <div class="score-box" id="det-score-box">
-                <div class="score-title">Forensic Performance Metrics</div>
-                <div class="score-values">
-                    <div>
-                        <div class="score-val" id="det-clarity">—</div>
-                        <div class="score-lbl">Clarity</div>
-                    </div>
-                    <div>
-                        <div class="score-val" id="det-visibility">—</div>
-                        <div class="score-lbl">Visibility</div>
-                    </div>
-                    <div>
-                        <div class="score-val" id="det-adhesion">—</div>
-                        <div class="score-lbl">Adhesion</div>
-                    </div>
-                    <div>
-                        <div class="score-val" id="det-contrast">—</div>
-                        <div class="score-lbl">Contrast</div>
+                        <!-- Progress Bars -->
+                        <div class="metric-item">
+                            <div class="metric-info">
+                                <span>Ridge Clarity</span>
+                                <span id="det-val-clarity">—</span>
+                            </div>
+                            <div class="metric-bar-track">
+                                <div class="metric-bar-fill" id="det-fill-clarity"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-info">
+                                <span>Contrast Quality</span>
+                                <span id="det-val-contrast">—</span>
+                            </div>
+                            <div class="metric-bar-track">
+                                <div class="metric-bar-fill" id="det-fill-contrast"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-info">
+                                <span>Minutiae Visibility</span>
+                                <span id="det-val-visibility">—</span>
+                            </div>
+                            <div class="metric-bar-track">
+                                <div class="metric-bar-fill" id="det-fill-visibility"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-info">
+                                <span>Fingerprint Sharpness</span>
+                                <span id="det-val-sharpness">—</span>
+                            </div>
+                            <div class="metric-bar-track">
+                                <div class="metric-bar-fill" id="det-fill-sharpness"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-info">
+                                <span>Adhesion Quality</span>
+                                <span id="det-val-adhesion">—</span>
+                            </div>
+                            <div class="metric-bar-track">
+                                <div class="metric-bar-fill" id="det-fill-adhesion"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="detail-row" id="det-ai-row" style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green); margin-bottom: 0.5rem;">
-                <span class="detail-label" style="font-weight: 700;">AI Preliminary Score</span>
-                <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;" id="det-ai-score">—</span>
-            </div>
-            
-            <div class="detail-row" id="det-faculty-row" style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green);">
-                <span class="detail-label" style="font-weight: 700;">Faculty Final Score</span>
-                <span class="detail-value" style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;" id="det-faculty-score">—</span>
-            </div>
 
-            <p class="section-divider" id="det-validation-divider">Validation Details</p>
-            <div class="detail-row" id="det-status-row"><span class="detail-label">Validation Status</span><span class="detail-value" id="det-status"></span></div>
-            <div class="detail-row" id="det-reviewer-row"><span class="detail-label">Faculty Reviewer</span><span class="detail-value" id="det-reviewer" style="font-weight: 600;"></span></div>
-            <div class="detail-row" id="det-validated-date-row"><span class="detail-label">Review Date</span><span class="detail-value" id="det-validated-at"></span></div>
-            <div class="detail-row" id="det-remarks-row"><span class="detail-label">Remarks from Reviewer</span><span class="detail-value" id="det-remarks" style="font-style: italic;"></span></div>
+                <!-- Bottom Section: Lab Analysis Notes -->
+                <div class="analysis-notes-box">
+                    <div class="analysis-notes-title">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        Lab Analysis Notes
+                    </div>
+
+                    <div class="notes-content-wrap">
+                        <div class="notes-label" id="det-remarks-label">Faculty Remarks:</div>
+                        <div class="notes-text" id="det-remarks"></div>
+                    </div>
+
+                    <!-- Details Grid -->
+                    <div class="info-details-grid">
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Trial ID:</span>
+                            <span class="info-detail-value" id="det-trial-id"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Powder Type:</span>
+                            <span class="info-detail-value" id="det-powder" style="text-transform: capitalize;"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Surface Type:</span>
+                            <span class="info-detail-value" id="det-surface" style="text-transform: capitalize;"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Image Label:</span>
+                            <span class="info-detail-value" id="det-label"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Status:</span>
+                            <span class="info-detail-value" id="det-status"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">AI Preliminary Score:</span>
+                            <span class="info-detail-value" id="det-ai-score"></span>
+                        </div>
+                        <div class="info-detail-row" id="det-faculty-row">
+                            <span class="info-detail-label" id="det-faculty-score-label">Faculty Final Score:</span>
+                            <span class="info-detail-value" id="det-faculty-score"></span>
+                        </div>
+                        <div class="info-detail-row" id="det-reviewer-row">
+                            <span class="info-detail-label">Faculty Reviewer:</span>
+                            <span class="info-detail-value" id="det-reviewer"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Image Path:</span>
+                            <span class="info-detail-value" id="det-image-path" style="font-family: monospace; font-size: 0.75rem; color:#10b981; word-break: break-all;"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Evaluation Date:</span>
+                            <span class="info-detail-value" id="det-evaluation-date"></span>
+                        </div>
+                        <div class="info-detail-row" id="det-validated-date-row">
+                            <span class="info-detail-label">Validation Date:</span>
+                            <span class="info-detail-value" id="det-validated-at"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:1.5rem;" class="no-print">
+                    <button type="button" class="btn btn-secondary" onclick="closeDetailModal()" style="flex:1; background:#334155; border-color:#334155; color:#fff;">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -508,61 +890,130 @@ function renderRecordsTable(records) {
 }
 
 function openDetailModal(row) {
+    // Fill student chip (username/nickname from email or name)
+    const username = row.student_email ? row.student_email.split('@')[0] : (row.student_name ? row.student_name.toLowerCase().replace(/\s+/g, '') : 'student');
+    document.getElementById('det-student-chip').textContent = username;
+
     document.getElementById('det-trial-id').textContent = row.trial_id || 'TR-' + String(row.id).padStart(4, '0');
     document.getElementById('det-powder').textContent = row.powder_type || '';
     document.getElementById('det-surface').textContent = row.surface_type || '';
     document.getElementById('det-label').textContent = row.image_label || 'Untitled';
-    document.getElementById('det-notes').innerHTML = row.notes ? escapeHtml(row.notes).replace(/\n/g, '<br>') : 'No notes provided.';
-    document.getElementById('det-submitted-at').textContent = new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString();
+    
+    // Evaluation Date mapping
+    const evalDate = row.ai_evaluated_at ? new Date(row.ai_evaluated_at.replace(/-/g, "/")).toLocaleString() : (row.submitted_at ? new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString() : '—');
+    document.getElementById('det-evaluation-date').textContent = evalDate;
 
-    const imgWrapper = document.getElementById('det-img-wrapper');
+    // Image path
+    document.getElementById('det-image-path').textContent = row.image_path ? 'uploads/' + row.image_path : '—';
+
+    // Image viewer logic
     const img = document.getElementById('det-img');
+    const imgWrapper = document.getElementById('det-img-wrapper');
+    const imgMissing = document.getElementById('det-img-missing');
+    
     if (row.image_path && row.image_exists) {
         img.src = '../view_fingerprint.php?test_id=' + row.id;
-        imgWrapper.style.display = 'block';
+        imgWrapper.style.display = 'flex';
+        if (imgMissing) imgMissing.style.display = 'none';
     } else {
         imgWrapper.style.display = 'none';
+        if (imgMissing) imgMissing.style.display = 'block';
     }
 
-    // Performance Metrics
-    document.getElementById('det-clarity').textContent = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score).toFixed(1) + '%' : '—';
-    document.getElementById('det-visibility').textContent = row.visibility_score !== null ? parseFloat(row.visibility_score).toFixed(1) + '%' : '—';
-    document.getElementById('det-adhesion').textContent = row.adhesion_score !== null ? parseFloat(row.adhesion_score).toFixed(1) + '%' : '—';
-    document.getElementById('det-contrast').textContent = row.contrast_score !== null ? parseFloat(row.contrast_score).toFixed(1) + '%' : '—';
+    // Quality metrics values mapping
+    const clarity = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score) : 0;
+    const contrast = row.contrast_score !== null ? parseFloat(row.contrast_score) : 0;
+    const visibility = row.visibility_score !== null ? parseFloat(row.visibility_score) : 0;
+    const sharpness = clarity; // Use ridge_clarity_score as sharpness display value
+    const adhesion = row.adhesion_score !== null ? parseFloat(row.adhesion_score) : 0;
+    const accuracy = row.accuracy_score !== null ? parseFloat(row.accuracy_score) : 0;
 
-    // AI score
-    document.getElementById('det-ai-score').textContent = row.ai_accuracy_score !== null ? parseFloat(row.ai_accuracy_score).toFixed(1) + '%' : 'Awaiting AI Evaluation';
+    // Set text labels
+    document.getElementById('det-val-clarity').textContent = clarity > 0 ? clarity.toFixed(0) + '%' : '—';
+    document.getElementById('det-val-contrast').textContent = contrast > 0 ? contrast.toFixed(0) + '%' : '—';
+    document.getElementById('det-val-visibility').textContent = visibility > 0 ? visibility.toFixed(0) + '%' : '—';
+    document.getElementById('det-val-sharpness').textContent = sharpness > 0 ? sharpness.toFixed(0) + '%' : '—';
+    document.getElementById('det-val-adhesion').textContent = adhesion > 0 ? adhesion.toFixed(0) + '%' : '—';
     
-    // Faculty Final Score
-    if (row.status === 'approved' && row.faculty_final_score !== null) {
-        document.getElementById('det-faculty-score').textContent = parseFloat(row.faculty_final_score).toFixed(1) + '%';
-        document.getElementById('det-faculty-row').style.display = 'flex';
-    } else if (row.status === 'pending_validation') {
-        document.getElementById('det-faculty-score').textContent = 'Awaiting Validation';
-        document.getElementById('det-faculty-row').style.display = 'flex';
+    // Composite / Overall Score Huge Text
+    const overallScoreHuge = document.getElementById('det-val-accuracy-huge');
+    overallScoreHuge.textContent = accuracy > 0 ? Math.round(accuracy) + '%' : '—';
+
+    // Set overall score badge
+    const badgeEl = document.getElementById('det-val-quality-badge');
+    if (accuracy >= 85) {
+        badgeEl.textContent = 'EXCELLENT';
+        badgeEl.style.color = '#10b981';
+        badgeEl.style.borderColor = 'rgba(16, 185, 129, 0.25)';
+        badgeEl.style.background = 'rgba(16, 185, 129, 0.12)';
+    } else if (accuracy >= 70) {
+        badgeEl.textContent = 'GOOD';
+        badgeEl.style.color = '#10b981';
+        badgeEl.style.borderColor = 'rgba(16, 185, 129, 0.25)';
+        badgeEl.style.background = 'rgba(16, 185, 129, 0.12)';
+    } else if (accuracy >= 50) {
+        badgeEl.textContent = 'AVERAGE';
+        badgeEl.style.color = '#f59e0b';
+        badgeEl.style.borderColor = 'rgba(245, 158, 11, 0.25)';
+        badgeEl.style.background = 'rgba(245, 158, 11, 0.12)';
     } else {
-        document.getElementById('det-faculty-row').style.display = 'none';
+        badgeEl.textContent = 'POOR';
+        badgeEl.style.color = '#ef4444';
+        badgeEl.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+        badgeEl.style.background = 'rgba(239, 68, 68, 0.12)';
     }
 
-    // Validation Details
-    document.getElementById('det-status').innerHTML = `<span class="badge ${getBadgeClass(row.status)}">${getStatusLabel(row.status)}</span>`;
-    
+    // Set progress bar widths
+    document.getElementById('det-fill-clarity').style.width = clarity + '%';
+    document.getElementById('det-fill-contrast').style.width = contrast + '%';
+    document.getElementById('det-fill-visibility').style.width = visibility + '%';
+    document.getElementById('det-fill-sharpness').style.width = sharpness + '%';
+    document.getElementById('det-fill-adhesion').style.width = adhesion + '%';
+
+    // Lab Analysis Notes mapping
+    document.getElementById('det-ai-score').textContent = row.ai_accuracy_score !== null ? parseFloat(row.ai_accuracy_score).toFixed(1) + '%' : 'Awaiting AI Evaluation';
+
+    // Conditional elements based on status
+    const statusVal = document.getElementById('det-status');
     const reviewerRow = document.getElementById('det-reviewer-row');
-    const validatedDateRow = document.getElementById('det-validated-date-row');
-    const remarksRow = document.getElementById('det-remarks-row');
+    const validatedAtRow = document.getElementById('det-validated-date-row');
+    const remarksRow = document.getElementById('det-remarks');
+    const remarksLabel = document.getElementById('det-remarks-label');
+    const facultyScoreRow = document.getElementById('det-faculty-row');
 
     if (row.status === 'pending_validation') {
+        statusVal.innerHTML = '<span class="badge badge-pending_validation">Pending Validation</span>';
         reviewerRow.style.display = 'none';
-        validatedDateRow.style.display = 'none';
-        remarksRow.style.display = 'none';
+        validatedAtRow.style.display = 'none';
+        facultyScoreRow.style.display = 'flex';
+        
+        document.getElementById('det-faculty-score-label').textContent = 'Accuracy:';
+        document.getElementById('det-faculty-score').textContent = 'Awaiting Faculty Validation';
+        
+        remarksLabel.textContent = 'Notes:';
+        remarksRow.innerHTML = 'This record is still awaiting faculty review.';
     } else {
         reviewerRow.style.display = 'flex';
-        validatedDateRow.style.display = 'flex';
-        remarksRow.style.display = 'flex';
-
+        validatedAtRow.style.display = 'flex';
+        
         document.getElementById('det-reviewer').textContent = row.faculty_validator || 'Faculty Reviewer';
         document.getElementById('det-validated-at').textContent = row.validated_at ? new Date(row.validated_at.replace(/-/g, "/")).toLocaleString() : '—';
-        document.getElementById('det-remarks').innerHTML = row.faculty_remarks ? escapeHtml(row.faculty_remarks).replace(/\n/g, '<br>') : 'No evaluation remarks submitted.';
+        
+        remarksLabel.textContent = 'Faculty Remarks:';
+        remarksRow.innerHTML = row.faculty_remarks ? escapeHtml(row.faculty_remarks).replace(/\n/g, '<br>') : 'No remarks provided.';
+
+        if (row.status === 'approved') {
+            statusVal.innerHTML = '<span class="badge badge-approved">Approved</span>';
+            facultyScoreRow.style.display = 'flex';
+            document.getElementById('det-faculty-score-label').textContent = 'Faculty Final Score:';
+            document.getElementById('det-faculty-score').textContent = row.faculty_final_score !== null ? parseFloat(row.faculty_final_score).toFixed(1) + '%' : '—';
+        } else if (row.status === 'rejected') {
+            statusVal.innerHTML = '<span class="badge badge-rejected">Rejected</span>';
+            facultyScoreRow.style.display = 'none';
+        } else if (row.status === 'needs_revision') {
+            statusVal.innerHTML = '<span class="badge badge-needs_revision">Needs Revision</span>';
+            facultyScoreRow.style.display = 'none';
+        }
     }
 
     document.getElementById('detailOverlay').classList.add('open');

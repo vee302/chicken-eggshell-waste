@@ -34,9 +34,11 @@ try {
     }
 
     $sql = "
-        SELECT ft.*, fr.remarks AS faculty_remarks, faculty.full_name AS faculty_validator
+        SELECT ft.*, fr.remarks AS faculty_remarks, faculty.full_name AS faculty_validator,
+               student.full_name AS student_name, student.email AS student_email
         FROM fingerprint_tests ft
         LEFT JOIN users faculty ON ft.validated_by = faculty.id
+        LEFT JOIN users student ON ft.student_id = student.id
         LEFT JOIN faculty_remarks fr ON fr.test_id = ft.id AND fr.id = (
             SELECT MAX(fr2.id) FROM faculty_remarks fr2 WHERE fr2.test_id = ft.id
         )

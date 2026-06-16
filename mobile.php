@@ -585,72 +585,88 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
 
     <!-- Benefits Section -->
     <section class="benefits-section" id="benefits">
-        <div class="container-full">
+        <div class="container">
             <div class="section-header">
                 <span class="section-label">Impact & Advantages</span>
                 <h2 class="section-title">Why It Matters</h2>
             </div>
 
-            <div class="benefits-container">
-                <div class="benefits-track">
-                    <div class="benefit-card" data-benefit="1">
-                        <div class="benefit-content">
-                            <div class="benefit-card-header">
-                                <span class="benefit-badge">Benefit 01</span>
-                            </div>
-                            <h3>Eco-Friendly &amp; Biodegradable</h3>
-                            <p>Natural calcium carbonate breaks down safely without environmental harm</p>
-                        </div>
+            <div class="benefits-accordion">
+                <div class="benefit-accordion-item">
+                    <button class="benefit-accordion-trigger" type="button">
+                        <span class="benefit-accordion-title">Eco-Friendly &amp; Biodegradable</span>
+                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="benefit-accordion-body">
+                        <p>Natural calcium carbonate breaks down safely without environmental harm</p>
                     </div>
+                </div>
 
-                    <div class="benefit-card" data-benefit="2">
-                        <div class="benefit-content">
-                            <div class="benefit-card-header">
-                                <span class="benefit-badge">Benefit 02</span>
-                            </div>
-                            <h3>Cost-Effective Alternative</h3>
-                            <p>Utilizes waste material, reducing production costs significantly</p>
-                        </div>
+                <div class="benefit-accordion-item">
+                    <button class="benefit-accordion-trigger" type="button">
+                        <span class="benefit-accordion-title">Cost-Effective Alternative</span>
+                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="benefit-accordion-body">
+                        <p>Utilizes waste material, reducing production costs significantly</p>
                     </div>
+                </div>
 
-                    <div class="benefit-card" data-benefit="3">
-                        <div class="benefit-content">
-                            <div class="benefit-card-header">
-                                <span class="benefit-badge">Benefit 03</span>
-                            </div>
-                            <h3>Safer for Forensic Users</h3>
-                            <p>Non-toxic composition eliminates health risks from heavy metals</p>
-                        </div>
+                <div class="benefit-accordion-item">
+                    <button class="benefit-accordion-trigger" type="button">
+                        <span class="benefit-accordion-title">Safer for Forensic Users</span>
+                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="benefit-accordion-body">
+                        <p>Non-toxic composition eliminates health risks from heavy metals</p>
                     </div>
+                </div>
 
-                    <div class="benefit-card" data-benefit="4">
-                        <div class="benefit-content">
-                            <div class="benefit-card-header">
-                                <span class="benefit-badge">Benefit 04</span>
-                            </div>
-                            <h3>Supports Waste Reduction</h3>
-                            <p>Transforms food industry waste into valuable forensic resource</p>
-                        </div>
+                <div class="benefit-accordion-item">
+                    <button class="benefit-accordion-trigger" type="button">
+                        <span class="benefit-accordion-title">Supports Waste Reduction</span>
+                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="benefit-accordion-body">
+                        <p>Transforms food industry waste into valuable forensic resource</p>
                     </div>
+                </div>
 
-                    <div class="benefit-card" data-benefit="5">
-                        <div class="benefit-content">
-                            <div class="benefit-card-header">
-                                <span class="benefit-badge">Benefit 05</span>
-                            </div>
-                            <h3>Criminology Training Tool</h3>
-                            <p>Ideal for educational institutions and student practice</p>
-                        </div>
+                <div class="benefit-accordion-item">
+                    <button class="benefit-accordion-trigger" type="button">
+                        <span class="benefit-accordion-title">Criminology Training Tool</span>
+                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="benefit-accordion-body">
+                        <p>Ideal for educational institutions and student practice</p>
                     </div>
+                </div>
 
-                    <div class="benefit-card" data-benefit="6">
-                        <div class="benefit-content">
-                            <div class="benefit-card-header">
-                                <span class="benefit-badge">Benefit 06</span>
-                            </div>
-                            <h3>Supports SDG 12 &amp; 13</h3>
-                            <p>Aligns with sustainable consumption and climate action goals</p>
-                        </div>
+                <div class="benefit-accordion-item">
+                    <button class="benefit-accordion-trigger" type="button">
+                        <span class="benefit-accordion-title">Supports SDG 12 &amp; 13</span>
+                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="benefit-accordion-body">
+                        <p>Aligns with sustainable consumption and climate action goals</p>
                     </div>
                 </div>
             </div>
@@ -893,6 +909,24 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
     <script src="mobile.js?v=<?= time() ?>"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Accordion click handler (inline failsafe against JS caching)
+            const triggers = document.querySelectorAll('.benefit-accordion-trigger');
+            triggers.forEach(trigger => {
+                trigger.addEventListener('click', () => {
+                    const item = trigger.closest('.benefit-accordion-item');
+                    const isOpen = item.classList.contains('is-open');
+
+                    // Close all items first (single-open behavior)
+                    document.querySelectorAll('.benefit-accordion-item.is-open').forEach(openItem => {
+                        openItem.classList.remove('is-open');
+                    });
+
+                    // Open if not already open
+                    if (!isOpen) {
+                        item.classList.add('is-open');
+                    }
+                });
+            });
 
             // ==========================================================================
             // EXPECTED RESULTS SCROLL ANIMATIONS (Bulletproof in-view Check & Fallback)

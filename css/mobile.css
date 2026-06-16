@@ -89,8 +89,6 @@
     .problem-content,
     .process-timeline,
     .timeline-container,
-    .benefits-container,
-    .benefits-track,
     .benefits-grid,
     .results-grid,
     .stakeholders-network,
@@ -667,83 +665,6 @@
 }
 
 .result-card p {
-    font-size: 0.76rem !important;
-    line-height: 1.5 !important;
-    color: var(--gray, #8B8B8B) !important;
-    margin: 0 !important;
-}
-
-/* ==========================================================================
-   BENEFITS SECTION (Mobile Overrides matching timeline cards)
-   ========================================================================== */
-
-.benefits-section {
-    overflow: visible !important;
-    min-height: auto !important;
-    padding: 3rem 1.25rem !important;
-}
-
-.benefits-track {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.75rem !important;
-    width: 100% !important;
-    transform: none !important;
-    padding: 0 !important;
-}
-
-.benefits-track::before {
-    display: none !important;
-}
-
-.benefit-marker {
-    display: none !important;
-}
-
-.benefit-card {
-    width: 100% !important;
-    display: block !important;
-    opacity: 1 !important;
-    transform: none !important;
-    margin-bottom: 0 !important;
-    padding: 1rem 1.15rem !important;
-    border-radius: 12px !important;
-    border: 1px solid rgba(47, 79, 58, 0.1) !important;
-    box-shadow: 0 4px 15px rgba(47, 79, 58, 0.02) !important;
-    text-align: left !important;
-}
-
-.benefit-content {
-    width: 100% !important;
-}
-
-.benefit-card-header {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    margin-bottom: 0.5rem !important;
-}
-
-.benefit-badge {
-    font-size: 0.65rem !important;
-    font-weight: 800 !important;
-    color: var(--dark-green, #2F4F3A) !important;
-    background: rgba(47, 79, 58, 0.06) !important;
-    padding: 3px 8px !important;
-    border-radius: 4px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-}
-
-.benefit-card h3 {
-    font-size: 0.95rem !important;
-    font-weight: 700 !important;
-    color: var(--dark-green, #2F4F3A) !important;
-    margin-bottom: 0.35rem !important;
-    line-height: 1.2 !important;
-}
-
-.benefit-card p {
     font-size: 0.76rem !important;
     line-height: 1.5 !important;
     color: var(--gray, #8B8B8B) !important;

@@ -526,73 +526,41 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
 
     <!-- Benefits Section -->
     <section class="benefits-section" id="benefits">
-        <div class="container-full">
+        <div class="container">
             <div class="section-header">
                 <span class="section-label">Impact & Advantages</span>
                 <h2 class="section-title">Why It Matters</h2>
             </div>
 
-            <div class="benefits-container">
-                <div class="benefits-track">
-                    <div class="benefit-card" data-benefit="1">
-                        <div class="benefit-marker">
-                            <span class="benefit-number">01</span>
-                        </div>
-                        <div class="benefit-card-content">
-                            <h3>Eco-Friendly & Biodegradable</h3>
-                            <p>Natural calcium carbonate breaks down safely without environmental harm</p>
-                        </div>
-                    </div>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <h3>Eco-Friendly & Biodegradable</h3>
+                    <p>Natural calcium carbonate breaks down safely without environmental harm</p>
+                </div>
 
-                    <div class="benefit-card" data-benefit="2">
-                        <div class="benefit-marker">
-                            <span class="benefit-number">02</span>
-                        </div>
-                        <div class="benefit-card-content">
-                            <h3>Cost-Effective Alternative</h3>
-                            <p>Utilizes waste material, reducing production costs significantly</p>
-                        </div>
-                    </div>
+                <div class="benefit-card">
+                    <h3>Cost-Effective Alternative</h3>
+                    <p>Utilizes waste material, reducing production costs significantly</p>
+                </div>
 
-                    <div class="benefit-card" data-benefit="3">
-                        <div class="benefit-marker">
-                            <span class="benefit-number">03</span>
-                        </div>
-                        <div class="benefit-card-content">
-                            <h3>Safer for Forensic Users</h3>
-                            <p>Non-toxic composition eliminates health risks from heavy metals</p>
-                        </div>
-                    </div>
+                <div class="benefit-card">
+                    <h3>Safer for Forensic Users</h3>
+                    <p>Non-toxic composition eliminates health risks from heavy metals</p>
+                </div>
 
-                    <div class="benefit-card" data-benefit="4">
-                        <div class="benefit-marker">
-                            <span class="benefit-number">04</span>
-                        </div>
-                        <div class="benefit-card-content">
-                            <h3>Supports Waste Reduction</h3>
-                            <p>Transforms food industry waste into valuable forensic resource</p>
-                        </div>
-                    </div>
+                <div class="benefit-card">
+                    <h3>Supports Waste Reduction</h3>
+                    <p>Transforms food industry waste into valuable forensic resource</p>
+                </div>
 
-                    <div class="benefit-card" data-benefit="5">
-                        <div class="benefit-marker">
-                            <span class="benefit-number">05</span>
-                        </div>
-                        <div class="benefit-card-content">
-                            <h3>Criminology Training Tool</h3>
-                            <p>Ideal for educational institutions and student practice</p>
-                        </div>
-                    </div>
+                <div class="benefit-card">
+                    <h3>Criminology Training Tool</h3>
+                    <p>Ideal for educational institutions and student practice</p>
+                </div>
 
-                    <div class="benefit-card" data-benefit="6">
-                        <div class="benefit-marker">
-                            <span class="benefit-number">06</span>
-                        </div>
-                        <div class="benefit-card-content">
-                            <h3>Supports SDG 12 & 13</h3>
-                            <p>Aligns with sustainable consumption and climate action goals</p>
-                        </div>
-                    </div>
+                <div class="benefit-card">
+                    <h3>Supports SDG 12 & 13</h3>
+                    <p>Aligns with sustainable consumption and climate action goals</p>
                 </div>
             </div>
         </div>

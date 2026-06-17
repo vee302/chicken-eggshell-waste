@@ -1,5 +1,5 @@
 <?php
-// admin/admin_backup.php - Database Backup & Restoration Panel (Disabled)
+// admin/backup_restore.php - Database Backup & Restoration Panel Redirect Stub (Disabled)
 require_once "auth.php";
 check_admin_auth();
 

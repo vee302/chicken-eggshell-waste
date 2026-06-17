@@ -1,5 +1,10 @@
 // session_timeout.js — Centralized JavaScript for Inactivity Session Timeout
 (function() {
+    // Disable timeout for admin
+    if (window.location.pathname.includes('/admin/')) {
+        return;
+    }
+
     let lastActive = Date.now();
     const idleLimit = 300000; // 5 minutes in milliseconds (300,000 ms)
     const checkInterval = 1000; // Check every second

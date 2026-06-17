@@ -327,17 +327,6 @@ try {
         FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // ============================================================
-    // 10c. Create BACKUP_HISTORY table
-    // ============================================================
-    $pdo->exec("CREATE TABLE IF NOT EXISTS `backup_history` (
-        `id`          INT AUTO_INCREMENT PRIMARY KEY,
-        `filename`    VARCHAR(255) NOT NULL,
-        `status`      ENUM('success','failed') DEFAULT 'success',
-        `created_by`  INT DEFAULT NULL,
-        `created_at`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // ============================================================
     // 10d. Create SYSTEM_SETTINGS table
@@ -443,9 +432,11 @@ register_shutdown_function(function() {
                    strpos($_SERVER['SCRIPT_NAME'], 'check_registration_status.php') !== false ||
                    $is_json;
 
-        if (!$is_ajax) {
-            $is_subdir = (strpos($_SERVER['SCRIPT_NAME'], '/admin/') !== false || 
-                          strpos($_SERVER['SCRIPT_NAME'], '/faculty/') !== false || 
+        $is_admin = (strpos($_SERVER['SCRIPT_NAME'], '/admin/') !== false) || 
+                    (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'super_admin');
+
+        if (!$is_ajax && !$is_admin) {
+            $is_subdir = (strpos($_SERVER['SCRIPT_NAME'], '/faculty/') !== false || 
                           strpos($_SERVER['SCRIPT_NAME'], '/student/') !== false || 
                           strpos($_SERVER['SCRIPT_NAME'], '/police-partner/') !== false);
             $script_url = $is_subdir ? '../assets/js/session_timeout.js' : 'assets/js/session_timeout.js';

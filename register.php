@@ -24,18 +24,18 @@ $error_message = "";
 $form_data = [];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])) {
-    $first_name             = trim($_POST["first_name"] ?? "");
-    $middle_name            = trim($_POST["middle_name"] ?? "");
-    $last_name              = trim($_POST["last_name"] ?? "");
-    $id_number              = trim($_POST["id_number"] ?? "");
+    $first_name = trim($_POST["first_name"] ?? "");
+    $middle_name = trim($_POST["middle_name"] ?? "");
+    $last_name = trim($_POST["last_name"] ?? "");
+    $id_number = trim($_POST["id_number"] ?? "");
     $department_affiliation = trim($_POST["department_affiliation"] ?? "");
-    $contact_number         = trim($_POST["contact_number"] ?? "");
-    $email                  = strtolower(trim($_POST["email"] ?? ""));
-    $requested_role         = trim($_POST["requested_role"] ?? "");
-    $reason                 = trim($_POST["reason_for_access"] ?? "");
-    $password               = trim($_POST["password"] ?? "");
-    $confirm_pass           = trim($_POST["confirm_password"] ?? "");
-    $full_name              = trim("$first_name $middle_name $last_name");
+    $contact_number = trim($_POST["contact_number"] ?? "");
+    $email = strtolower(trim($_POST["email"] ?? ""));
+    $requested_role = trim($_POST["requested_role"] ?? "");
+    $reason = trim($_POST["reason_for_access"] ?? "");
+    $password = trim($_POST["password"] ?? "");
+    $confirm_pass = trim($_POST["confirm_password"] ?? "");
+    $full_name = trim("$first_name $middle_name $last_name");
 
     // Preserve form data for re-fill
     $form_data = compact('first_name', 'middle_name', 'last_name', 'id_number', 'department_affiliation', 'contact_number', 'email', 'requested_role', 'reason');
@@ -49,11 +49,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "ID Number is required.";
     } elseif (empty($department_affiliation)) {
         $error_message = "Department / Affiliation is required.";
-    } elseif (!in_array($department_affiliation, [
-        'College of Criminal Justice Education',
-        'Faculty Researcher',
-        'Alumni / Police Partner'
-    ])) {
+    } elseif (
+        !in_array($department_affiliation, [
+            'College of Criminal Justice Education',
+            'Faculty Researcher',
+            'Alumni / Police Partner',
+            'Police Partner Institution'
+        ])
+    ) {
         $error_message = "Invalid Department / Affiliation selected.";
     } elseif (empty($contact_number)) {
         $error_message = "Contact Number is required.";
@@ -103,7 +106,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     $allowed_exts = ['jpg', 'jpeg', 'png', 'pdf'];
                     $file_name = $file['name'];
                     $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-                    
+
                     $allowed_mimes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
                     $file_mime = null;
                     if (function_exists('finfo_open')) {
@@ -113,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     } elseif (function_exists('mime_content_type')) {
                         $file_mime = mime_content_type($file['tmp_name']);
                     }
-                    
+
                     if (!in_array($file_ext, $allowed_exts)) {
                         $error_message = "Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.";
                         $file_error = true;
@@ -126,7 +129,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                         if (!is_dir($upload_dir)) {
                             mkdir($upload_dir, 0755, true);
                         }
-                        
+
                         $temp = explode(".", $file_name);
                         $new_filename = 'proof_' . round(microtime(true)) . '_' . bin2hex(random_bytes(8)) . '.' . end($temp);
                         $dest_path = $upload_dir . $new_filename;
@@ -146,7 +149,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 // Check email uniqueness
                 $chk = $pdo->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
                 $chk->execute([':email' => $email]);
-                
+
                 if ($chk->fetch()) {
                     $error_message = "An account with this email address already exists.";
                 } else {
@@ -155,24 +158,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     $ins = $pdo->prepare("INSERT INTO users
                         (first_name, middle_name, last_name, full_name, email, password, contact_number, id_number, department, affiliation, requested_role, reason_for_access, proof_of_affiliation, role, status)
                         VALUES (:fn, :mn, :ln, :full, :email, :pass, :contact, :idnum, :dept, :aff, :reqrole, :reason, :proof, NULL, 'pending')");
-                    
+
                     $ins->execute([
-                        ':fn'      => $first_name,
-                        ':mn'      => $middle_name !== "" ? $middle_name : null,
-                        ':ln'      => $last_name,
-                        ':full'    => $full_name,
-                        ':email'   => $email,
-                        ':pass'    => $hashed,
+                        ':fn' => $first_name,
+                        ':mn' => $middle_name !== "" ? $middle_name : null,
+                        ':ln' => $last_name,
+                        ':full' => $full_name,
+                        ':email' => $email,
+                        ':pass' => $hashed,
                         ':contact' => $contact_number,
-                        ':idnum'   => $id_number,
-                        ':dept'    => $department_affiliation,
-                        ':aff'     => $department_affiliation,
+                        ':idnum' => $id_number,
+                        ':dept' => $department_affiliation,
+                        ':aff' => $department_affiliation,
                         ':reqrole' => $requested_role,
-                        ':reason'  => $reason,
-                        ':proof'   => $proof_path
+                        ':reason' => $reason,
+                        ':proof' => $proof_path
                     ]);
 
-                    $registeredUserId = (int)$pdo->lastInsertId();
+                    $registeredUserId = (int) $pdo->lastInsertId();
                     $_SESSION['pending_registration_user_id'] = $registeredUserId;
                     $_SESSION['pending_registration_email'] = $email;
 
@@ -188,6 +191,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -195,8 +199,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     <link rel="stylesheet" href="css/login.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .login-container { max-width: 640px; }
-        
+        .login-container {
+            max-width: 640px;
+        }
+
         /* Progress Indicator Styles */
         .progress-indicator {
             display: flex;
@@ -205,6 +211,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             margin-bottom: 2.25rem;
             position: relative;
         }
+
         .progress-step {
             display: flex;
             flex-direction: column;
@@ -213,6 +220,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             z-index: 2;
             flex: 1;
         }
+
         .progress-step .step-num {
             width: 36px;
             height: 36px;
@@ -228,6 +236,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             transition: all 0.3s ease;
             margin-bottom: 0.5rem;
         }
+
         .progress-step .step-text {
             font-size: 0.78rem;
             font-weight: 600;
@@ -235,24 +244,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             text-align: center;
             transition: all 0.3s ease;
         }
+
         .progress-step.active .step-num {
             border-color: var(--dark-green);
             background-color: var(--dark-green);
             color: var(--white);
             box-shadow: 0 0 0 4px rgba(47, 79, 58, 0.15);
         }
+
         .progress-step.active .step-text {
             color: var(--dark-green);
             font-weight: 700;
         }
+
         .progress-step.completed .step-num {
             border-color: var(--soft-green);
             background-color: var(--soft-green);
             color: var(--white);
         }
+
         .progress-step.completed .step-text {
             color: var(--soft-green);
         }
+
         .progress-line {
             position: absolute;
             top: 18px;
@@ -263,16 +277,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             z-index: 1;
             transition: all 0.3s ease;
         }
+
         .progress-line.active {
             background-color: var(--soft-green);
         }
 
         /* Form Steps Transitions */
-        .form-step { display: none; }
-        .form-step.active { display: block; animation: fadeStep 0.35s ease; }
+        .form-step {
+            display: none;
+        }
+
+        .form-step.active {
+            display: block;
+            animation: fadeStep 0.35s ease;
+        }
+
         @keyframes fadeStep {
-            from { opacity: 0; transform: translateY(8px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Form Layout Grid */
@@ -281,6 +310,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             grid-template-columns: 1fr 1fr;
             gap: 0 1.25rem;
         }
+
         @media (max-width: 576px) {
             .form-grid-2 {
                 grid-template-columns: 1fr;
@@ -300,14 +330,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             outline: none;
             transition: all 0.25s ease;
         }
+
         .form-control-plain:focus {
             border-color: var(--soft-green);
             box-shadow: 0 0 0 4px rgba(107, 143, 113, 0.15);
         }
-        select.form-control-plain { cursor: pointer; }
 
-        .required-star { color: var(--error-red); margin-left: 2px; }
-        
+        select.form-control-plain {
+            cursor: pointer;
+        }
+
+        .required-star {
+            color: var(--error-red);
+            margin-left: 2px;
+        }
+
         .field-hint {
             font-size: 0.76rem;
             color: var(--gray);
@@ -323,7 +360,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             border-top: 1.5px solid var(--cream);
             padding-top: 1.5rem;
         }
-        .btn-next, .btn-back, .btn-cancel {
+
+        .btn-next,
+        .btn-back,
+        .btn-cancel {
             padding: 0.85rem;
             border-radius: 12px;
             font-size: 0.95rem;
@@ -337,32 +377,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             gap: 6px;
             text-decoration: none;
         }
+
         .btn-next {
             flex: 2;
             background: var(--dark-green);
             color: var(--white);
             box-shadow: 0 4px 12px rgba(47, 79, 58, 0.15);
         }
+
         .btn-next:hover {
             background: var(--forest-green);
             transform: translateY(-1px);
             box-shadow: 0 6px 18px rgba(47, 79, 58, 0.25);
         }
+
         .btn-back {
             flex: 1;
             background: var(--white);
             color: var(--dark-green);
             border: 1.5px solid var(--mint-green);
         }
+
         .btn-back:hover {
             background: var(--cream);
         }
+
         .btn-cancel {
             flex: 1;
             background: transparent;
             color: var(--gray);
             border: 1.5px solid var(--light-gray);
         }
+
         .btn-cancel:hover {
             background: rgba(0, 0, 0, 0.03);
         }
@@ -377,18 +423,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             gap: 4px;
             text-align: left;
         }
+
         .req-item {
             transition: color 0.2s ease;
         }
+
         .req-item.invalid {
-            color: #6c757d; /* muted gray */
+            color: #6c757d;
+            /* muted gray */
         }
+
         .req-item.valid {
-            color: #1b4332; /* dark green */
+            color: #1b4332;
+            /* dark green */
             font-weight: 600;
         }
     </style>
 </head>
+
 <body>
     <header>
         <h1>Green Forensics Evaluating System</h1>
@@ -419,7 +471,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
             <!-- Error Alerts -->
             <div class="alert alert-danger" id="clientErrorBox" style="display:none;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="8" x2="12" y2="12"></line>
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -429,7 +482,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
             <?php if (!empty($error_message)): ?>
                 <div class="alert alert-danger" id="serverErrorBox">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="8" x2="12" y2="12"></line>
                         <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -451,48 +505,65 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 </div>
             </div>
 
-            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" id="registerForm" enctype="multipart/form-data" autocomplete="off" novalidate>
+            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" id="registerForm"
+                enctype="multipart/form-data" autocomplete="off" novalidate>
                 <!-- ===== STEP 1: Profile & Identity ===== -->
                 <div class="form-step active" id="step1">
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label for="first_name">First Name <span class="required-star">*</span></label>
-                            <input type="text" id="first_name" name="first_name" class="form-control-plain" placeholder="First Name" value="<?php echo htmlspecialchars($form_data['first_name'] ?? ''); ?>">
+                            <input type="text" id="first_name" name="first_name" class="form-control-plain"
+                                placeholder="First Name"
+                                value="<?php echo htmlspecialchars($form_data['first_name'] ?? ''); ?>">
                         </div>
                         <div class="form-group">
                             <label for="middle_name">Middle Name</label>
-                            <input type="text" id="middle_name" name="middle_name" class="form-control-plain" placeholder="Middle Name" value="<?php echo htmlspecialchars($form_data['middle_name'] ?? ''); ?>">
+                            <input type="text" id="middle_name" name="middle_name" class="form-control-plain"
+                                placeholder="Middle Name"
+                                value="<?php echo htmlspecialchars($form_data['middle_name'] ?? ''); ?>">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="last_name">Last Name <span class="required-star">*</span></label>
-                        <input type="text" id="last_name" name="last_name" class="form-control-plain" placeholder="Last Name" value="<?php echo htmlspecialchars($form_data['last_name'] ?? ''); ?>">
+                        <input type="text" id="last_name" name="last_name" class="form-control-plain"
+                            placeholder="Last Name"
+                            value="<?php echo htmlspecialchars($form_data['last_name'] ?? ''); ?>">
                     </div>
 
                     <div class="form-group">
-                        <label for="id_number">Student / Employee / Partner ID Number <span class="required-star">*</span></label>
-                        <input type="text" id="id_number" name="id_number" class="form-control-plain" placeholder="e.g. 2024-CCJE-0001" value="<?php echo htmlspecialchars($form_data['id_number'] ?? ''); ?>">
+                        <label for="id_number">Student / Employee / Partner ID Number <span
+                                class="required-star">*</span></label>
+                        <input type="text" id="id_number" name="id_number" class="form-control-plain"
+                            placeholder="e.g. 2024-CCJE-0001"
+                            value="<?php echo htmlspecialchars($form_data['id_number'] ?? ''); ?>">
                     </div>
 
                     <div class="form-group">
-                        <label for="department_affiliation">Department / Affiliation <span class="required-star">*</span></label>
+                        <label for="department_affiliation">Department / Affiliation <span
+                                class="required-star">*</span></label>
                         <select id="department_affiliation" name="department_affiliation" class="form-control-plain">
                             <option value="" disabled <?php echo empty($form_data['department_affiliation']) ? 'selected' : ''; ?>>Select department or affiliation</option>
                             <option value="College of Criminal Justice Education" <?php echo ($form_data['department_affiliation'] ?? '') === 'College of Criminal Justice Education' ? 'selected' : ''; ?>>College of Criminal Justice Education</option>
                             <option value="Faculty Researcher" <?php echo ($form_data['department_affiliation'] ?? '') === 'Faculty Researcher' ? 'selected' : ''; ?>>Faculty Researcher</option>
                             <option value="Alumni / Police Partner" <?php echo ($form_data['department_affiliation'] ?? '') === 'Alumni / Police Partner' ? 'selected' : ''; ?>>Alumni / Police Partner</option>
+                            <option value="Police Partner Institution" <?php echo ($form_data['department_affiliation'] ?? '') === 'Police Partner Institution' ? 'selected' : ''; ?>>Police Partner Institution
+                            </option>
                         </select>
                     </div>
 
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label for="contact_number">Contact Number <span class="required-star">*</span></label>
-                            <input type="tel" id="contact_number" name="contact_number" class="form-control-plain" placeholder="e.g. 09XXXXXXXXX" value="<?php echo htmlspecialchars($form_data['contact_number'] ?? ''); ?>">
+                            <input type="tel" id="contact_number" name="contact_number" class="form-control-plain"
+                                placeholder="e.g. 09XXXXXXXXX"
+                                value="<?php echo htmlspecialchars($form_data['contact_number'] ?? ''); ?>">
                         </div>
                         <div class="form-group">
                             <label for="email">Email Address <span class="required-star">*</span></label>
-                            <input type="email" id="email" name="email" class="form-control-plain" placeholder="you@example.com" value="<?php echo htmlspecialchars($form_data['email'] ?? ''); ?>">
+                            <input type="email" id="email" name="email" class="form-control-plain"
+                                placeholder="you@example.com"
+                                value="<?php echo htmlspecialchars($form_data['email'] ?? ''); ?>">
                         </div>
                     </div>
 
@@ -517,30 +588,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
                     <div class="form-group">
                         <label for="reason_for_access">Reason for Access <span class="required-star">*</span></label>
-                        <textarea id="reason_for_access" name="reason_for_access" class="form-control-plain" rows="3" placeholder="Briefly explain your purpose for accessing the Green Forensics system."><?php echo htmlspecialchars($form_data['reason'] ?? ''); ?></textarea>
+                        <textarea id="reason_for_access" name="reason_for_access" class="form-control-plain" rows="3"
+                            placeholder="Briefly explain your purpose for accessing the Green Forensics system."><?php echo htmlspecialchars($form_data['reason'] ?? ''); ?></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="proof_of_affiliation">Proof of Affiliation (Optional)</label>
-                        <input type="file" id="proof_of_affiliation" name="proof_of_affiliation" class="form-control-plain" accept=".jpg,.jpeg,.png,.pdf">
+                        <input type="file" id="proof_of_affiliation" name="proof_of_affiliation"
+                            class="form-control-plain" accept=".jpg,.jpeg,.png,.pdf">
                         <p class="field-hint">Allowed types: JPG, JPEG, PNG, PDF. Max file size: 5MB.</p>
                     </div>
 
                     <div class="form-group">
                         <label for="password">Password <span class="required-star">*</span></label>
                         <div class="password-wrapper">
-                            <input type="password" id="password" name="password" class="form-control-plain" placeholder="Minimum 8 characters">
-                            <button type="button" class="password-toggle" data-password-toggle="password" aria-label="Show password" aria-pressed="false">
+                            <input type="password" id="password" name="password" class="form-control-plain"
+                                placeholder="Minimum 8 characters">
+                            <button type="button" class="password-toggle" data-password-toggle="password"
+                                aria-label="Show password" aria-pressed="false">
                                 <span class="icon-eye">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
                                 </span>
                                 <span class="icon-eye-off">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"></path>
-                                        <path d="M9.9 4.24A10.84 10.84 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path
+                                            d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94">
+                                        </path>
+                                        <path
+                                            d="M9.9 4.24A10.84 10.84 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19">
+                                        </path>
                                         <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"></path>
                                         <line x1="3" y1="3" x2="21" y2="21"></line>
                                     </svg>
@@ -559,18 +640,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     <div class="form-group">
                         <label for="confirm_password">Confirm Password <span class="required-star">*</span></label>
                         <div class="password-wrapper">
-                            <input type="password" id="confirm_password" name="confirm_password" class="form-control-plain" placeholder="Confirm your password">
-                            <button type="button" class="password-toggle" data-password-toggle="confirm_password" aria-label="Show password" aria-pressed="false">
+                            <input type="password" id="confirm_password" name="confirm_password"
+                                class="form-control-plain" placeholder="Confirm your password">
+                            <button type="button" class="password-toggle" data-password-toggle="confirm_password"
+                                aria-label="Show password" aria-pressed="false">
                                 <span class="icon-eye">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
                                 </span>
                                 <span class="icon-eye-off">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"></path>
-                                        <path d="M9.9 4.24A10.84 10.84 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path
+                                            d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94">
+                                        </path>
+                                        <path
+                                            d="M9.9 4.24A10.84 10.84 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19">
+                                        </path>
                                         <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"></path>
                                         <line x1="3" y1="3" x2="21" y2="21"></line>
                                     </svg>
@@ -581,7 +670,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
                     <div class="form-nav">
                         <button type="button" class="btn-back" onclick="goToStep1()">Back</button>
-                        <button type="submit" name="submit_registration" class="btn-next" id="submitBtn" onclick="return validateStep2()">Submit Registration</button>
+                        <button type="submit" name="submit_registration" class="btn-next" id="submitBtn"
+                            onclick="return validateStep2()">Submit Registration</button>
                     </div>
                 </div>
             </form>
@@ -593,7 +683,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
             <div class="back-link-wrapper">
                 <a href="index.php" class="back-link">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <line x1="19" y1="12" x2="5" y2="12"></line>
                         <polyline points="12 19 5 12 12 5"></polyline>
                     </svg>
@@ -626,7 +717,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
                     // If server error occurred, check if we need to return to step 2
                     <?php if (!empty($error_message) && !empty($form_data['requested_role'])): ?>
-                    goToStep2(true);
+                        goToStep2(true);
                     <?php endif; ?>
                 }, 400);
             }, 1000);
@@ -708,7 +799,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 if (!deptAff) { showClientError("Department / Affiliation is required."); return; }
                 if (!contact) { showClientError("Contact Number is required."); return; }
                 if (!email) { showClientError("Email Address is required."); return; }
-                
+
                 // Email format validation
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(email)) {
@@ -740,10 +831,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
         function validateStep2() {
             hideClientError();
-            
+
             const role = document.getElementById("requested_role").value;
             const reason = document.getElementById("reason_for_access").value.trim();
-            
+
             // Client-side file validation
             const fileInput = document.getElementById("proof_of_affiliation");
             if (fileInput && fileInput.files && fileInput.files.length > 0) {
@@ -766,7 +857,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             if (!role) { showClientError("Requested Role is required."); return false; }
             if (!reason) { showClientError("Reason for Access is required."); return false; }
             if (!pass) { showClientError("Password is required."); return false; }
-            
+
             // Password validation rules
             const isLengthValid = pass.length >= 8;
             const isUppercaseValid = /[A-Z]/.test(pass);
@@ -778,7 +869,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 showClientError("Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special symbol.");
                 return false;
             }
-            
+
             if (!conf) { showClientError("Confirm Password is required."); return false; }
             if (pass !== conf) { showClientError("Passwords do not match."); return false; }
 
@@ -786,4 +877,5 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         }
     </script>
 </body>
+
 </html>

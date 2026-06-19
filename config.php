@@ -7,7 +7,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Polyfill for getallheaders() if it doesn't exist (e.g. non-Apache or cloud hosting like Railway)
 if (!function_exists('getallheaders')) {
-    function getallheaders() {
+    function getallheaders()
+    {
         $headers = [];
         foreach ($_SERVER as $name => $value) {
             if (substr($name, 0, 5) == 'HTTP_') {
@@ -198,7 +199,8 @@ try {
     // Add validated_by foreign key if it does not exist
     try {
         $pdo->exec("ALTER TABLE `fingerprint_tests` ADD CONSTRAINT `fk_validated_by` FOREIGN KEY (`validated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL");
-    } catch (Exception $e) {}
+    } catch (Exception $e) {
+    }
 
     // Make sure score columns allow NULL
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL");
@@ -417,7 +419,7 @@ try {
 }
 
 // Global Inactivity Auto-Logout Tracker (5 Minutes)
-register_shutdown_function(function() {
+register_shutdown_function(function () {
     if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
         $is_json = false;
         foreach (headers_list() as $header) {
@@ -426,19 +428,19 @@ register_shutdown_function(function() {
                 break;
             }
         }
-        
-        $is_ajax = (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
-                   strpos($_SERVER['SCRIPT_NAME'], 'ajax_') !== false ||
-                   strpos($_SERVER['SCRIPT_NAME'], 'check_registration_status.php') !== false ||
-                   $is_json;
 
-        $is_admin = (strpos($_SERVER['SCRIPT_NAME'], '/admin/') !== false) || 
-                    (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'super_admin');
+        $is_ajax = (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+            strpos($_SERVER['SCRIPT_NAME'], 'ajax_') !== false ||
+            strpos($_SERVER['SCRIPT_NAME'], 'check_registration_status.php') !== false ||
+            $is_json;
+
+        $is_admin = (strpos($_SERVER['SCRIPT_NAME'], '/admin/') !== false) ||
+            (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'super_admin');
 
         if (!$is_ajax && !$is_admin) {
-            $is_subdir = (strpos($_SERVER['SCRIPT_NAME'], '/faculty/') !== false || 
-                          strpos($_SERVER['SCRIPT_NAME'], '/student/') !== false || 
-                          strpos($_SERVER['SCRIPT_NAME'], '/police-partner/') !== false);
+            $is_subdir = (strpos($_SERVER['SCRIPT_NAME'], '/faculty/') !== false ||
+                strpos($_SERVER['SCRIPT_NAME'], '/student/') !== false ||
+                strpos($_SERVER['SCRIPT_NAME'], '/police-partner/') !== false);
             $script_url = $is_subdir ? '../assets/js/session_timeout.js' : 'assets/js/session_timeout.js';
             ?>
             <script src="<?php echo $script_url; ?>"></script>

@@ -40,7 +40,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT ft.*, u.full_name AS student_name,
                fac.full_name AS validator_name,
-               fr.remarks AS faculty_remarks,
+               COALESCE(ft.faculty_remarks, fr.remarks) AS faculty_remarks,
                fr.created_at AS validation_date
         FROM fingerprint_tests ft
         JOIN users u ON u.id = ft.student_id

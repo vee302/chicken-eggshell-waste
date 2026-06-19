@@ -24,7 +24,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT 
             ft.*, 
-            fr.remarks AS faculty_remarks, 
+            COALESCE(ft.faculty_remarks, fr.remarks) AS faculty_remarks, 
             faculty.full_name AS faculty_reviewer,
             student.full_name AS student_name,
             student.email AS student_email

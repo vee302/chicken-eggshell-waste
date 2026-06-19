@@ -30,7 +30,7 @@ if ($f_to)      { $where[] = "DATE(ft.submitted_at)<=?"; $params[] = $f_to; }
 
 $sql = "
     SELECT ft.*, u.full_name AS student_name,
-           fr.remarks AS faculty_remarks, fr.decision, fr.created_at AS review_date
+           COALESCE(ft.faculty_remarks, fr.remarks) AS faculty_remarks, fr.decision, fr.created_at AS review_date
     FROM fingerprint_tests ft
     JOIN users u ON u.id = ft.student_id
     LEFT JOIN faculty_remarks fr ON fr.test_id = ft.id AND fr.decision='approved'
@@ -344,7 +344,7 @@ if (isset($_GET['log_report']) && $_GET['log_report'] === '1' && !empty($records
                                     <td><?= htmlspecialchars($r['student_name']) ?></td>
                                     <td style="text-transform:capitalize;"><?= $r['powder_type'] ?></td>
                                     <td style="text-transform:capitalize;"><?= $r['surface_type'] ?></td>
-                                    <td><strong><?= number_format($r['accuracy_score'], 1) ?>%</strong></td>
+                                    <td><strong><?= number_format($r['faculty_final_score'] !== null ? $r['faculty_final_score'] : $r['accuracy_score'], 1) ?>%</strong></td>
                                     <td><span class="badge badge-approved"><?= ucfirst($r['status']) ?></span></td>
                                     <td><?= date('M d, Y', strtotime($r['submitted_at'])) ?></td>
                                     <td style="font-size:.82rem;color:#6c757d;max-width:200px;"><?= htmlspecialchars($r['faculty_remarks'] ?? 'No remarks added.') ?></td>
@@ -394,21 +394,50 @@ if (isset($_GET['log_report']) && $_GET['log_report'] === '1' && !empty($records
                     <table>
                         <tr>
                             <th>Powder Type:</th>
-                            <td style="text-transform:capitalize; font-weight: 600;"><?= $r['powder_type'] ?></td>
+                            <td style="text-transform:capitalize; font-weight: 600;"><?= htmlspecialchars($r['powder_type']) ?></td>
                             <th>Surface Type:</th>
-                            <td style="text-transform:capitalize;"><?= $r['surface_type'] ?></td>
+                            <td style="text-transform:capitalize;"><?= htmlspecialchars($r['surface_type']) ?></td>
                         </tr>
                         <tr>
-                            <th>Ridge Clarity Score:</th>
-                            <td><?= number_format($r['ridge_clarity_score'], 1) ?>%</td>
-                            <th>Visibility Score:</th>
-                            <td><?= number_format($r['visibility_score'], 1) ?>%</td>
-                        </tr>
-                        <tr>
-                            <th>Adhesion Score:</th>
-                            <td><?= number_format($r['adhesion_score'], 1) ?>%</td>
-                            <th>Overall Accuracy:</th>
-                            <td style="font-weight: 700; color: #1b4332;"><?= number_format($r['accuracy_score'], 1) ?>%</td>
+                            <td colspan="4" style="padding: 6px 0;">
+                                <div style="font-size: 8.5pt; font-weight: 700; color: #1b4332; margin-bottom: 4px; text-transform: uppercase;">Validation Metrics Comparison</div>
+                                <table style="width: 100%; border: 1px solid #eee; font-size: 8.5pt;">
+                                    <thead>
+                                        <tr style="background: #f8faf6;">
+                                            <th style="padding: 4px 6px; width: 40%;">Metric</th>
+                                            <th style="padding: 4px 6px;">AI Score</th>
+                                            <th style="padding: 4px 6px;">Faculty Score (Official)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td style="padding: 3px 6px;">Ridge Clarity</td>
+                                            <td style="padding: 3px 6px;"><?= number_format($r['ridge_clarity_score'], 1) ?>%</td>
+                                            <td style="padding: 3px 6px; font-weight: 700;"><?= number_format($r['faculty_ridge_clarity_score'] !== null ? $r['faculty_ridge_clarity_score'] : $r['ridge_clarity_score'], 1) ?>%</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 3px 6px;">Visibility</td>
+                                            <td style="padding: 3px 6px;"><?= number_format($r['visibility_score'], 1) ?>%</td>
+                                            <td style="padding: 3px 6px; font-weight: 700;"><?= number_format($r['faculty_visibility_score'] !== null ? $r['faculty_visibility_score'] : $r['visibility_score'], 1) ?>%</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 3px 6px;">Adhesion</td>
+                                            <td style="padding: 3px 6px;"><?= number_format($r['adhesion_score'], 1) ?>%</td>
+                                            <td style="padding: 3px 6px; font-weight: 700;"><?= number_format($r['faculty_adhesion_score'] !== null ? $r['faculty_adhesion_score'] : $r['adhesion_score'], 1) ?>%</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 3px 6px;">Contrast</td>
+                                            <td style="padding: 3px 6px;"><?= number_format($r['contrast_score'], 1) ?>%</td>
+                                            <td style="padding: 3px 6px; font-weight: 700;"><?= number_format($r['faculty_contrast_score'] !== null ? $r['faculty_contrast_score'] : $r['contrast_score'], 1) ?>%</td>
+                                        </tr>
+                                        <tr style="border-top: 1px solid #ddd; background: #fbfdfa;">
+                                            <td style="padding: 4px 6px; font-weight: 700;">Overall Accuracy</td>
+                                            <td style="padding: 4px 6px; font-weight: 700;"><?= number_format($r['ai_accuracy_score'] !== null ? $r['ai_accuracy_score'] : $r['accuracy_score'], 1) ?>%</td>
+                                            <td style="padding: 4px 6px; font-weight: 700; color: #1b4332;"><?= number_format($r['faculty_final_score'] !== null ? $r['faculty_final_score'] : $r['accuracy_score'], 1) ?>%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
                         </tr>
                         <tr>
                             <th>Submitted Date:</th>

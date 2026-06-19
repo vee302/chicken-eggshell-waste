@@ -24,11 +24,15 @@ try {
     }
     
     $approved_trials = array_filter($trials, function($t) {
-        return $t['status'] === 'approved' && $t['accuracy_score'] !== null;
+        $score = $t['faculty_final_score'] !== null ? $t['faculty_final_score'] : $t['accuracy_score'];
+        return $t['status'] === 'approved' && $score !== null;
     });
     
     if ($approved_trials) {
-        $overall_avg = round(array_sum(array_column($approved_trials, 'accuracy_score')) / count($approved_trials), 1);
+        $scores_sum = array_sum(array_map(function($t) {
+            return $t['faculty_final_score'] !== null ? $t['faculty_final_score'] : $t['accuracy_score'];
+        }, $approved_trials));
+        $overall_avg = round($scores_sum / count($approved_trials), 1);
     }
 } catch (PDOException $e) {}
 ?>
@@ -454,10 +458,12 @@ try {
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($t['surface_type']) ?></td>
                                 <td>
                                     <strong>
-                                        <?php if ($t['status'] === 'approved' && $t['accuracy_score'] !== null): ?>
-                                            <?= number_format($t['accuracy_score'], 1) ?>%
+                                        <?php 
+                                        $displayScore = $t['faculty_final_score'] !== null ? $t['faculty_final_score'] : $t['accuracy_score'];
+                                        if ($t['status'] === 'approved' && $displayScore !== null): ?>
+                                            <?= number_format($displayScore, 1) ?>%
                                         <?php elseif ($t['status'] === 'pending_validation'): ?>
-                                            Awaiting Validation
+                                            Awaiting Faculty Validation
                                         <?php elseif ($t['status'] === 'needs_revision'): ?>
                                             Needs Revision
                                         <?php elseif ($t['status'] === 'rejected'): ?>
@@ -468,15 +474,15 @@ try {
                                     </strong>
                                 </td>
                                 <td style="min-width:130px;">
-                                    <?php if ($t['status'] === 'approved' && $t['accuracy_score'] !== null): ?>
+                                    <?php if ($t['status'] === 'approved' && $displayScore !== null): ?>
                                         <div class="score-bar">
                                             <div class="score-bar-track">
-                                                <div class="score-bar-fill" style="width:<?= min(100, $t['accuracy_score']) ?>%"></div>
+                                                <div class="score-bar-fill" style="width:<?= min(100, $displayScore) ?>%"></div>
                                             </div>
-                                            <span style="font-size:.75rem;color:var(--gray);width:35px;text-align:right;"><?= number_format($t['accuracy_score'], 0) ?>%</span>
+                                            <span style="font-size:.75rem;color:var(--gray);width:35px;text-align:right;"><?= number_format($displayScore, 0) ?>%</span>
                                         </div>
                                     <?php else: ?>
-                                        <span style="font-size:.75rem;color:var(--gray);font-style:italic;">Awaiting review</span>
+                                        <span style="font-size:.75rem;color:var(--gray);font-style:italic;">Awaiting Faculty Validation</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -610,6 +616,9 @@ try {
                                 <div class="metric-bar-fill" id="inspect-fill-adhesion"></div>
                             </div>
                         </div>
+                        
+                        <!-- AI Preliminary Results Container -->
+                        <div id="inspect-ai-prelim-container"></div>
                     </div>
                 </div>
 
@@ -777,58 +786,105 @@ function populateInspectionPanel(row) {
         imgMissing.style.display = 'block';
     }
 
-    // Quality metrics values mapping
-    const clarity = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score) : 0;
-    const contrast = row.contrast_score !== null ? parseFloat(row.contrast_score) : 0;
-    const visibility = row.visibility_score !== null ? parseFloat(row.visibility_score) : 0;
-    const sharpness = clarity; // Use ridge_clarity_score as sharpness display value
-    const adhesion = row.adhesion_score !== null ? parseFloat(row.adhesion_score) : 0;
-    const accuracy = row.accuracy_score !== null ? parseFloat(row.accuracy_score) : 0;
+    // AI Preliminary Result Metrics
+    const aiAccuracy = row.ai_accuracy_score !== null ? parseFloat(row.ai_accuracy_score) : (row.accuracy_score !== null ? parseFloat(row.accuracy_score) : 0);
+    const aiClarity = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score) : 0;
+    const aiVisibility = row.visibility_score !== null ? parseFloat(row.visibility_score) : 0;
+    const aiAdhesion = row.adhesion_score !== null ? parseFloat(row.adhesion_score) : 0;
+    const aiContrast = row.contrast_score !== null ? parseFloat(row.contrast_score) : 0;
 
-    // Set text labels
-    document.getElementById('inspect-val-clarity').textContent = clarity > 0 ? clarity.toFixed(0) + '%' : '—';
-    document.getElementById('inspect-val-contrast').textContent = contrast > 0 ? contrast.toFixed(0) + '%' : '—';
-    document.getElementById('inspect-val-visibility').textContent = visibility > 0 ? visibility.toFixed(0) + '%' : '—';
-    document.getElementById('inspect-val-sharpness').textContent = sharpness > 0 ? sharpness.toFixed(0) + '%' : '—';
-    document.getElementById('inspect-val-adhesion').textContent = adhesion > 0 ? adhesion.toFixed(0) + '%' : '—';
-    
-    // Composite / Overall Score Huge Text
-    const overallScoreHuge = document.getElementById('inspect-val-accuracy-huge');
-    overallScoreHuge.textContent = accuracy > 0 ? Math.round(accuracy) + '%' : '—';
+    // Faculty Final Evaluation Metrics (fallback to AI scores for older approved records)
+    const hasFacultyScores = row.faculty_final_score !== null;
+    const fAccuracy = hasFacultyScores ? parseFloat(row.faculty_final_score) : aiAccuracy;
+    const fClarity = hasFacultyScores && row.faculty_ridge_clarity_score !== null ? parseFloat(row.faculty_ridge_clarity_score) : aiClarity;
+    const fVisibility = hasFacultyScores && row.faculty_visibility_score !== null ? parseFloat(row.faculty_visibility_score) : aiVisibility;
+    const fAdhesion = hasFacultyScores && row.faculty_adhesion_score !== null ? parseFloat(row.faculty_adhesion_score) : aiAdhesion;
+    const fContrast = hasFacultyScores && row.faculty_contrast_score !== null ? parseFloat(row.faculty_contrast_score) : aiContrast;
 
-    // Set overall score badge
-    const badgeEl = document.getElementById('inspect-val-quality-badge');
-    if (accuracy >= 85) {
-        badgeEl.textContent = 'EXCELLENT';
-        badgeEl.style.color = '#10b981';
-        badgeEl.style.borderColor = 'rgba(16, 185, 129, 0.25)';
-        badgeEl.style.background = 'rgba(16, 185, 129, 0.12)';
-    } else if (accuracy >= 70) {
-        badgeEl.textContent = 'GOOD';
-        badgeEl.style.color = '#10b981';
-        badgeEl.style.borderColor = 'rgba(16, 185, 129, 0.25)';
-        badgeEl.style.background = 'rgba(16, 185, 129, 0.12)';
-    } else if (accuracy >= 50) {
-        badgeEl.textContent = 'AVERAGE';
-        badgeEl.style.color = '#f59e0b';
-        badgeEl.style.borderColor = 'rgba(245, 158, 11, 0.25)';
-        badgeEl.style.background = 'rgba(245, 158, 11, 0.12)';
-    } else {
-        badgeEl.textContent = 'POOR';
-        badgeEl.style.color = '#ef4444';
-        badgeEl.style.borderColor = 'rgba(239, 68, 68, 0.25)';
-        badgeEl.style.background = 'rgba(239, 68, 68, 0.12)';
+    // Render comparison list or details
+    const aiDetailsHtml = `
+        <div style="margin-top: 1rem; border-top: 1px solid #27354f; padding-top: 0.85rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">AI Preliminary Results (Read-Only)</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #cbd5e1;">
+                <div style="display: flex; justify-content: space-between;"><span>AI Accuracy:</span> <strong>${aiAccuracy > 0 ? aiAccuracy.toFixed(1) + '%' : '—'}</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>AI Ridge Clarity:</span> <span>${aiClarity > 0 ? aiClarity.toFixed(1) + '%' : '—'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span>AI Visibility:</span> <span>${aiVisibility > 0 ? aiVisibility.toFixed(1) + '%' : '—'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span>AI Adhesion:</span> <span>${aiAdhesion > 0 ? aiAdhesion.toFixed(1) + '%' : '—'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span>AI Contrast:</span> <span>${aiContrast > 0 ? aiContrast.toFixed(1) + '%' : '—'}</span></div>
+            </div>
+        </div>
+    `;
+
+    const extraAiContainer = document.getElementById('inspect-ai-prelim-container');
+    if (extraAiContainer) {
+        extraAiContainer.innerHTML = aiDetailsHtml;
     }
 
-    // Set progress bar widths
-    document.getElementById('inspect-fill-clarity').style.width = clarity + '%';
-    document.getElementById('inspect-fill-contrast').style.width = contrast + '%';
-    document.getElementById('inspect-fill-visibility').style.width = visibility + '%';
-    document.getElementById('inspect-fill-sharpness').style.width = sharpness + '%';
-    document.getElementById('inspect-fill-adhesion').style.width = adhesion + '%';
+    // Update main progress bars to show Faculty Final score if approved, otherwise show placeholder or hide
+    const overallScoreHuge = document.getElementById('inspect-val-accuracy-huge');
+    const badgeEl = document.getElementById('inspect-val-quality-badge');
+    const badgeDesc = document.querySelector('.quality-badge-desc');
 
-    // Lab Analysis Notes mapping
-    document.getElementById('inspect-ai-score').textContent = row.ai_accuracy_score !== null ? parseFloat(row.ai_accuracy_score).toFixed(1) + '%' : 'Awaiting AI Evaluation';
+    if (row.status === 'approved') {
+        overallScoreHuge.textContent = Math.round(fAccuracy) + '%';
+        badgeEl.textContent = 'APPROVED';
+        badgeEl.style.color = '#10b981';
+        badgeEl.style.borderColor = 'rgba(16, 185, 129, 0.25)';
+        badgeEl.style.background = 'rgba(16, 185, 129, 0.12)';
+        if (badgeDesc) badgeDesc.textContent = 'Faculty Approved Official Score';
+
+        // Set text labels
+        document.getElementById('inspect-val-clarity').textContent = fClarity > 0 ? fClarity.toFixed(1) + '%' : '—';
+        document.getElementById('inspect-val-contrast').textContent = fContrast > 0 ? fContrast.toFixed(1) + '%' : '—';
+        document.getElementById('inspect-val-visibility').textContent = fVisibility > 0 ? fVisibility.toFixed(1) + '%' : '—';
+        document.getElementById('inspect-val-sharpness').textContent = fClarity > 0 ? fClarity.toFixed(1) + '%' : '—';
+        document.getElementById('inspect-val-adhesion').textContent = fAdhesion > 0 ? fAdhesion.toFixed(1) + '%' : '—';
+
+        // Set progress bar widths
+        document.getElementById('inspect-fill-clarity').style.width = fClarity + '%';
+        document.getElementById('inspect-fill-contrast').style.width = fContrast + '%';
+        document.getElementById('inspect-fill-visibility').style.width = fVisibility + '%';
+        document.getElementById('inspect-fill-sharpness').style.width = fClarity + '%';
+        document.getElementById('inspect-fill-adhesion').style.width = fAdhesion + '%';
+        
+    } else {
+        overallScoreHuge.textContent = '—';
+        
+        if (row.status === 'pending_validation') {
+            badgeEl.textContent = 'AWAITING REVIEW';
+            badgeEl.style.color = '#f59e0b';
+            badgeEl.style.borderColor = 'rgba(245, 158, 11, 0.25)';
+            badgeEl.style.background = 'rgba(245, 158, 11, 0.12)';
+            if (badgeDesc) badgeDesc.textContent = 'Awaiting Faculty Validation';
+        } else if (row.status === 'rejected') {
+            badgeEl.textContent = 'REJECTED';
+            badgeEl.style.color = '#ef4444';
+            badgeEl.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+            badgeEl.style.background = 'rgba(239, 68, 68, 0.12)';
+            if (badgeDesc) badgeDesc.textContent = 'Rejected';
+        } else if (row.status === 'needs_revision') {
+            badgeEl.textContent = 'REVISION NEEDED';
+            badgeEl.style.color = '#3b82f6';
+            badgeEl.style.borderColor = 'rgba(59, 130, 246, 0.25)';
+            badgeEl.style.background = 'rgba(59, 130, 246, 0.12)';
+            if (badgeDesc) badgeDesc.textContent = 'Needs Revision';
+        }
+
+        // Set progress bars to 0% as they are not approved yet
+        document.getElementById('inspect-val-clarity').textContent = '—';
+        document.getElementById('inspect-val-contrast').textContent = '—';
+        document.getElementById('inspect-val-visibility').textContent = '—';
+        document.getElementById('inspect-val-sharpness').textContent = '—';
+        document.getElementById('inspect-val-adhesion').textContent = '—';
+
+        document.getElementById('inspect-fill-clarity').style.width = '0%';
+        document.getElementById('inspect-fill-contrast').style.width = '0%';
+        document.getElementById('inspect-fill-visibility').style.width = '0%';
+        document.getElementById('inspect-fill-sharpness').style.width = '0%';
+        document.getElementById('inspect-fill-adhesion').style.width = '0%';
+    }
+
+    document.getElementById('inspect-ai-score').textContent = aiAccuracy > 0 ? aiAccuracy.toFixed(1) + '%' : 'Awaiting AI Evaluation';
 
     // Conditional elements based on status
     const statusVal = document.getElementById('inspect-status');
@@ -844,7 +900,7 @@ function populateInspectionPanel(row) {
         validatedAtRow.style.display = 'none';
         facultyScoreRow.style.display = 'flex';
         
-        document.getElementById('inspect-faculty-score-label').textContent = 'Accuracy:';
+        document.getElementById('inspect-faculty-score-label').textContent = 'Faculty Final Score:';
         document.getElementById('inspect-faculty-score').textContent = 'Awaiting Faculty Validation';
         
         remarksLabel.textContent = 'Notes:';
@@ -863,7 +919,7 @@ function populateInspectionPanel(row) {
             statusVal.innerHTML = '<span class="badge badge-approved">Approved</span>';
             facultyScoreRow.style.display = 'flex';
             document.getElementById('inspect-faculty-score-label').textContent = 'Faculty Final Score:';
-            document.getElementById('inspect-faculty-score').textContent = row.faculty_final_score !== null ? parseFloat(row.faculty_final_score).toFixed(1) + '%' : '—';
+            document.getElementById('inspect-faculty-score').textContent = fAccuracy.toFixed(1) + '%';
         } else if (row.status === 'rejected') {
             statusVal.innerHTML = '<span class="badge badge-rejected">Rejected</span>';
             facultyScoreRow.style.display = 'none';

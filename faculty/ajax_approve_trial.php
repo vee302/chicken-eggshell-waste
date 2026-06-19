@@ -29,24 +29,34 @@ if ($test_id <= 0) {
     exit;
 }
 
-$faculty_final_score = isset($_POST['faculty_final_score']) ? floatval($_POST['faculty_final_score']) : null;
+$faculty_accuracy_score      = isset($_POST['faculty_accuracy_score']) ? $_POST['faculty_accuracy_score'] : null;
+$faculty_ridge_clarity_score = isset($_POST['faculty_ridge_clarity_score']) ? $_POST['faculty_ridge_clarity_score'] : null;
+$faculty_visibility_score    = isset($_POST['faculty_visibility_score']) ? $_POST['faculty_visibility_score'] : null;
+$faculty_adhesion_score      = isset($_POST['faculty_adhesion_score']) ? $_POST['faculty_adhesion_score'] : null;
+$faculty_contrast_score      = isset($_POST['faculty_contrast_score']) ? $_POST['faculty_contrast_score'] : null;
 
-// Fallback: If individual scores are passed instead of a single final score
-if ($faculty_final_score === null) {
-    $clarity  = isset($_POST['ridge_clarity_score']) ? floatval($_POST['ridge_clarity_score']) : null;
-    $visibility = isset($_POST['visibility_score']) ? floatval($_POST['visibility_score']) : null;
-    $adhesion   = isset($_POST['adhesion_score']) ? floatval($_POST['adhesion_score']) : null;
-    $contrast   = isset($_POST['contrast_score']) ? floatval($_POST['contrast_score']) : null;
-    
-    if ($clarity !== null && $visibility !== null && $adhesion !== null && $contrast !== null) {
-        $faculty_final_score = ($clarity + $visibility + $adhesion + $contrast) / 4.0;
-    }
-}
-
-if ($faculty_final_score === null || $faculty_final_score < 0 || $faculty_final_score > 100) {
-    echo json_encode(['success' => false, 'message' => 'Please provide a valid final score (0-100).']);
+if (
+    $faculty_accuracy_score === null || $faculty_accuracy_score === '' || !is_numeric($faculty_accuracy_score) || $faculty_accuracy_score < 0 || $faculty_accuracy_score > 100 ||
+    $faculty_ridge_clarity_score === null || $faculty_ridge_clarity_score === '' || !is_numeric($faculty_ridge_clarity_score) || $faculty_ridge_clarity_score < 0 || $faculty_ridge_clarity_score > 100 ||
+    $faculty_visibility_score === null || $faculty_visibility_score === '' || !is_numeric($faculty_visibility_score) || $faculty_visibility_score < 0 || $faculty_visibility_score > 100 ||
+    $faculty_adhesion_score === null || $faculty_adhesion_score === '' || !is_numeric($faculty_adhesion_score) || $faculty_adhesion_score < 0 || $faculty_adhesion_score > 100 ||
+    $faculty_contrast_score === null || $faculty_contrast_score === '' || !is_numeric($faculty_contrast_score) || $faculty_contrast_score < 0 || $faculty_contrast_score > 100
+) {
+    echo json_encode(['success' => false, 'message' => 'Please provide valid scores (0-100) for all 5 metrics.']);
     exit;
 }
+
+$faculty_accuracy_score      = floatval($faculty_accuracy_score);
+$faculty_ridge_clarity_score = floatval($faculty_ridge_clarity_score);
+$faculty_visibility_score    = floatval($faculty_visibility_score);
+$faculty_adhesion_score      = floatval($faculty_adhesion_score);
+$faculty_contrast_score      = floatval($faculty_contrast_score);
+
+// Calculate average of the 5 faculty final scores, rounded to 2 decimal places
+$faculty_final_score = round(
+    ($faculty_accuracy_score + $faculty_ridge_clarity_score + $faculty_visibility_score + $faculty_adhesion_score + $faculty_contrast_score) / 5.0,
+    2
+);
 
 try {
     $pdo->beginTransaction();
@@ -63,13 +73,28 @@ try {
     $stmt = $pdo->prepare("
         UPDATE fingerprint_tests 
         SET status = 'approved',
-            accuracy_score = ?,
+            faculty_accuracy_score = ?,
+            faculty_ridge_clarity_score = ?,
+            faculty_visibility_score = ?,
+            faculty_adhesion_score = ?,
+            faculty_contrast_score = ?,
             faculty_final_score = ?,
+            faculty_remarks = ?,
             validated_by = ?,
             validated_at = NOW()
         WHERE id = ?
     ");
-    $stmt->execute([$faculty_final_score, $faculty_final_score, $faculty_id, $test_id]);
+    $stmt->execute([
+        $faculty_accuracy_score,
+        $faculty_ridge_clarity_score,
+        $faculty_visibility_score,
+        $faculty_adhesion_score,
+        $faculty_contrast_score,
+        $faculty_final_score,
+        $remarks,
+        $faculty_id,
+        $test_id
+    ]);
 
     $stmt = $pdo->prepare("
         INSERT INTO faculty_remarks (test_id, faculty_id, remarks, decision, created_at)

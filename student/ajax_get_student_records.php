@@ -34,7 +34,7 @@ try {
     }
 
     $sql = "
-        SELECT ft.*, fr.remarks AS faculty_remarks, faculty.full_name AS faculty_validator,
+        SELECT ft.*, COALESCE(ft.faculty_remarks, fr.remarks) AS faculty_remarks, faculty.full_name AS faculty_validator,
                student.full_name AS student_name, student.email AS student_email
         FROM fingerprint_tests ft
         LEFT JOIN users faculty ON ft.validated_by = faculty.id

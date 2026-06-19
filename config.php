@@ -190,6 +190,12 @@ try {
     $addTestColumn('status', "`status` VARCHAR(50) DEFAULT 'pending_validation'");
     $addTestColumn('validated_by', "`validated_by` INT DEFAULT NULL AFTER `submitted_at`");
     $addTestColumn('validated_at', "`validated_at` TIMESTAMP NULL DEFAULT NULL AFTER `validated_by`");
+    $addTestColumn('faculty_accuracy_score', "`faculty_accuracy_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('faculty_ridge_clarity_score', "`faculty_ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('faculty_visibility_score', "`faculty_visibility_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('faculty_adhesion_score', "`faculty_adhesion_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('faculty_contrast_score', "`faculty_contrast_score` DECIMAL(5,2) DEFAULT NULL");
+    $addTestColumn('faculty_remarks', "`faculty_remarks` TEXT DEFAULT NULL");
 
     // Copy legacy columns if they exist
     if (in_array('fingerprint_image', $testCols, true)) {
@@ -202,7 +208,6 @@ try {
     } catch (Exception $e) {
     }
 
-    // Make sure score columns allow NULL
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL");
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `visibility_score` DECIMAL(5,2) DEFAULT NULL");
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `adhesion_score` DECIMAL(5,2) DEFAULT NULL");
@@ -210,6 +215,11 @@ try {
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `accuracy_score` DECIMAL(5,2) DEFAULT NULL");
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `faculty_final_score` DECIMAL(5,2) DEFAULT NULL");
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `ai_accuracy_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `faculty_accuracy_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `faculty_ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `faculty_visibility_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `faculty_adhesion_score` DECIMAL(5,2) DEFAULT NULL");
+    $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `faculty_contrast_score` DECIMAL(5,2) DEFAULT NULL");
 
     // Safe migration of status column
     $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `status` VARCHAR(50) DEFAULT 'pending_validation'");

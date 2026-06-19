@@ -49,11 +49,12 @@ try {
     $stmt = $pdo->prepare("
         UPDATE fingerprint_tests 
         SET status = 'rejected',
+            faculty_remarks = ?,
             validated_by = ?,
             validated_at = NOW()
         WHERE id = ?
     ");
-    $stmt->execute([$faculty_id, $test_id]);
+    $stmt->execute([$remarks, $faculty_id, $test_id]);
 
     $stmt = $pdo->prepare("
         INSERT INTO faculty_remarks (test_id, faculty_id, remarks, decision, created_at)

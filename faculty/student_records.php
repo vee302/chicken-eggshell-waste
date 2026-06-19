@@ -23,7 +23,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT ft.*, u.full_name AS student_name,
                fac.full_name AS validator_name,
-               fr.remarks AS faculty_remarks,
+               COALESCE(ft.faculty_remarks, fr.remarks) AS faculty_remarks,
                fr.created_at AS validation_date
         FROM fingerprint_tests ft
         JOIN users u ON u.id = ft.student_id
@@ -186,7 +186,21 @@ if (isset($_GET['view'])) {
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <strong><?= $r['accuracy_score'] !== null ? number_format($r['accuracy_score'], 1) . '%' : 'Awaiting Validation' ?></strong>
+                                    <strong>
+                                        <?php 
+                                        $displayScore = $r['faculty_final_score'] !== null ? $r['faculty_final_score'] : $r['accuracy_score'];
+                                        if ($r['status'] === 'approved' && $displayScore !== null): ?>
+                                            <?= number_format($displayScore, 1) ?>%
+                                        <?php elseif ($r['status'] === 'pending_validation'): ?>
+                                            Awaiting Faculty Validation
+                                        <?php elseif ($r['status'] === 'needs_revision'): ?>
+                                            Needs Revision
+                                        <?php elseif ($r['status'] === 'rejected'): ?>
+                                            Rejected
+                                        <?php else: ?>
+                                            N/A
+                                        <?php endif; ?>
+                                    </strong>
                                 </td>
                                 <td>
                                     <span class="badge badge-<?= $r['status'] ?>">

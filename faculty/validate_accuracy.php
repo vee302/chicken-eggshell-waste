@@ -445,16 +445,16 @@ if (isset($_GET['id'])) {
             padding-bottom: 4px;
             border-bottom: 1.5px solid rgba(27,67,50,0.12);
         }
-        .form-row-2 {
+        .faculty-evaluation-grid {
             display: grid;
-            grid-template-columns: 200px 1fr;
-            gap: 1.25rem;
-            margin-bottom: 1rem;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.25rem;
         }
-        @media (max-width: 576px) {
-            .form-row-2 {
+        @media (max-width: 768px) {
+            .faculty-evaluation-grid {
                 grid-template-columns: 1fr;
-                gap: 0.75rem;
+                gap: 1rem;
             }
         }
         .form-group-label {
@@ -837,10 +837,10 @@ function renderWorkspace() {
             <!-- Right Column: Read-only AI Quality Metrics -->
             <div>
                 <div class="quality-metrics-container">
-                    <h3 class="metrics-heading">AI Preliminary Quality Metrics (Read-only)</h3>
+                    <h3 class="metrics-heading">AI Preliminary Quality Metrics (Read-Only)</h3>
                     
                     <div class="metric-score-card overall-card">
-                        <div class="metric-score-label">Accuracy</div>
+                        <div class="metric-score-label">AI Accuracy</div>
                         <div class="metric-score-progress">
                             <div class="metric-score-fill" style="width: ${widthAccuracy}"></div>
                         </div>
@@ -848,7 +848,7 @@ function renderWorkspace() {
                     </div>
                     
                     <div class="metric-score-card">
-                        <div class="metric-score-label">Ridge Clarity</div>
+                        <div class="metric-score-label">AI Ridge Clarity</div>
                         <div class="metric-score-progress">
                             <div class="metric-score-fill" style="width: ${widthClarity}"></div>
                         </div>
@@ -856,7 +856,7 @@ function renderWorkspace() {
                     </div>
                     
                     <div class="metric-score-card">
-                        <div class="metric-score-label">Visibility</div>
+                        <div class="metric-score-label">AI Visibility</div>
                         <div class="metric-score-progress">
                             <div class="metric-score-fill" style="width: ${widthVisibility}"></div>
                         </div>
@@ -864,7 +864,7 @@ function renderWorkspace() {
                     </div>
                     
                     <div class="metric-score-card">
-                        <div class="metric-score-label">Adhesion</div>
+                        <div class="metric-score-label">AI Adhesion</div>
                         <div class="metric-score-progress">
                             <div class="metric-score-fill" style="width: ${widthAdhesion}"></div>
                         </div>
@@ -872,7 +872,7 @@ function renderWorkspace() {
                     </div>
                     
                     <div class="metric-score-card">
-                        <div class="metric-score-label">Contrast</div>
+                        <div class="metric-score-label">AI Contrast</div>
                         <div class="metric-score-progress">
                             <div class="metric-score-fill" style="width: ${widthContrast}"></div>
                         </div>
@@ -884,16 +884,37 @@ function renderWorkspace() {
 
         <!-- Faculty Validation Panel -->
         <div class="faculty-validation-box">
-            <h3 class="validation-heading">Faculty Validation</h3>
+            <h3 class="validation-heading">Faculty Final Evaluation</h3>
             
-            <div class="form-row-2">
-                <div>
-                    <label class="form-group-label" for="faculty_final_score_input">Faculty Final Score (%) *</label>
-                    <input type="number" id="faculty_final_score_input" class="form-control-plain" min="0" max="100" step="0.01" value="${finalScoreDefault}" style="font-weight:700; color:#1b4332;">
+            <div class="faculty-evaluation-grid">
+                <!-- Left column of scores -->
+                <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                        <label class="form-group-label" for="faculty_accuracy_input" style="margin: 0; font-weight: 600; color: #1b4332;">Final Accuracy Score (%)</label>
+                        <input type="number" id="faculty_accuracy_input" class="form-control-plain" min="0" max="100" step="0.01" value="${accuracy !== null ? accuracy.toFixed(1) : ''}" style="width: 100px; text-align: right; font-weight: 700; color: #1b4332; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 4px 8px;">
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                        <label class="form-group-label" for="faculty_clarity_input" style="margin: 0; font-weight: 600; color: #1b4332;">Final Ridge Clarity (%)</label>
+                        <input type="number" id="faculty_clarity_input" class="form-control-plain" min="0" max="100" step="0.01" value="${clarity !== null ? clarity.toFixed(1) : ''}" style="width: 100px; text-align: right; font-weight: 700; color: #1b4332; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 4px 8px;">
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                        <label class="form-group-label" for="faculty_visibility_input" style="margin: 0; font-weight: 600; color: #1b4332;">Final Visibility (%)</label>
+                        <input type="number" id="faculty_visibility_input" class="form-control-plain" min="0" max="100" step="0.01" value="${visibility !== null ? visibility.toFixed(1) : ''}" style="width: 100px; text-align: right; font-weight: 700; color: #1b4332; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 4px 8px;">
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                        <label class="form-group-label" for="faculty_adhesion_input" style="margin: 0; font-weight: 600; color: #1b4332;">Final Adhesion (%)</label>
+                        <input type="number" id="faculty_adhesion_input" class="form-control-plain" min="0" max="100" step="0.01" value="${adhesion !== null ? adhesion.toFixed(1) : ''}" style="width: 100px; text-align: right; font-weight: 700; color: #1b4332; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 4px 8px;">
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                        <label class="form-group-label" for="faculty_contrast_input" style="margin: 0; font-weight: 600; color: #1b4332;">Final Contrast (%)</label>
+                        <input type="number" id="faculty_contrast_input" class="form-control-plain" min="0" max="100" step="0.01" value="${contrast !== null ? contrast.toFixed(1) : ''}" style="width: 100px; text-align: right; font-weight: 700; color: #1b4332; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 4px 8px;">
+                    </div>
                 </div>
-                <div>
-                    <label class="form-group-label" for="faculty_remarks_input">Faculty Remarks / Evaluation Feedback</label>
-                    <textarea id="faculty_remarks_input" class="form-control-plain" rows="2" placeholder="Provide evaluation remarks here..."></textarea>
+                
+                <!-- Right column for Remarks -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label class="form-group-label" for="faculty_remarks_input" style="margin: 0;">Faculty Remarks / Evaluation Feedback</label>
+                    <textarea id="faculty_remarks_input" class="form-control-plain" rows="6" placeholder="Provide evaluation remarks here..." style="flex: 1; min-height: 120px; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-family: inherit; resize: none; outline: none;"></textarea>
                     <p id="workspaceRemarksWarning" style="color:#c0392b; font-size:0.75rem; font-weight:600; margin-top:4px; margin-bottom:0; display:none;">Remarks are required to reject or request revision.</p>
                 </div>
             </div>
@@ -918,7 +939,6 @@ function performValidation(action) {
     
     const remarks = document.getElementById('faculty_remarks_input').value.trim();
     const warning = document.getElementById('workspaceRemarksWarning');
-    const finalScore = parseFloat(document.getElementById('faculty_final_score_input').value);
     
     // Remarks is strictly required for Reject and Needs Revision
     if ((action === 'reject' || action === 'needs_revision') && !remarks) {
@@ -928,10 +948,26 @@ function performValidation(action) {
     }
     warning.style.display = 'none';
 
-    // Validation final score check (0 to 100)
-    if (action === 'approve' && (isNaN(finalScore) || finalScore < 0 || finalScore > 100)) {
-        alert("Please enter a valid final score between 0 and 100.");
-        return;
+    let accuracy = 0, clarity = 0, visibility = 0, adhesion = 0, contrast = 0;
+    
+    // Validation final score check (0 to 100) for all 5 fields
+    if (action === 'approve') {
+        accuracy = parseFloat(document.getElementById('faculty_accuracy_input').value);
+        clarity = parseFloat(document.getElementById('faculty_clarity_input').value);
+        visibility = parseFloat(document.getElementById('faculty_visibility_input').value);
+        adhesion = parseFloat(document.getElementById('faculty_adhesion_input').value);
+        contrast = parseFloat(document.getElementById('faculty_contrast_input').value);
+        
+        if (
+            isNaN(accuracy) || accuracy < 0 || accuracy > 100 ||
+            isNaN(clarity) || clarity < 0 || clarity > 100 ||
+            isNaN(visibility) || visibility < 0 || visibility > 100 ||
+            isNaN(adhesion) || adhesion < 0 || adhesion > 100 ||
+            isNaN(contrast) || contrast < 0 || contrast > 100
+        ) {
+            alert("Please enter a valid score between 0 and 100 for all 5 evaluation metrics.");
+            return;
+        }
     }
 
     const btnApprove = document.getElementById('btnApprove');
@@ -967,7 +1003,11 @@ function performValidation(action) {
     let endpoint = '';
     if (action === 'approve') {
         endpoint = 'ajax_approve_trial.php';
-        formData.append('faculty_final_score', finalScore);
+        formData.append('faculty_accuracy_score', accuracy);
+        formData.append('faculty_ridge_clarity_score', clarity);
+        formData.append('faculty_visibility_score', visibility);
+        formData.append('faculty_adhesion_score', adhesion);
+        formData.append('faculty_contrast_score', contrast);
     } else if (action === 'reject') {
         endpoint = 'ajax_reject_trial.php';
     } else if (action === 'needs_revision') {

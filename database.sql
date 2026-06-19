@@ -57,6 +57,12 @@ CREATE TABLE IF NOT EXISTS `fingerprint_tests` (
     `evaluation_source` VARCHAR(50) DEFAULT 'AI Preliminary',
     `faculty_final_score` DECIMAL(5,2) DEFAULT NULL,
     `ai_accuracy_score` DECIMAL(5,2) DEFAULT NULL,
+    `faculty_accuracy_score` DECIMAL(5,2) DEFAULT NULL,
+    `faculty_ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL,
+    `faculty_visibility_score` DECIMAL(5,2) DEFAULT NULL,
+    `faculty_adhesion_score` DECIMAL(5,2) DEFAULT NULL,
+    `faculty_contrast_score` DECIMAL(5,2) DEFAULT NULL,
+    `faculty_remarks` TEXT DEFAULT NULL,
     FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`validated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

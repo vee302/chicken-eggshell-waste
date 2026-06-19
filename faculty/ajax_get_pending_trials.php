@@ -12,16 +12,26 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset(
 }
 
 try {
+    $where_clause = "WHERE ft.status = 'pending_validation'";
+    $params = [];
+    
+    // Dynamic check for assigned_faculty_id column to restrict visibility
+    $check_cols = $pdo->query("SHOW COLUMNS FROM `fingerprint_tests` LIKE 'assigned_faculty_id'")->fetch();
+    if ($check_cols) {
+        $where_clause .= " AND ft.assigned_faculty_id = :faculty_id";
+        $params[':faculty_id'] = $_SESSION['user_id'] ?? 0;
+    }
+
     $stmt = $pdo->prepare("
         SELECT 
           ft.*,
           student.full_name AS student_name
         FROM fingerprint_tests ft
         LEFT JOIN users student ON ft.student_id = student.id
-        WHERE ft.status = 'pending_validation'
+        $where_clause
         ORDER BY ft.submitted_at DESC
     ");
-    $stmt->execute();
+    $stmt->execute($params);
     $submissions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($submissions as &$s) {

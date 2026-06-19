@@ -72,15 +72,17 @@ CREATE TABLE IF NOT EXISTS `fingerprint_tests` (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `safety_climate_log` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `test_id` INT NOT NULL,
     `student_id` INT NOT NULL,
-    `temperature` DECIMAL(5,2) DEFAULT NULL COMMENT 'in Celsius',
-    `humidity` DECIMAL(5,2) DEFAULT NULL COMMENT 'in percent',
-    `health_feedback` TEXT DEFAULT NULL,
-    `irritation_report` TEXT DEFAULT NULL,
+    `trial_id` INT DEFAULT NULL,
+    `powder_type` VARCHAR(100) NOT NULL,
+    `surface_type` VARCHAR(100) NOT NULL,
+    `temperature` DECIMAL(5,2) DEFAULT NULL,
+    `humidity` DECIMAL(5,2) DEFAULT NULL,
+    `health_feedback` VARCHAR(255) DEFAULT NULL,
+    `irritation_status` ENUM('none','mild','moderate','severe') DEFAULT 'none',
     `remarks` TEXT DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`test_id`) REFERENCES `fingerprint_tests`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`trial_id`) REFERENCES `fingerprint_tests`(`id`) ON DELETE SET NULL,
     FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -166,13 +168,13 @@ ON DUPLICATE KEY UPDATE `id`=`id`;
 -- ============================================================
 -- SEED: Sample safety climate logs
 -- ============================================================
-INSERT INTO `safety_climate_log` (`id`, `test_id`, `student_id`, `temperature`, `humidity`, `health_feedback`, `irritation_report`, `remarks`) VALUES
-(1, 1, 4, 27.50, 65.00, 'No discomfort reported during testing.', 'None', 'Testing conditions were within safe parameters.'),
-(2, 2, 4, 28.00, 68.00, 'Mild dryness in throat after 30 minutes.', 'Minimal', 'Recommended to use mask during extended testing.'),
-(3, 3, 4, 26.00, 60.00, 'No issues reported.', 'None', 'Comfortable testing environment.'),
-(4, 4, 4, 29.00, 72.00, 'Slight irritation in eyes noted.', 'Mild eye irritation', 'Goggles required for next session.'),
-(5, 5, 4, 27.00, 63.00, 'No discomfort.', 'None', 'Good environmental conditions.'),
-(6, 6, 4, 28.50, 70.00, 'No issues.', 'None', 'Standard testing protocol followed.')
+INSERT INTO `safety_climate_log` (`id`, `student_id`, `trial_id`, `powder_type`, `surface_type`, `temperature`, `humidity`, `health_feedback`, `irritation_status`, `remarks`) VALUES
+(1, 4, 1, 'eggshell', 'glass', 27.50, 65.00, 'No discomfort reported during testing.', 'none', 'Testing conditions were within safe parameters.'),
+(2, 4, 2, 'commercial', 'glass', 28.00, 68.00, 'Mild dryness in throat after 30 minutes.', 'none', 'Recommended to use mask during extended testing.'),
+(3, 4, 3, 'eggshell', 'paper', 26.00, 60.00, 'No issues reported.', 'none', 'Comfortable testing environment.'),
+(4, 4, 4, 'eggshell', 'wood', 29.00, 72.00, 'Slight irritation in eyes noted.', 'mild', 'Goggles required for next session.'),
+(5, 4, 5, 'commercial', 'plastic', 27.00, 63.00, 'No discomfort.', 'none', 'Good environmental conditions.'),
+(6, 4, 6, 'eggshell', 'metal', 28.50, 70.00, 'No issues.', 'none', 'Standard testing protocol followed.')
 ON DUPLICATE KEY UPDATE `id`=`id`;
 
 -- ============================================================

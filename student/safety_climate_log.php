@@ -8,12 +8,24 @@ $active_page  = 'safety_climate_log';
 $student_name = $_SESSION['user_name'] ?? 'Student';
 $student_id   = $_SESSION['user_id']  ?? 0;
 
-$msg = $msg_type = '';
+// Fetch their submitted fingerprint trials
+$my_trials = [];
+try {
+    $stmt = $pdo->prepare("SELECT id, trial_id, powder_type, surface_type FROM fingerprint_tests WHERE student_id = ? ORDER BY submitted_at DESC");
+    $stmt->execute([$student_id]);
+    $my_trials = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {}
 
-// Fetch logs
+// Fetch initial safety logs
 $logs = [];
 try {
-    $stmt = $pdo->prepare("SELECT * FROM safety_logs WHERE student_id = ? ORDER BY logged_at DESC LIMIT 30");
+    $stmt = $pdo->prepare("
+        SELECT scl.*, DATE_FORMAT(scl.created_at, '%M %d, %Y %H:%i') as formatted_date, ft.trial_id as trial_code
+        FROM safety_climate_log scl
+        LEFT JOIN fingerprint_tests ft ON ft.id = scl.trial_id
+        WHERE scl.student_id = ?
+        ORDER BY scl.created_at DESC
+    ");
     $stmt->execute([$student_id]);
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {}
@@ -30,6 +42,11 @@ try {
     <style>
         .temp-pill  { background:rgba(116,198,157,.15); color:var(--dark-green); padding:2px 10px; border-radius:20px; font-size:.8rem; font-weight:600; }
         .humid-pill { background:rgba(45,106,79,.1); color:var(--medium-green); padding:2px 10px; border-radius:20px; font-size:.8rem; font-weight:600; }
+        
+        .badge-none { background: rgba(82, 183, 136, 0.15); color: #2d6a4f; border: 1px solid rgba(82, 183, 136, 0.25); padding: 3px 10px; border-radius: 20px; font-size: .7rem; font-weight: 700; display: inline-block; }
+        .badge-mild { background: rgba(244, 162, 97, 0.15); color: #c97d2a; border: 1px solid rgba(244, 162, 97, 0.25); padding: 3px 10px; border-radius: 20px; font-size: .7rem; font-weight: 700; display: inline-block; }
+        .badge-moderate { background: rgba(231, 111, 81, 0.15); color: #e76f51; border: 1px solid rgba(231, 111, 81, 0.25); padding: 3px 10px; border-radius: 20px; font-size: .7rem; font-weight: 700; display: inline-block; }
+        .badge-severe { background: rgba(230, 57, 70, 0.15); color: #e63946; border: 1px solid rgba(230, 57, 70, 0.25); padding: 3px 10px; border-radius: 20px; font-size: .7rem; font-weight: 700; display: inline-block; }
     </style>
 </head>
 <body>
@@ -56,7 +73,7 @@ try {
             <div class="page-header-wrap">
                 <div class="page-title">
                     <h1>Safety &amp; Climate Log</h1>
-                    <p>Record laboratory conditions and safety compliance for each session.</p>
+                    <p>Record laboratory conditions, safety parameters, and physiological health feedback for testing sessions.</p>
                 </div>
             </div>
 
@@ -69,51 +86,85 @@ try {
                         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                         </svg>
-                        New Log Entry
+                        New Safety Log Entry
                     </h3>
                 </div>
                 <form id="form-safety-log">
                     <div class="form-grid-2">
                         <div class="form-group">
-                            <label for="temperature">Temperature (°C)</label>
-                            <input type="number" name="temperature" id="temperature" class="form-control"
-                                   step="0.1" placeholder="e.g. 24.5">
+                            <label for="trial_id">Related Fingerprint Trial (Optional)</label>
+                            <select name="trial_id" id="trial_id" class="form-control">
+                                <option value="none">No Related Trial / General testing</option>
+                                <?php foreach ($my_trials as $t): ?>
+                                    <option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['trial_id'] ?: 'TR-'.str_pad($t['id'], 4, '0', STR_PAD_LEFT)) ?> (<?= ucfirst($t['powder_type']) ?> on <?= ucfirst($t['surface_type']) ?>)</option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label for="humidity">Humidity (%)</label>
+                            <label for="powder_type">Powder Type Used *</label>
+                            <select name="powder_type" id="powder_type" class="form-control" required>
+                                <option value="">— Select Powder —</option>
+                                <option value="eggshell">Eggshell-Based Powder</option>
+                                <option value="commercial">Commercial Powder</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="surface_type">Surface Material Type *</label>
+                            <select name="surface_type" id="surface_type" class="form-control" required>
+                                <option value="">— Select Surface —</option>
+                                <option value="glass">Glass</option>
+                                <option value="paper">Paper</option>
+                                <option value="wood">Wood</option>
+                                <option value="plastic">Plastic</option>
+                                <option value="metal">Metal</option>
+                                <option value="ceramic">Ceramic</option>
+                                <option value="fabric">Fabric</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="irritation_status">Irritation Status / Incident Category *</label>
+                            <select name="irritation_status" id="irritation_status" class="form-control" required>
+                                <option value="none">None (Safe condition)</option>
+                                <option value="mild">Mild irritation</option>
+                                <option value="moderate">Moderate irritation</option>
+                                <option value="severe">Severe irritation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="temperature">Ambient Temperature (°C)</label>
+                            <input type="number" name="temperature" id="temperature" class="form-control"
+                                   step="0.1" placeholder="e.g. 25.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="humidity">Relative Humidity (%)</label>
                             <input type="number" name="humidity" id="humidity" class="form-control"
-                                   step="0.1" min="0" max="100" placeholder="e.g. 65.0">
+                                   step="0.1" min="0" max="100" placeholder="e.g. 60.0">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="ppe_worn">PPE Equipment Worn</label>
-                        <input type="text" name="ppe_worn" id="ppe_worn" class="form-control"
-                               placeholder="e.g. Gloves, Mask, Lab Coat, Goggles">
+                        <label for="health_feedback">Physiological / Health Feedback</label>
+                        <input type="text" name="health_feedback" id="health_feedback" class="form-control"
+                               placeholder="e.g. Coughing, watery eyes, safe, no symptoms" maxlength="255">
                     </div>
 
                     <div class="form-group">
-                        <label for="conditions">General Lab Conditions</label>
-                        <select name="conditions" id="conditions" class="form-control">
-                            <option value="">— Select Condition —</option>
-                            <option value="Optimal">Optimal</option>
-                            <option value="Acceptable">Acceptable</option>
-                            <option value="Suboptimal">Suboptimal</option>
-                            <option value="Hazardous">Hazardous</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="notes">Additional Notes</label>
-                        <textarea name="notes" id="notes" class="form-control" rows="3"
-                                  placeholder="Any additional observations or safety concerns..."></textarea>
+                        <label for="remarks">General Remarks / Safety Observation Notes</label>
+                        <textarea name="remarks" id="remarks" class="form-control" rows="3"
+                                  placeholder="Provide general observations, ventilation status, or precautions taken..."></textarea>
                     </div>
 
                     <button type="submit" class="btn btn-primary" id="btn-save-log">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="20 6 9 17 4 12"/>
                         </svg>
-                        Save Log
+                        Save Safety Log
                     </button>
                 </form>
             </div>
@@ -122,32 +173,38 @@ try {
             <div class="dashboard-card">
                 <div class="card-title-wrap">
                     <h3>Log History</h3>
-                    <span style="font-size:.82rem;color:var(--gray);"><?= count($logs) ?> entr<?= count($logs) !== 1 ? 'ies' : 'y' ?></span>
+                    <span style="font-size:.82rem;color:var(--gray);" id="log-count"><?= count($logs) ?> entr<?= count($logs) !== 1 ? 'ies' : 'y' ?></span>
                 </div>
                 <div class="table-responsive">
-                    <table class="custom-table">
+                    <table class="custom-table" id="safety-log-table">
                         <thead>
                             <tr>
                                 <th>Date &amp; Time</th>
-                                <th>Temperature</th>
-                                <th>Humidity</th>
-                                <th>PPE Worn</th>
-                                <th>Lab Conditions</th>
-                                <th>Notes</th>
+                                <th>Trial ID</th>
+                                <th>Powder</th>
+                                <th>Surface</th>
+                                <th>Temp (°C)</th>
+                                <th>Humidity (%)</th>
+                                <th>Health Feedback</th>
+                                <th>Irritation</th>
+                                <th>Remarks</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php if (empty($logs)): ?>
-                            <tr><td colspan="6" style="text-align:center;color:#6c757d;padding:2rem;">No logs recorded yet.</td></tr>
+                            <tr class="no-data-row"><td colspan="9" style="text-align:center;color:#6c757d;padding:2rem;">No safety and climate logs submitted yet.</td></tr>
                         <?php else: ?>
                             <?php foreach ($logs as $log): ?>
                             <tr>
-                                <td><?= date('M d, Y H:i', strtotime($log['logged_at'])) ?></td>
-                                <td><span class="temp-pill"><?= $log['temperature'] ?>°C</span></td>
-                                <td><span class="humid-pill"><?= $log['humidity'] ?>%</span></td>
-                                <td><?= htmlspecialchars($log['ppe_worn'] ?: '—') ?></td>
-                                <td><?= htmlspecialchars($log['lab_conditions'] ?: '—') ?></td>
-                                <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($log['notes'] ?: '—') ?></td>
+                                <td><?= htmlspecialchars($log['formatted_date']) ?></td>
+                                <td><strong><?= htmlspecialchars($log['trial_code'] ?: 'N/A') ?></strong></td>
+                                <td style="text-transform:capitalize;"><?= htmlspecialchars($log['powder_type']) ?></td>
+                                <td style="text-transform:capitalize;"><?= htmlspecialchars($log['surface_type']) ?></td>
+                                <td><span class="temp-pill"><?= $log['temperature'] !== null ? htmlspecialchars($log['temperature']) . '°C' : '—' ?></span></td>
+                                <td><span class="humid-pill"><?= $log['humidity'] !== null ? htmlspecialchars($log['humidity']) . '%' : '—' ?></span></td>
+                                <td style="max-width:180px;font-size:0.8rem;"><?= htmlspecialchars($log['health_feedback'] ?: '—') ?></td>
+                                <td><span class="badge-<?= htmlspecialchars($log['irritation_status']) ?>"><?= ucfirst(htmlspecialchars($log['irritation_status'])) ?></span></td>
+                                <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.8rem;color:#64748b;"><?= htmlspecialchars($log['remarks'] ?: '—') ?></td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -161,7 +218,26 @@ try {
 <?php require_once '_sidebar_js.php'; ?>
 <script>
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+const myTrialsData = <?php echo json_encode($my_trials); ?>;
 let isSubmitting = false;
+
+// Auto-fill powder and surface types when selecting a trial
+document.getElementById('trial_id').addEventListener('change', function() {
+    const selectedId = this.value;
+    const powderSelect = document.getElementById('powder_type');
+    const surfaceSelect = document.getElementById('surface_type');
+    
+    if (selectedId && selectedId !== 'none') {
+        const found = myTrialsData.find(t => t.id == selectedId);
+        if (found) {
+            powderSelect.value = found.powder_type;
+            surfaceSelect.value = found.surface_type;
+        }
+    } else {
+        powderSelect.value = "";
+        surfaceSelect.value = "";
+    }
+});
 
 function showNotification(type, message) {
     const container = document.getElementById('alertContainer');
@@ -181,7 +257,7 @@ function escapeHtml(text) {
         '"': '&quot;',
         "'": '&#039;'
     };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
 document.getElementById('form-safety-log').addEventListener('submit', function(e) {
@@ -198,7 +274,7 @@ document.getElementById('form-safety-log').addEventListener('submit', function(e
     const formData = new FormData(this);
     formData.append('csrf_token', csrfToken);
 
-    fetch('ajax_submit_climate_log.php', {
+    fetch('ajax_submit_safety_climate_log.php', {
         method: 'POST',
         body: formData,
         headers: {
@@ -228,30 +304,35 @@ document.getElementById('form-safety-log').addEventListener('submit', function(e
 });
 
 function appendLogHistoryRow(data) {
-    const tbody = document.querySelector('.custom-table tbody');
-    const noLogsRow = tbody.querySelector('tr td[colspan="6"]');
+    const tbody = document.querySelector('#safety-log-table tbody');
+    const noLogsRow = tbody.querySelector('.no-data-row');
     if (noLogsRow) {
-        noLogsRow.parentElement.remove();
+        noLogsRow.remove();
     }
 
     const tr = document.createElement('tr');
     
-    const loggedAtStr = new Date(data.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + 
-                       new Date(data.logged_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const trialCode = data.trial_code ? escapeHtml(data.trial_code) : 'N/A';
+    const tempDisp = data.temperature !== null ? escapeHtml(data.temperature) + '°C' : '—';
+    const humidDisp = data.humidity !== null ? escapeHtml(data.humidity) + '%' : '—';
+    const capIrritation = data.irritation_status.charAt(0).toUpperCase() + data.irritation_status.slice(1);
 
     tr.innerHTML = `
-        <td>${loggedAtStr}</td>
-        <td><span class="temp-pill">${data.temperature}°C</span></td>
-        <td><span class="humid-pill">${data.humidity}%</span></td>
-        <td>${escapeHtml(data.ppe_worn)}</td>
-        <td>${escapeHtml(data.lab_conditions)}</td>
-        <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(data.notes)}</td>
+        <td>${escapeHtml(data.formatted_date)}</td>
+        <td><strong>${trialCode}</strong></td>
+        <td style="text-transform:capitalize;">${escapeHtml(data.powder_type)}</td>
+        <td style="text-transform:capitalize;">${escapeHtml(data.surface_type)}</td>
+        <td><span class="temp-pill">${tempDisp}</span></td>
+        <td><span class="humid-pill">${humidDisp}</span></td>
+        <td style="max-width:180px;font-size:0.8rem;">${escapeHtml(data.health_feedback)}</td>
+        <td><span class="badge-${escapeHtml(data.irritation_status)}">${capIrritation}</span></td>
+        <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.8rem;color:#64748b;">${escapeHtml(data.remarks)}</td>
     `;
     
     tbody.insertBefore(tr, tbody.firstChild);
 
     // Update count span
-    const countSpan = document.querySelector('.card-title-wrap span');
+    const countSpan = document.getElementById('log-count');
     if (countSpan) {
         const count = tbody.querySelectorAll('tr').length;
         countSpan.textContent = `${count} entr${count !== 1 ? 'ies' : 'y'}`;

@@ -61,6 +61,104 @@ if (isset($_GET['log_report']) && $_GET['log_report'] === '1' && !empty($records
     // Return simple JSON or exit since it's an AJAX log
     exit;
 }
+
+// Query Safety & Climate Log statistics
+$safety_stats = [
+    'total_logs' => 0,
+    'no_irritation' => 0,
+    'mild_irritation' => 0,
+    'moderate_irritation' => 0,
+    'severe_irritation' => 0,
+    'avg_temp' => 'N/A',
+    'avg_humidity' => 'N/A',
+    'common_powder' => 'N/A',
+    'common_surface' => 'N/A',
+    'summary_remarks' => []
+];
+
+try {
+    $safety_where = ["1=1"];
+    $safety_params = [];
+    if ($f_student) { $safety_where[] = "scl.student_id=?";   $safety_params[] = $f_student; }
+    if ($f_powder)  { $safety_where[] = "scl.powder_type=?";   $safety_params[] = $f_powder; }
+    if ($f_surface) { $safety_where[] = "scl.surface_type=?";  $safety_params[] = $f_surface; }
+    if ($f_from)    { $safety_where[] = "DATE(scl.created_at)>=?"; $safety_params[] = $f_from; }
+    if ($f_to)      { $safety_where[] = "DATE(scl.created_at)<=?"; $safety_params[] = $f_to; }
+
+    // Check if assigned_faculty_id exists in fingerprint_tests
+    $check_cols = $pdo->query("SHOW COLUMNS FROM `fingerprint_tests` LIKE 'assigned_faculty_id'")->fetch();
+    if ($check_cols) {
+        $safety_where[] = "(scl.trial_id IS NOT NULL AND ft.assigned_faculty_id = ?)";
+        $safety_params[] = $faculty_id;
+    }
+
+    $scl_sql = "
+        SELECT scl.*
+        FROM safety_climate_log scl
+        LEFT JOIN fingerprint_tests ft ON ft.id = scl.trial_id
+        WHERE " . implode(' AND ', $safety_where) . "
+    ";
+    
+    $scl_stmt = $pdo->prepare($scl_sql);
+    $scl_stmt->execute($safety_params);
+    $scl_records = $scl_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!empty($scl_records)) {
+        $safety_stats['total_logs'] = count($scl_records);
+        $temps = [];
+        $humids = [];
+        $powders = [];
+        $surfaces = [];
+        
+        foreach ($scl_records as $scl) {
+            // Irritation counts
+            $irr = strtolower($scl['irritation_status']);
+            if ($irr === 'none') {
+                $safety_stats['no_irritation']++;
+            } elseif ($irr === 'mild') {
+                $safety_stats['mild_irritation']++;
+            } elseif ($irr === 'moderate') {
+                $safety_stats['moderate_irritation']++;
+            } elseif ($irr === 'severe') {
+                $safety_stats['severe_irritation']++;
+            }
+            
+            if ($scl['temperature'] !== null) {
+                $temps[] = floatval($scl['temperature']);
+            }
+            if ($scl['humidity'] !== null) {
+                $humids[] = floatval($scl['humidity']);
+            }
+            if ($scl['powder_type'] !== '') {
+                $powders[] = $scl['powder_type'];
+            }
+            if ($scl['surface_type'] !== '') {
+                $surfaces[] = $scl['surface_type'];
+            }
+            if (!empty($scl['remarks'])) {
+                $safety_stats['summary_remarks'][] = $scl['remarks'];
+            }
+        }
+        
+        if (!empty($temps)) {
+            $safety_stats['avg_temp'] = round(array_sum($temps) / count($temps), 1) . '°C';
+        }
+        if (!empty($humids)) {
+            $safety_stats['avg_humidity'] = round(array_sum($humids) / count($humids), 1) . '%';
+        }
+        
+        if (!empty($powders)) {
+            $pow_counts = array_count_values($powders);
+            arsort($pow_counts);
+            $safety_stats['common_powder'] = ucfirst(key($pow_counts));
+        }
+        if (!empty($surfaces)) {
+            $surf_counts = array_count_values($surfaces);
+            arsort($surf_counts);
+            $safety_stats['common_surface'] = ucfirst(key($surf_counts));
+        }
+    }
+} catch (PDOException $e) {}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -320,6 +418,58 @@ if (isset($_GET['log_report']) && $_GET['log_report'] === '1' && !empty($records
                 <div class="card-title-wrap">
                     <h3>Report Preview (<?= count($records) ?> Approved Records)</h3>
                 </div>
+
+                <?php if ($safety_stats['total_logs'] > 0): ?>
+                    <!-- Safety & Climate Preview Block -->
+                    <div style="background: #fbfdfa; border: 1.5px solid #d2e2d5; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem; margin-left: 1.5rem; margin-right: 1.5rem; margin-top: 1rem;">
+                        <h4 style="color: #1b4332; font-size: 0.95rem; font-weight: 700; margin-top: 0; margin-bottom: 0.75rem; border-bottom: 1px solid #d2e2d5; padding-bottom: 6px;">Safety &amp; Climate Monitoring Summary (SDG 12 &amp; 13)</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                            <div style="background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2efe5;">
+                                <span style="font-size: 0.7rem; color: #6b8f71; font-weight: 700; text-transform: uppercase;">Total Logs</span>
+                                <strong style="display: block; font-size: 1.2rem; color: #1b4332; margin-top: 2px;"><?= $safety_stats['total_logs'] ?></strong>
+                            </div>
+                            <div style="background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2efe5;">
+                                <span style="font-size: 0.7rem; color: #6b8f71; font-weight: 700; text-transform: uppercase;">Avg Temp</span>
+                                <strong style="display: block; font-size: 1.2rem; color: #1b4332; margin-top: 2px;"><?= $safety_stats['avg_temp'] ?></strong>
+                            </div>
+                            <div style="background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2efe5;">
+                                <span style="font-size: 0.7rem; color: #6b8f71; font-weight: 700; text-transform: uppercase;">Avg Humidity</span>
+                                <strong style="display: block; font-size: 1.2rem; color: #1b4332; margin-top: 2px;"><?= $safety_stats['avg_humidity'] ?></strong>
+                            </div>
+                            <div style="background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2efe5;">
+                                <span style="font-size: 0.7rem; color: #6b8f71; font-weight: 700; text-transform: uppercase;">Common Powder</span>
+                                <strong style="display: block; font-size: 1.05rem; color: #1b4332; margin-top: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"><?= $safety_stats['common_powder'] ?></strong>
+                            </div>
+                            <div style="background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2efe5;">
+                                <span style="font-size: 0.7rem; color: #6b8f71; font-weight: 700; text-transform: uppercase;">Common Surface</span>
+                                <strong style="display: block; font-size: 1.05rem; color: #1b4332; margin-top: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"><?= $safety_stats['common_surface'] ?></strong>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px;">
+                            <div style="background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2efe5; font-size: 0.8rem;">
+                                <strong style="color: #1b4332; display: block; margin-bottom: 6px; font-size: 0.75rem; text-transform: uppercase;">Irritation Incident Breakdown</strong>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>No Irritation:</span> <strong><?= $safety_stats['no_irritation'] ?></strong></div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>Mild Irritation:</span> <strong><?= $safety_stats['mild_irritation'] ?></strong></div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>Moderate Irritation:</span> <strong><?= $safety_stats['moderate_irritation'] ?></strong></div>
+                                <div style="display:flex; justify-content:space-between;"><span>Severe Irritation:</span> <strong style="color: <?= $safety_stats['severe_irritation'] > 0 ? '#e63946' : 'inherit' ?>;"><?= $safety_stats['severe_irritation'] ?></strong></div>
+                            </div>
+                            <div style="background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2efe5; font-size: 0.8rem;">
+                                <strong style="color: #1b4332; display: block; margin-bottom: 6px; font-size: 0.75rem; text-transform: uppercase;">Recent Observations / Remarks</strong>
+                                <div style="max-height: 80px; overflow-y: auto; color: #555; font-style: italic;">
+                                    <?php if (empty($safety_stats['summary_remarks'])): ?>
+                                        No safety remarks submitted.
+                                    <?php else: ?>
+                                        <ul style="margin: 0; padding-left: 15px;">
+                                            <?php foreach (array_slice($safety_stats['summary_remarks'], 0, 3) as $rem): ?>
+                                                <li><?= htmlspecialchars($rem) ?></li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
                 <div class="table-responsive">
                     <table class="custom-table">
                         <thead>
@@ -377,6 +527,53 @@ if (isset($_GET['log_report']) && $_GET['log_report'] === '1' && !empty($records
             <p><strong>Total Validated Records:</strong> <?= count($records) ?></p>
         </div>
     </div>
+
+    <?php if ($safety_stats['total_logs'] > 0): ?>
+        <!-- Safety & Climate Printable Section -->
+        <h2 style="margin-top: 1.5rem; page-break-before: auto;">Safety &amp; Climate Monitoring Summary</h2>
+        <div style="border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 1.5rem; background: #fafafa;">
+            <table style="width: 100%; font-size: 9pt; border-collapse: collapse; margin-bottom: 10px;">
+                <tr style="background: #f1f5f0;">
+                    <th style="padding: 6px; border: 1px solid #ddd; text-align: center;">Total Safety Logs</th>
+                    <th style="padding: 6px; border: 1px solid #ddd; text-align: center;">Avg Temp</th>
+                    <th style="padding: 6px; border: 1px solid #ddd; text-align: center;">Avg Humidity</th>
+                    <th style="padding: 6px; border: 1px solid #ddd; text-align: center;">Common Powder</th>
+                    <th style="padding: 6px; border: 1px solid #ddd; text-align: center;">Common Surface</th>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;"><?= $safety_stats['total_logs'] ?></td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;"><?= $safety_stats['avg_temp'] ?></td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;"><?= $safety_stats['avg_humidity'] ?></td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;"><?= $safety_stats['common_powder'] ?></td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;"><?= $safety_stats['common_surface'] ?></td>
+                </tr>
+            </table>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 8.5pt; margin-top: 8px;">
+                <div style="border: 1px solid #eee; padding: 8px; border-radius: 4px; background: #fff;">
+                    <strong style="color: #1b4332; display: block; margin-bottom: 4px;">Irritation Status Breakout</strong>
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f9f9f9; padding-bottom:2px;"><span>None:</span> <strong><?= $safety_stats['no_irritation'] ?> logs</strong></div>
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f9f9f9; padding-bottom:2px;"><span>Mild:</span> <strong><?= $safety_stats['mild_irritation'] ?> logs</strong></div>
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f9f9f9; padding-bottom:2px;"><span>Moderate:</span> <strong><?= $safety_stats['moderate_irritation'] ?> logs</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Severe:</span> <strong><?= $safety_stats['severe_irritation'] ?> logs</strong></div>
+                </div>
+                <div style="border: 1px solid #eee; padding: 8px; border-radius: 4px; background: #fff;">
+                    <strong style="color: #1b4332; display: block; margin-bottom: 4px;">Key Health &amp; Safety Remarks</strong>
+                    <div style="color: #444; font-style: italic;">
+                        <?php if (empty($safety_stats['summary_remarks'])): ?>
+                            No remarks submitted.
+                        <?php else: ?>
+                            <ul style="margin: 0; padding-left: 12px;">
+                                <?php foreach (array_slice($safety_stats['summary_remarks'], 0, 3) as $rem): ?>
+                                    <li><?= htmlspecialchars($rem) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <h2>Approved Submissions Detail</h2>
     <?php foreach ($records as $r): ?>

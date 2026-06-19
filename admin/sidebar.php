@@ -94,6 +94,16 @@ try {
             </a>
         </li>
 
+        <!-- 5b. Safety & Climate Logs Monitoring -->
+        <li class="menu-item <?php echo ($current_page === 'safety_climate_logs.php') ? 'active' : ''; ?>">
+            <a href="safety_climate_logs.php" class="menu-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span>Safety &amp; Climate Logs</span>
+            </a>
+        </li>
+
         <!-- 6. Reports Monitoring -->
         <li class="menu-item <?php echo ($current_page === 'admin_reports.php') ? 'active' : ''; ?>">
             <a href="admin_reports.php" class="menu-link">

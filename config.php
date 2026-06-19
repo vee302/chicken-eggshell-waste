@@ -234,21 +234,118 @@ try {
     $pdo->exec("UPDATE `fingerprint_tests` SET `trial_id` = CONCAT('TR-', LPAD(id, 4, '0')) WHERE `trial_id` IS NULL OR `trial_id` = ''");
 
     // ============================================================
-    // 6. Create SAFETY_CLIMATE_LOG table
+    // 6. Create or Migrate SAFETY_CLIMATE_LOG table
     // ============================================================
-    $pdo->exec("CREATE TABLE IF NOT EXISTS `safety_climate_log` (
-        `id`                INT AUTO_INCREMENT PRIMARY KEY,
-        `test_id`           INT NOT NULL,
-        `student_id`        INT NOT NULL,
-        `temperature`       DECIMAL(5,2) DEFAULT NULL,
-        `humidity`          DECIMAL(5,2) DEFAULT NULL,
-        `health_feedback`   TEXT DEFAULT NULL,
-        `irritation_report` TEXT DEFAULT NULL,
-        `remarks`           TEXT DEFAULT NULL,
-        `created_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (`test_id`)    REFERENCES `fingerprint_tests`(`id`) ON DELETE CASCADE,
-        FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $hasSafetyTable = false;
+    try {
+        $hasSafetyTable = $pdo->query("SELECT 1 FROM `safety_climate_log` LIMIT 1") !== false;
+    } catch (Exception $e) {}
+
+    if ($hasSafetyTable) {
+        // Check if table contains data
+        $rowCount = (int)$pdo->query("SELECT COUNT(*) FROM `safety_climate_log`")->fetchColumn();
+        
+        if ($rowCount === 0) {
+            // Drop and recreate empty table
+            $pdo->exec("DROP TABLE IF EXISTS `safety_climate_log`");
+            $hasSafetyTable = false;
+        } else {
+            // Migrate existing table using ALTER
+            $sclCols = $pdo->query("SHOW COLUMNS FROM `safety_climate_log`")->fetchAll(PDO::FETCH_COLUMN);
+            
+            // Add student_id if not present
+            if (!in_array('student_id', $sclCols, true)) {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `student_id` INT NOT NULL");
+            }
+            
+            // Add trial_id if not present
+            if (!in_array('trial_id', $sclCols, true)) {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `trial_id` INT DEFAULT NULL");
+                // If old test_id exists, copy test_id to trial_id
+                if (in_array('test_id', $sclCols, true)) {
+                    $pdo->exec("UPDATE `safety_climate_log` SET `trial_id` = `test_id` WHERE `trial_id` IS NULL");
+                }
+            }
+            
+            // Add powder_type if not present (default to empty or eggshell)
+            if (!in_array('powder_type', $sclCols, true)) {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `powder_type` VARCHAR(100) NOT NULL DEFAULT 'eggshell'");
+                // Copy from connected test if available
+                $pdo->exec("UPDATE `safety_climate_log` scl 
+                            JOIN `fingerprint_tests` ft ON scl.trial_id = ft.id 
+                            SET scl.powder_type = ft.powder_type");
+            }
+            
+            // Add surface_type if not present (default to empty or glass)
+            if (!in_array('surface_type', $sclCols, true)) {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `surface_type` VARCHAR(100) NOT NULL DEFAULT 'glass'");
+                // Copy from connected test if available
+                $pdo->exec("UPDATE `safety_climate_log` scl 
+                            JOIN `fingerprint_tests` ft ON scl.trial_id = ft.id 
+                            SET scl.surface_type = ft.surface_type");
+            }
+            
+            // Add temperature if not present
+            if (!in_array('temperature', $sclCols, true)) {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `temperature` DECIMAL(5,2) DEFAULT NULL");
+            }
+            
+            // Add humidity if not present
+            if (!in_array('humidity', $sclCols, true)) {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `humidity` DECIMAL(5,2) DEFAULT NULL");
+            }
+            
+            // Add health_feedback if not present
+            if (!in_array('health_feedback', $sclCols, true)) {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `health_feedback` VARCHAR(255) DEFAULT NULL");
+            }
+            
+            // Add irritation_status if not present (convert irritation_report if it exists)
+            if (!in_array('irritation_status', $sclCols, true)) {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `irritation_status` ENUM('none','mild','moderate','severe') DEFAULT 'none'");
+                if (in_array('irritation_report', $sclCols, true)) {
+                    $pdo->exec("UPDATE `safety_climate_log` 
+                                SET `irritation_status` = CASE 
+                                    WHEN LOWER(`irritation_report`) LIKE '%severe%' THEN 'severe'
+                                    WHEN LOWER(`irritation_report`) LIKE '%moderate%' THEN 'moderate'
+                                    WHEN LOWER(`irritation_report`) LIKE '%mild%' THEN 'mild'
+                                    ELSE 'none'
+                                END");
+                }
+            }
+            
+            // Add remarks if not present
+            if (!in_array('remarks', $sclCols, true)) {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `remarks` TEXT DEFAULT NULL");
+            }
+            
+            // Add foreign keys constraints if possible
+            try {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD CONSTRAINT `fk_scl_student` FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE");
+            } catch (Exception $e) {}
+            try {
+                $pdo->exec("ALTER TABLE `safety_climate_log` ADD CONSTRAINT `fk_scl_trial` FOREIGN KEY (`trial_id`) REFERENCES `fingerprint_tests`(`id`) ON DELETE SET NULL");
+            } catch (Exception $e) {}
+        }
+    }
+
+    if (!$hasSafetyTable) {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `safety_climate_log` (
+            `id`                INT AUTO_INCREMENT PRIMARY KEY,
+            `student_id`        INT NOT NULL,
+            `trial_id`          INT DEFAULT NULL,
+            `powder_type`       VARCHAR(100) NOT NULL,
+            `surface_type`      VARCHAR(100) NOT NULL,
+            `temperature`       DECIMAL(5,2) DEFAULT NULL,
+            `humidity`          DECIMAL(5,2) DEFAULT NULL,
+            `health_feedback`   VARCHAR(255) DEFAULT NULL,
+            `irritation_status` ENUM('none','mild','moderate','severe') DEFAULT 'none',
+            `remarks`           TEXT DEFAULT NULL,
+            `created_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (`trial_id`)   REFERENCES `fingerprint_tests`(`id`) ON DELETE SET NULL,
+            FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
 
     // ============================================================
     // 7. Create STUDENT SAFETY_LOGS table

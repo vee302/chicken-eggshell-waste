@@ -48,6 +48,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "ID Number is required.";
     } elseif (empty($contact_number)) {
         $error_message = "Contact Number is required.";
+    } elseif (!preg_match('/^09[0-9]{9}$/', $contact_number)) {
+        $error_message = "Contact number must be exactly 11 digits and start with 09.";
     } elseif (empty($email)) {
         $error_message = "Email Address is required.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -532,9 +534,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label for="contact_number">Contact Number <span class="required-star">*</span></label>
-                            <input type="tel" id="contact_number" name="contact_number" class="form-control-plain"
+                            <input type="text" id="contact_number" name="contact_number" class="form-control-plain"
+                                inputmode="numeric" maxlength="11"
                                 placeholder="e.g. 09XXXXXXXXX"
                                 value="<?php echo htmlspecialchars($form_data['contact_number'] ?? ''); ?>">
+                            <div id="contact_validation_msg" style="font-size: 0.76rem; margin-top: 0.35rem; font-weight: 500; min-height: 1.25rem;"></div>
                         </div>
                         <div class="form-group">
                             <label for="email">Email Address <span class="required-star">*</span></label>
@@ -742,6 +746,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
                 passwordInput.addEventListener("input", validatePasswordInput);
             }
+
+            // Real-time contact number validation
+            const contactInput = document.getElementById("contact_number");
+            const contactValidationMsg = document.getElementById("contact_validation_msg");
+            if (contactInput && contactValidationMsg) {
+                const validateContactInput = () => {
+                    // Prevent non-numeric characters while typing
+                    contactInput.value = contactInput.value.replace(/\D/g, '');
+                    
+                    const val = contactInput.value;
+                    if (val.length === 0) {
+                        contactValidationMsg.textContent = "";
+                    } else if (!val.startsWith("09")) {
+                        contactValidationMsg.textContent = "Contact number must start with 09.";
+                        contactValidationMsg.style.color = "var(--error-red, #D9534F)";
+                    } else if (val.length < 11) {
+                        contactValidationMsg.textContent = "Contact number must be exactly 11 digits and start with 09.";
+                        contactValidationMsg.style.color = "var(--error-red, #D9534F)";
+                    } else {
+                        contactValidationMsg.textContent = "Contact number is valid.";
+                        contactValidationMsg.style.color = "var(--dark-green, #2F4F3A)";
+                    }
+                };
+
+                contactInput.addEventListener("input", validateContactInput);
+                // Run initially if prefilled
+                if (contactInput.value) {
+                    validateContactInput();
+                }
+            }
         });
 
         const clientErrorBox = document.getElementById("clientErrorBox");
@@ -773,6 +807,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 if (!ln) { showClientError("Last Name is required."); return; }
                 if (!idNum) { showClientError("ID Number is required."); return; }
                 if (!contact) { showClientError("Contact Number is required."); return; }
+                if (!contact.startsWith("09")) {
+                    showClientError("Contact number must start with 09.");
+                    return;
+                }
+                if (contact.length !== 11) {
+                    showClientError("Please enter a valid 11-digit contact number starting with 09.");
+                    return;
+                }
                 if (!email) { showClientError("Email Address is required."); return; }
 
                 // Email format validation

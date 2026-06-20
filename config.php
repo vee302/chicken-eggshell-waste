@@ -41,6 +41,7 @@ http://localhost/waste-eggshell/
 define('DB_PASSWORD', getenv('MYSQLPASSWORD') !== false ? getenv('MYSQLPASSWORD') : '');
 define('DB_NAME', getenv('MYSQLDATABASE') ?: 'green_forensics');
 define('DB_PORT', getenv('MYSQLPORT') ?: '3306');
+define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: '');
 
 try {
     // 1. Connect to MySQL without selecting a database first

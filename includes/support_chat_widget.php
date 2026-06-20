@@ -83,4 +83,7 @@ if (file_exists('assets/css/support_chat.css')) {
 </div>
 
 <!-- Support Chat Javascript -->
+<script>
+    var supportChatPrefix = "<?php echo $prefix; ?>";
+</script>
 <script src="<?php echo $prefix; ?>assets/js/support_chat.js"></script>

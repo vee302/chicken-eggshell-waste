@@ -109,6 +109,38 @@ function getBotResponse(userText) {
     return "Sorry, I may not have an answer for that yet. Please contact the Super Administrator for further assistance.";
 }
 
+// Fetch response from Gemini API backend
+function getBotResponseAPI(text, callback) {
+    const prefix = typeof supportChatPrefix !== 'undefined' ? supportChatPrefix : '';
+    const url = prefix + 'ajax_support_chat.php';
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: text })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success' && typeof data.reply !== 'undefined') {
+            callback(data.reply);
+        } else {
+            // Fallback if status is fallback or error
+            callback(getBotResponse(text));
+        }
+    })
+    .catch(error => {
+        console.error('Support Chat API error, falling back to rule-based logic:', error);
+        callback(getBotResponse(text));
+    });
+}
+
 // Handle Form Submit
 function handleChatSubmit(event) {
     if (event) event.preventDefault();
@@ -123,16 +155,15 @@ function handleChatSubmit(event) {
     appendMessage(text, true);
     input.value = '';
 
-    // Trigger Bot response with typing delay
+    // Trigger Bot response with typing indicator
     const typing = showTypingIndicator();
-    const responseText = getBotResponse(text);
 
-    setTimeout(() => {
+    getBotResponseAPI(text, (reply) => {
         if (typing && typing.parentNode) {
             typing.parentNode.removeChild(typing);
         }
-        appendMessage(responseText, false);
-    }, 600); // 600ms delay for natural dialogue flow
+        appendMessage(reply, false);
+    });
 }
 
 // Handle Suggestion Click
@@ -140,14 +171,13 @@ function sendSuggestion(questionText) {
     // Send user action
     appendMessage(questionText, true);
 
-    // Bot response
+    // Bot response with typing indicator
     const typing = showTypingIndicator();
-    const responseText = getBotResponse(questionText);
 
-    setTimeout(() => {
+    getBotResponseAPI(questionText, (reply) => {
         if (typing && typing.parentNode) {
             typing.parentNode.removeChild(typing);
         }
-        appendMessage(responseText, false);
-    }, 500);
+        appendMessage(reply, false);
+    });
 }

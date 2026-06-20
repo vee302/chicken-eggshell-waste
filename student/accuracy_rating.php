@@ -934,6 +934,6 @@ function printTrialDetails() {
     window.print();
 }
 </script>
-<?php include '../includes/support_chat_widget.php'; ?>
+<?php include dirname(__DIR__) . '/support-assistant/support_widget.php'; ?>
 </body>
 </html>

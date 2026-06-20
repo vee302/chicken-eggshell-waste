@@ -1,9 +1,9 @@
 <?php
 ob_start(); // Buffer output to prevent warnings or database notices from corrupting the JSON payload
-// support_chat_api.php - Backend API Handler for Gemini AI Support Assistant
+// support-assistant/support_chat_api.php - Backend API Handler for Gemini AI Support Assistant
 header('Content-Type: application/json');
 
-require_once "config.php";
+require_once dirname(__DIR__) . "/config.php";
 
 // Helper function to safely output JSON and exit
 function send_response($success, $reply, $http_code = 200) {
@@ -42,7 +42,7 @@ if (strpos($lowerMessage, 'password') !== false || strpos($lowerMessage, 'passco
 
 // Helper for local diagnostic logging
 function debug_log($message) {
-    $file = __DIR__ . '/debug_log.txt';
+    $file = dirname(__DIR__) . '/debug_log.txt';
     $timestamp = date('Y-m-d H:i:s');
     file_put_contents($file, "[$timestamp] $message\n", FILE_APPEND);
 }
@@ -74,11 +74,6 @@ $data = [
         ]
     ],
     "systemInstruction" => [
-        "parts" => [
-            ["text" => $systemInstruction]
-        ]
-    ],
-    "system_instruction" => [
         "parts" => [
             ["text" => $systemInstruction]
         ]

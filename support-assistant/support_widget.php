@@ -1,10 +1,10 @@
 <?php
-// includes/support_chat_widget.php - Reusable Support Chat Widget for Green Forensics
+// support-assistant/support_widget.php - HTML Layout for Green Forensics Support Assistant
 
 $prefix = '';
-if (file_exists('assets/css/support_chat.css')) {
+if (file_exists('support-assistant/support_chat.css')) {
     $prefix = '';
-} elseif (file_exists('../assets/css/support_chat.css')) {
+} elseif (file_exists('../support-assistant/support_chat.css')) {
     $prefix = '../';
 }
 
@@ -17,9 +17,10 @@ if ($prefix === '../') {
     $baseUrl = $scriptDir;
 }
 $baseUrl = rtrim(str_replace('\\', '/', $baseUrl), '/') . '/';
+$rootUrl = rtrim($baseUrl, '/');
 ?>
 <!-- Support Chat Widget Stylesheet -->
-<link rel="stylesheet" href="<?php echo $prefix; ?>assets/css/support_chat.css">
+<link rel="stylesheet" href="<?php echo $rootUrl; ?>/support-assistant/support_chat.css">
 
 <!-- Floating Support Chat Button -->
 <button id="supportChatBtn" class="support-chat-btn" aria-label="Open support assistant" onclick="toggleSupportChat()">
@@ -74,6 +75,8 @@ $baseUrl = rtrim(str_replace('\\', '/', $baseUrl), '/') . '/';
             <button class="suggestion-btn" onclick="sendSuggestion('How to upload fingerprint image?')">How to upload fingerprint image?</button>
             <button class="suggestion-btn" onclick="sendSuggestion('How does faculty validation work?')">How does faculty validation work?</button>
             <button class="suggestion-btn" onclick="sendSuggestion('How to request account unlock?')">How to request account unlock?</button>
+            <button class="suggestion-btn" onclick="sendSuggestion('Terms of Use')">Terms of Use</button>
+            <button class="suggestion-btn" onclick="sendSuggestion('Privacy Policy')">Privacy Policy</button>
             <button class="suggestion-btn" onclick="sendSuggestion('Contact Super Admin')">Contact Super Admin</button>
         </div>
     </div>
@@ -94,8 +97,6 @@ $baseUrl = rtrim(str_replace('\\', '/', $baseUrl), '/') . '/';
 
 <!-- Support Chat Javascript -->
 <script>
-    var supportChatPrefix = "<?php echo $prefix; ?>";
-    var supportChatBaseUrl = "<?php echo $baseUrl; ?>";
-    var BASE_URL = "<?php echo rtrim($baseUrl, '/'); ?>";
+    window.GREEN_FORENSICS_BASE_URL = "<?php echo $rootUrl; ?>";
 </script>
-<script src="<?php echo $prefix; ?>assets/js/support_chat.js"></script>
+<script src="<?php echo $rootUrl; ?>/support-assistant/support_chat.js"></script>

@@ -13,7 +13,8 @@ $public_pages = [
     'logout.php', 
     'desktop.php',
     'deskstop.php',
-    'index.php'
+    'index.php',
+    'support_chat_api.php'
 ];
 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {

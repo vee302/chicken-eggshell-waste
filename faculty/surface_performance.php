@@ -152,6 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toggle && sidebar) toggle.addEventListener('click', () => sidebar.classList.toggle('active'));
 });
 </script>
-<?php include '../includes/support_chat_widget.php'; ?>
+<?php include dirname(__DIR__) . '/support-assistant/support_widget.php'; ?>
 </body>
 </html>

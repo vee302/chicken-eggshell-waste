@@ -79,6 +79,9 @@ try {
         `role`              ENUM('super_admin','faculty_researcher','criminology_student','alumni_police_partner')
                             DEFAULT NULL,
         `status`            ENUM('active','inactive','pending','rejected','suspended') DEFAULT 'pending',
+        `failed_login_attempts` INT DEFAULT 0,
+        `locked_until`       DATETIME NULL,
+        `last_failed_login`  DATETIME NULL,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
@@ -135,6 +138,10 @@ try {
         $pdo->exec("ALTER TABLE `users` ADD COLUMN `updated_at`
             TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`");
     }
+    
+    $addUserColumn('failed_login_attempts', "`failed_login_attempts` INT DEFAULT 0 AFTER `status`");
+    $addUserColumn('locked_until', "`locked_until` DATETIME NULL AFTER `failed_login_attempts`");
+    $addUserColumn('last_failed_login', "`last_failed_login` DATETIME NULL AFTER `locked_until`");
     $pdo->exec("UPDATE `users`
         SET `status` = 'active'
         WHERE `email` IN (
@@ -434,6 +441,23 @@ try {
         `user_agent`  VARCHAR(255) DEFAULT NULL,
         `created_at`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+ 
+ 
+    // ============================================================
+    // 10c. Create ACCOUNT_UNLOCK_REQUESTS table
+    // ============================================================
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `account_unlock_requests` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `user_id` INT NULL,
+        `email` VARCHAR(255) NOT NULL,
+        `reason` TEXT NULL,
+        `status` ENUM('pending','approved','rejected') DEFAULT 'pending',
+        `requested_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+        `reviewed_by` INT NULL,
+        `reviewed_at` DATETIME NULL,
+        FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+        FOREIGN KEY (`reviewed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
 

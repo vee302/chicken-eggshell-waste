@@ -6,10 +6,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 // Query pending count dynamically
 $sidebar_pending_count = 0;
+$sidebar_unlock_pending_count = 0;
 try {
     if (isset($pdo)) {
         $stmt_pending = $pdo->query("SELECT COUNT(*) FROM users WHERE status='pending'");
         $sidebar_pending_count = $stmt_pending ? (int)$stmt_pending->fetchColumn() : 0;
+
+        $stmt_unlock_pending = $pdo->query("SELECT COUNT(*) FROM account_unlock_requests WHERE status='pending'");
+        $sidebar_unlock_pending_count = $stmt_unlock_pending ? (int)$stmt_unlock_pending->fetchColumn() : 0;
     }
 } catch (PDOException $e) {
     // Fail silently
@@ -54,6 +58,17 @@ try {
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
                 <span>Pending Approvals<?php if ($sidebar_pending_count > 0): ?> <span style="background:var(--danger);color:#fff;border-radius:20px;font-size:.65rem;padding:1px 7px;font-weight:700;margin-left:4px;"><?php echo $sidebar_pending_count; ?></span><?php endif; ?></span>
+            </a>
+        </li>
+
+        <!-- 2b. Account Unlock Requests -->
+        <li class="menu-item <?php echo ($current_page === 'unlock_requests.php') ? 'active' : ''; ?>">
+            <a href="unlock_requests.php" class="menu-link" style="position:relative;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                </svg>
+                <span>Unlock Requests<?php if ($sidebar_unlock_pending_count > 0): ?> <span style="background:var(--danger);color:#fff;border-radius:20px;font-size:.65rem;padding:1px 7px;font-weight:700;margin-left:4px;"><?php echo $sidebar_unlock_pending_count; ?></span><?php endif; ?></span>
             </a>
         </li>
 

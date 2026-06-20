@@ -84,7 +84,11 @@ if (file_exists($env_path)) {
 
 // Production Validation Guard
 if (env('APP_ENV') === 'production') {
-    if (empty(env('DB_HOST')) || empty(env('DB_DATABASE')) || empty(env('DB_USERNAME'))) {
+    $has_host = !empty(env('DB_HOST')) || !empty(env('MYSQLHOST'));
+    $has_db   = !empty(env('DB_DATABASE')) || !empty(env('MYSQLDATABASE'));
+    $has_user = !empty(env('DB_USERNAME')) || !empty(env('MYSQLUSER'));
+    
+    if (!$has_host || !$has_db || !$has_user) {
         http_response_code(500);
         die("System configuration is incomplete. Please contact the administrator.");
     }
@@ -96,12 +100,12 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Database Connection Settings from Environment
-define('DB_SERVER', env('DB_HOST', 'localhost'));
-define('DB_USERNAME', env('DB_USERNAME', 'root'));
-define('DB_PASSWORD', env('DB_PASSWORD', ''));
-define('DB_NAME', env('DB_DATABASE', 'green_forensics'));
-define('DB_PORT', env('DB_PORT', '3306'));
+// Database Connection Settings from Environment (with Railway auto-variable fallback)
+define('DB_SERVER', env('DB_HOST', env('MYSQLHOST', 'localhost')));
+define('DB_USERNAME', env('DB_USERNAME', env('MYSQLUSER', 'root')));
+define('DB_PASSWORD', env('DB_PASSWORD', env('MYSQLPASSWORD', '')));
+define('DB_NAME', env('DB_DATABASE', env('MYSQLDATABASE', 'green_forensics')));
+define('DB_PORT', env('DB_PORT', env('MYSQLPORT', '3306')));
 define('GEMINI_API_KEY', env('GEMINI_API_KEY', ''));
 
 try {

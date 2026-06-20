@@ -201,14 +201,62 @@
     box-shadow: 0 2px 6px rgba(47, 79, 58, 0.12);
 }
 
-/* Suggested Questions */
+/* Suggested Questions Panel (Collapsible) */
 .chat-suggestions {
-    padding: 10px 16px 16px 16px;
+    padding: 0;
+    max-height: 0;
+    opacity: 0;
+    overflow-y: auto;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     background-color: var(--chat-bg);
     border-top: 1px solid rgba(47, 79, 58, 0.04);
+    transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+}
+
+.chat-suggestions.open {
+    padding: 12px 16px;
+    max-height: 150px; /* Limits height, scrollable if needed */
+    opacity: 1;
+}
+
+/* Quick Help Toggle Wrapper & Button */
+.chat-suggestions-toggle-wrapper {
+    padding: 8px 16px;
+    background-color: var(--chat-white);
+    border-top: 1px solid rgba(47, 79, 58, 0.06);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-suggestions-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #f0f4f1;
+    color: var(--chat-primary);
+    border: 1px solid rgba(47, 79, 58, 0.15);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.chat-suggestions-toggle:hover {
+    background-color: var(--chat-primary);
+    color: var(--chat-white);
+    border-color: var(--chat-primary);
+}
+
+.chat-suggestions-toggle.active {
+    background-color: var(--chat-primary);
+    color: var(--chat-white);
+    border-color: var(--chat-primary);
 }
 
 .suggestion-btn {

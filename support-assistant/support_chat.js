@@ -182,6 +182,9 @@ function handleChatSubmit(event) {
 
 // Handle Suggestion Click
 function sendSuggestion(questionText) {
+    // Collapse suggestions panel automatically
+    collapseSuggestions();
+
     // Send user action
     appendMessage(questionText, true);
 
@@ -211,4 +214,33 @@ function sendSuggestion(questionText) {
             appendMessage(reply, false);
         }
     });
+}
+
+// Toggle collapsible suggestions panel
+function toggleSuggestions() {
+    const suggestions = document.getElementById('chatSuggestions');
+    const toggleBtn = document.querySelector('.chat-suggestions-toggle');
+    if (!suggestions || !toggleBtn) return;
+
+    if (suggestions.classList.contains('open')) {
+        suggestions.classList.remove('open');
+        toggleBtn.classList.remove('active');
+    } else {
+        suggestions.classList.add('open');
+        toggleBtn.classList.add('active');
+        // Small timeout to allow expand transition before scrolling
+        setTimeout(scrollToBottom, 100);
+    }
+}
+
+// Collapse suggestions panel
+function collapseSuggestions() {
+    const suggestions = document.getElementById('chatSuggestions');
+    const toggleBtn = document.querySelector('.chat-suggestions-toggle');
+    if (suggestions) {
+        suggestions.classList.remove('open');
+    }
+    if (toggleBtn) {
+        toggleBtn.classList.remove('active');
+    }
 }

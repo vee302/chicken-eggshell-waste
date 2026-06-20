@@ -29,3 +29,5 @@ uploads/**
 /logs/
 /uploads/proofs/*
 /uploads/fingerprints/*
+debug_log.txt
+*.log

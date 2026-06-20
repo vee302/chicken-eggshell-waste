@@ -31,10 +31,19 @@ if (strpos($lowerMessage, 'password') !== false || strpos($lowerMessage, 'passco
     exit;
 }
 
+// Helper for local diagnostic logging
+function debug_log($message) {
+    $file = __DIR__ . '/debug_log.txt';
+    $timestamp = date('Y-m-d H:i:s');
+    file_put_contents($file, "[$timestamp] $message\n", FILE_APPEND);
+}
+
 // 2. Fetch Gemini API Key
 $apiKey = env('GEMINI_API_KEY');
 if (empty($apiKey)) {
-    error_log("Gemini API Error: GEMINI_API_KEY is not defined or empty in the environment configuration.");
+    $err = "Gemini API Error: GEMINI_API_KEY is not defined or empty in the environment configuration.";
+    error_log($err);
+    debug_log($err);
     echo json_encode([
         "success" => false,
         "reply" => "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator."
@@ -44,6 +53,7 @@ if (empty($apiKey)) {
 
 // 3. Fetch Gemini Model (non-hardcoded)
 $model = env('GEMINI_MODEL', 'gemini-1.5-flash');
+debug_log("Attempting call with Model: $model");
 
 // 4. Call Google Gemini API
 $url = "https://generativelanguage.googleapis.com/v1beta/models/" . $model . ":generateContent?key=" . $apiKey;
@@ -78,6 +88,13 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 ]);
 curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 
+// Disable SSL verification locally if XAMPP setup lacks certificates
+if (env('APP_ENV') !== 'production') {
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    debug_log("Local environment detected. Disabled cURL SSL verification.");
+}
+
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
@@ -85,7 +102,9 @@ curl_close($ch);
 
 // If request fails or API returns error response code
 if ($response === false || $httpCode !== 200) {
-    error_log("Gemini API Error. HTTP Code: $httpCode. cURL Error: $curlError. Response: " . ($response !== false ? $response : 'No response'));
+    $errMessage = "Gemini API Error. HTTP Code: $httpCode. cURL Error: $curlError. Response: " . ($response !== false ? $response : 'No response');
+    error_log($errMessage);
+    debug_log($errMessage);
     echo json_encode([
         "success" => false,
         "reply" => "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator."
@@ -97,7 +116,9 @@ $responseData = json_decode($response, true);
 $replyText = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '';
 
 if (empty($replyText)) {
-    error_log("Gemini API Error: empty response text structure. Response: " . $response);
+    $errMessage = "Gemini API Error: empty response text structure. Response: " . $response;
+    error_log($errMessage);
+    debug_log($errMessage);
     echo json_encode([
         "success" => false,
         "reply" => "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator."

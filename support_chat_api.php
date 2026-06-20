@@ -73,6 +73,11 @@ $data = [
             ["text" => $systemInstruction]
         ]
     ],
+    "system_instruction" => [
+        "parts" => [
+            ["text" => $systemInstruction]
+        ]
+    ],
     "generationConfig" => [
         "temperature" => 0.4,
         "maxOutputTokens" => 150

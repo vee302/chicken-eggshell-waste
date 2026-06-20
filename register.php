@@ -53,11 +53,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         !in_array($department_affiliation, [
             'College of Criminal Justice Education',
             'Faculty Researcher',
-            'Alumni / Police Partner',
-            'Police Partner Institution'
+            'Alumni / Police Partner'
         ])
     ) {
-        $error_message = "Invalid Department / Affiliation selected.";
+        $error_message = "Invalid department or affiliation selected.";
     } elseif (empty($contact_number)) {
         $error_message = "Contact Number is required.";
     } elseif (empty($email)) {
@@ -547,8 +546,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                             <option value="College of Criminal Justice Education" <?php echo ($form_data['department_affiliation'] ?? '') === 'College of Criminal Justice Education' ? 'selected' : ''; ?>>College of Criminal Justice Education</option>
                             <option value="Faculty Researcher" <?php echo ($form_data['department_affiliation'] ?? '') === 'Faculty Researcher' ? 'selected' : ''; ?>>Faculty Researcher</option>
                             <option value="Alumni / Police Partner" <?php echo ($form_data['department_affiliation'] ?? '') === 'Alumni / Police Partner' ? 'selected' : ''; ?>>Alumni / Police Partner</option>
-                            <option value="Police Partner Institution" <?php echo ($form_data['department_affiliation'] ?? '') === 'Police Partner Institution' ? 'selected' : ''; ?>>Police Partner Institution
-                            </option>
                         </select>
                     </div>
 

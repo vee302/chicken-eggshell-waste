@@ -16,7 +16,7 @@
 .support-chat-btn {
     position: fixed;
     bottom: 24px;
-    left: 24px;
+    right: 24px;
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -48,7 +48,7 @@
 .support-chat-panel {
     position: fixed;
     bottom: 96px;
-    left: 24px;
+    right: 24px;
     width: 380px;
     height: 560px;
     max-height: calc(100vh - 120px);
@@ -301,7 +301,7 @@
 @media (max-width: 768px) {
     .support-chat-btn {
         bottom: 18px;
-        left: 18px;
+        right: 18px;
         width: 50px;
         height: 50px;
     }
@@ -310,7 +310,6 @@
         width: calc(100% - 36px);
         height: calc(100% - 100px);
         bottom: 80px;
-        left: 18px;
         right: 18px;
         border-radius: 12px;
     }

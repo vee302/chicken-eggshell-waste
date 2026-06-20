@@ -321,6 +321,7 @@ function role_label($r) {
             document.getElementById("compileModal").classList.remove("active");
         }
     </script>
+<?php include '../includes/support_chat_widget.php'; ?>
 </body>
 
 </html>

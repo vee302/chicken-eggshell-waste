@@ -109,5 +109,6 @@
     <footer>
         <p>&copy; 2026 Green Forensics Project | LSPU CCJE San Pablo City Campus</p>
     </footer>
+<?php include 'includes/support_chat_widget.php'; ?>
 </body>
 </html>

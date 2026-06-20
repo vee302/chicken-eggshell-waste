@@ -261,5 +261,6 @@ $unlock_requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
     });
 </script>
+<?php include '../includes/support_chat_widget.php'; ?>
 </body>
 </html>

@@ -912,6 +912,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             return true;
         }
     </script>
+<?php include 'includes/support_chat_widget.php'; ?>
 </body>
 
 </html>

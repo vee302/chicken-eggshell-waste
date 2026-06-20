@@ -1046,6 +1046,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
             }
         });
     </script>
+<?php include 'includes/support_chat_widget.php'; ?>
 </body>
 
 </html>

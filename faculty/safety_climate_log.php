@@ -271,5 +271,6 @@ function renderSafetyLogs(logs) {
     }).join('');
 }
 </script>
+<?php include '../includes/support_chat_widget.php'; ?>
 </body>
 </html>

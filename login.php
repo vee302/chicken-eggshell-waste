@@ -420,6 +420,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         });
     </script>
 
+<?php include 'includes/support_chat_widget.php'; ?>
 </body>
 
 </html>

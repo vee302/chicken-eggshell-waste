@@ -125,5 +125,6 @@ try {
     </main>
 </div>
 <?php require_once '_sidebar_js.php'; ?>
+<?php include '../includes/support_chat_widget.php'; ?>
 </body>
 </html>

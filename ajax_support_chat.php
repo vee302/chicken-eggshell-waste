@@ -37,7 +37,7 @@ if (!defined('GEMINI_API_KEY') || empty(GEMINI_API_KEY)) {
 }
 
 // 3. Call Google Gemini API
-$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . GEMINI_API_KEY;
+$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" . GEMINI_API_KEY;
 
 // Construct payload
 $systemInstruction = "You are the Green Forensics Support Assistant, an AI chatbot for the Green Forensics Evaluating System (an academic project at LSPU CCJE San Pablo City Campus, focusing on sustainable fingerprint powder using chicken eggshell waste).

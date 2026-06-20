@@ -17,3 +17,15 @@ Desktop.ini
 uploads/**
 !uploads/**/
 !uploads/**/.gitkeep
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Backups and Logs
+/admin/backups/
+/backups/
+/logs/
+/uploads/proofs/*
+/uploads/fingerprints/*

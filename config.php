@@ -29,19 +29,80 @@ if (!function_exists('getallheaders')) {
     }
 }
 
+// Define env() helper function if not exists
+if (!function_exists('env')) {
+    function env($key, $default = null) {
+        $val = getenv($key);
+        if ($val === false) {
+            if (isset($_ENV[$key])) {
+                $val = $_ENV[$key];
+            } elseif (isset($_SERVER[$key])) {
+                $val = $_SERVER[$key];
+            } else {
+                return $default;
+            }
+        }
+        $lowerVal = strtolower($val);
+        if ($lowerVal === 'true') return true;
+        if ($lowerVal === 'false') return false;
+        if ($lowerVal === 'null' || $lowerVal === '(null)') return null;
+        return $val;
+    }
+}
+
+// Load .env file natively
+$env_path = __DIR__ . '/.env';
+if (file_exists($env_path)) {
+    $lines = file($env_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if (empty($line) || strpos($line, '#') === 0) {
+            continue;
+        }
+        $parts = explode('=', $line, 2);
+        if (count($parts) === 2) {
+            $key = trim($parts[0]);
+            $val = trim($parts[1]);
+            // Strip quotes
+            if (preg_match('/^"(.*)"$/', $val, $matches)) {
+                $val = $matches[1];
+            } elseif (preg_match('/^\'(.*)\'$/', $val, $matches)) {
+                $val = $matches[1];
+            }
+            if (getenv($key) === false) {
+                putenv("$key=$val");
+            }
+            if (!isset($_ENV[$key])) {
+                $_ENV[$key] = $val;
+            }
+            if (!isset($_SERVER[$key])) {
+                $_SERVER[$key] = $val;
+            }
+        }
+    }
+}
+
+// Production Validation Guard
+if (env('APP_ENV') === 'production') {
+    if (empty(env('DB_HOST')) || empty(env('DB_DATABASE')) || empty(env('DB_USERNAME'))) {
+        http_response_code(500);
+        die("System configuration is incomplete. Please contact the administrator.");
+    }
+}
+
 require_once __DIR__ . '/auth_timeout.php';
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-define('DB_SERVER', getenv('MYSQLHOST') ?: 'localhost');
-define('DB_USERNAME', getenv('MYSQLUSER') ?: 'root');
-http://localhost/waste-eggshell/
-define('DB_PASSWORD', getenv('MYSQLPASSWORD') !== false ? getenv('MYSQLPASSWORD') : '');
-define('DB_NAME', getenv('MYSQLDATABASE') ?: 'green_forensics');
-define('DB_PORT', getenv('MYSQLPORT') ?: '3306');
-define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: '');
+// Database Connection Settings from Environment
+define('DB_SERVER', env('DB_HOST', 'localhost'));
+define('DB_USERNAME', env('DB_USERNAME', 'root'));
+define('DB_PASSWORD', env('DB_PASSWORD', ''));
+define('DB_NAME', env('DB_DATABASE', 'green_forensics'));
+define('DB_PORT', env('DB_PORT', '3306'));
+define('GEMINI_API_KEY', env('GEMINI_API_KEY', ''));
 
 try {
     // 1. Connect to MySQL without selecting a database first

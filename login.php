@@ -24,6 +24,10 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 // Include database configuration
 require_once "config.php";
 
+// Lockout settings from environment configuration
+$max_attempts = (int)env('LOGIN_MAX_ATTEMPTS', 5);
+$lockout_minutes = (int)env('LOGIN_LOCKOUT_MINUTES', 15);
+
 $email = $password = "";
 $error_message = "";
 $info_message = "";
@@ -90,7 +94,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 $now = time();
                                 if ($now < $lockTime) {
                                     $is_locked = true;
-                                    $error_message = "Too many failed login attempts. Please try again after 15 minutes or contact the Super Administrator.";
+                                    $error_message = "Too many failed login attempts. Please try again after " . $lockout_minutes . " minutes or contact the Super Administrator.";
                                 } else {
                                     // Lockout expired! Automatically reset lockout details.
                                     try {
@@ -149,8 +153,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 } else {
                                     // Password is wrong - increment attempts
                                     $new_attempts = $failed_attempts + 1;
-                                    if ($new_attempts >= 5) {
-                                        $locked_until_val = date('Y-m-d H:i:s', time() + 15 * 60);
+                                    if ($new_attempts >= $max_attempts) {
+                                        $locked_until_val = date('Y-m-d H:i:s', time() + $lockout_minutes * 60);
                                         try {
                                             $update_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = :attempts, locked_until = :locked_until, last_failed_login = NOW() WHERE id = :id");
                                             $update_stmt->execute([
@@ -158,11 +162,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                                 ':locked_until' => $locked_until_val,
                                                 ':id' => $id
                                             ]);
-                                            log_login_activity($pdo, "Account Locked", "Account temporarily locked for 15 minutes due to 5 failed login attempts", $id, $email);
+                                            log_login_activity($pdo, "Account Locked", "Account temporarily locked for " . $lockout_minutes . " minutes due to " . $max_attempts . " failed login attempts", $id, $email);
                                         } catch (PDOException $e) {
                                             // Ignore
                                         }
-                                        $error_message = "Too many failed login attempts. Your account has been temporarily locked for 15 minutes.";
+                                        $error_message = "Too many failed login attempts. Your account has been temporarily locked for " . $lockout_minutes . " minutes.";
                                     } else {
                                         try {
                                             $update_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = :attempts, last_failed_login = NOW() WHERE id = :id");
@@ -170,11 +174,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                                 ':attempts' => $new_attempts,
                                                 ':id' => $id
                                             ]);
-                                            log_login_activity($pdo, "Failed Login Attempt", "Failed login attempt (attempts remaining: " . (5 - $new_attempts) . ")", $id, $email);
+                                            log_login_activity($pdo, "Failed Login Attempt", "Failed login attempt (attempts remaining: " . ($max_attempts - $new_attempts) . ")", $id, $email);
                                         } catch (PDOException $e) {
                                             // Ignore
                                         }
-                                        $error_message = "Invalid email or password. Attempts remaining: " . (5 - $new_attempts);
+                                        $error_message = "Invalid email or password. Attempts remaining: " . ($max_attempts - $new_attempts);
                                     }
                                 }
                             }

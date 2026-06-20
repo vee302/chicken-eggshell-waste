@@ -23,7 +23,8 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
                     (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'super_admin');
 
         if (!$is_admin) {
-            if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 300)) {
+            $timeout_seconds = (int)env('SESSION_TIMEOUT_MINUTES', 5) * 60;
+            if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > $timeout_seconds)) {
                 // Session expired! Clear session variables and destroy session
                 $_SESSION = array();
                 if (ini_get("session.use_cookies")) {

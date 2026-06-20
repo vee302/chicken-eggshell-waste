@@ -34,10 +34,8 @@ $surface_type = trim($_POST['surface_type'] ?? '');
 $label        = trim($_POST['image_label'] ?? '');
 $student_id   = $_SESSION['user_id'] ?? 0;
 
-$allowed_exts_str = get_setting('allowed_image_types', 'jpg,jpeg,png,webp');
-$allowed_exts = explode(',', $allowed_exts_str);
-$max_fingerprint_mb = (int)get_setting('max_fingerprint_upload_mb', 5);
-$max_bytes = $max_fingerprint_mb * 1024 * 1024;
+$allowed_exts  = ['jpg', 'jpeg', 'png', 'webp'];
+$max_bytes     = 5 * 1024 * 1024; // 5 MB
 
 if (!$powder_type || !$surface_type) {
     if (ob_get_length()) ob_end_clean();
@@ -54,13 +52,13 @@ if ($file['error'] !== UPLOAD_ERR_OK) {
 $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 if (!in_array($ext, $allowed_exts)) {
     if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'Only ' . strtoupper($allowed_exts_str) . ' images are allowed.']);
+    echo json_encode(['success' => false, 'message' => 'Only JPG, JPEG, PNG and WebP images are allowed.']);
     exit;
 }
 
 if ($file['size'] > $max_bytes) {
     if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'File size must not exceed ' . $max_fingerprint_mb . ' MB.']);
+    echo json_encode(['success' => false, 'message' => 'File size must not exceed 5 MB.']);
     exit;
 }
 

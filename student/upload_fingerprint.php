@@ -4,17 +4,6 @@ require_once '../config.php';
 require_once 'auth.php';
 check_student_auth();
 
-$allowed_image_types_str = get_setting('allowed_image_types', 'jpg,jpeg,png,webp');
-$allowed_image_exts = explode(',', $allowed_image_types_str);
-$max_fingerprint_mb = (int)get_setting('max_fingerprint_upload_mb', 5);
-$accept_attr = implode(',', array_map(function($e) { 
-    $t = trim($e);
-    if ($t === 'jpg' || $t === 'jpeg') return 'image/jpeg,image/jpg';
-    if ($t === 'png') return 'image/png';
-    if ($t === 'webp') return 'image/webp';
-    return 'image/' . $t;
-}, $allowed_image_exts));
-
 $active_page  = 'upload_fingerprint';
 $student_name = $_SESSION['user_name'] ?? 'Student';
 $student_id   = $_SESSION['user_id']  ?? 0;
@@ -140,7 +129,7 @@ try {
                         <div id="file-chosen" style="font-size: 0.82rem; font-weight: 700; color: #2d6a4f; margin-top: 1rem; text-align: center; min-height: 1.2rem;"></div>
                     </div>
                     <input type="file" name="fingerprint_image" id="fingerprint_image"
-                           accept="<?php echo htmlspecialchars($accept_attr); ?>" style="display:none;" required>
+                           accept="image/jpeg,image/png,image/webp" style="display:none;" required>
                     <input type="file" id="fingerprint_camera" accept="image/*" capture="environment" style="display:none;">
 
                     <div class="form-grid-2" style="margin-top: 1.25rem;">
@@ -1087,30 +1076,10 @@ btnUploadTrigger.addEventListener('click', () => {
     inp.click();
 });
 
-const CONFIG_ALLOWED_IMAGE_EXTS = <?php echo json_encode($allowed_image_exts); ?>;
-const CONFIG_MAX_FINGERPRINT_MB = <?php echo $max_fingerprint_mb; ?>;
-
 // Preview selected local files
 inp.addEventListener('change', () => {
     if (inp.files && inp.files[0]) {
         const file = inp.files[0];
-        const fileExt = file.name.split('.').pop().toLowerCase();
-        if (!CONFIG_ALLOWED_IMAGE_EXTS.includes(fileExt)) {
-            alert(`Invalid image type. Only ${CONFIG_ALLOWED_IMAGE_EXTS.join(', ').toUpperCase()} are allowed.`);
-            inp.value = '';
-            chosen.textContent = '';
-            webcamCapturePreview.style.display = 'none';
-            previewPlaceholder.style.display = 'flex';
-            return;
-        }
-        if (file.size > CONFIG_MAX_FINGERPRINT_MB * 1024 * 1024) {
-            alert(`File size exceeds the limit of ${CONFIG_MAX_FINGERPRINT_MB} MB.`);
-            inp.value = '';
-            chosen.textContent = '';
-            webcamCapturePreview.style.display = 'none';
-            previewPlaceholder.style.display = 'flex';
-            return;
-        }
         chosen.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
         
         const reader = new FileReader();
@@ -1143,16 +1112,6 @@ previewContainer.addEventListener('drop', e => {
     previewContainer.style.background = '#fafdfa';
     
     if (e.dataTransfer.files.length) {
-        const file = e.dataTransfer.files[0];
-        const fileExt = file.name.split('.').pop().toLowerCase();
-        if (!CONFIG_ALLOWED_IMAGE_EXTS.includes(fileExt)) {
-            alert(`Invalid image type. Only ${CONFIG_ALLOWED_IMAGE_EXTS.join(', ').toUpperCase()} are allowed.`);
-            return;
-        }
-        if (file.size > CONFIG_MAX_FINGERPRINT_MB * 1024 * 1024) {
-            alert(`File size exceeds the limit of ${CONFIG_MAX_FINGERPRINT_MB} MB.`);
-            return;
-        }
         inp.files = e.dataTransfer.files;
         const event = new Event('change');
         inp.dispatchEvent(event);
@@ -1182,17 +1141,6 @@ document.getElementById('form-upload-fingerprint').addEventListener('submit', fu
 
     if (!inp.files.length) {
         showNotification('error', 'Please select or capture a fingerprint image to upload.');
-        return;
-    }
-
-    const file = inp.files[0];
-    const fileExt = file.name.split('.').pop().toLowerCase();
-    if (!CONFIG_ALLOWED_IMAGE_EXTS.includes(fileExt)) {
-        showNotification('error', `Invalid image type. Only ${CONFIG_ALLOWED_IMAGE_EXTS.join(', ').toUpperCase()} are allowed.`);
-        return;
-    }
-    if (file.size > CONFIG_MAX_FINGERPRINT_MB * 1024 * 1024) {
-        showNotification('error', `File size exceeds the limit of ${CONFIG_MAX_FINGERPRINT_MB} MB.`);
         return;
     }
 

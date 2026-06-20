@@ -28,7 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     $middle_name = trim($_POST["middle_name"] ?? "");
     $last_name = trim($_POST["last_name"] ?? "");
     $id_number = trim($_POST["id_number"] ?? "");
-    $department_affiliation = trim($_POST["department_affiliation"] ?? "");
     $contact_number = trim($_POST["contact_number"] ?? "");
     $email = strtolower(trim($_POST["email"] ?? ""));
     $requested_role = trim($_POST["requested_role"] ?? "");
@@ -38,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     $full_name = trim("$first_name $middle_name $last_name");
 
     // Preserve form data for re-fill
-    $form_data = compact('first_name', 'middle_name', 'last_name', 'id_number', 'department_affiliation', 'contact_number', 'email', 'requested_role', 'reason');
+    $form_data = compact('first_name', 'middle_name', 'last_name', 'id_number', 'contact_number', 'email', 'requested_role', 'reason');
 
     // Server-side Validation
     if (empty($first_name)) {
@@ -47,16 +46,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "Last Name is required.";
     } elseif (empty($id_number)) {
         $error_message = "ID Number is required.";
-    } elseif (empty($department_affiliation)) {
-        $error_message = "Department / Affiliation is required.";
-    } elseif (
-        !in_array($department_affiliation, [
-            'College of Criminal Justice Education',
-            'Faculty Researcher',
-            'Alumni / Police Partner'
-        ])
-    ) {
-        $error_message = "Invalid department or affiliation selected.";
     } elseif (empty($contact_number)) {
         $error_message = "Contact Number is required.";
     } elseif (empty($email)) {
@@ -64,8 +53,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error_message = "Please enter a valid email address.";
     } elseif (empty($requested_role)) {
-        $error_message = "Requested Role is required.";
-    } elseif ($requested_role === 'super_admin') {
+        $error_message = "Please select your requested role.";
+    } elseif (in_array(strtolower($requested_role), ['super_admin', 'super administrator', 'super admin', 'admin'])) {
         $error_message = "Super Administrator role is not available for public registration.";
     } elseif (!in_array($requested_role, ['criminology_student', 'faculty_researcher', 'alumni_police_partner'])) {
         $error_message = "Invalid requested role selected.";
@@ -167,8 +156,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                         ':pass' => $hashed,
                         ':contact' => $contact_number,
                         ':idnum' => $id_number,
-                        ':dept' => $department_affiliation,
-                        ':aff' => $department_affiliation,
+                        ':dept' => null,
+                        ':aff' => null,
                         ':reqrole' => $requested_role,
                         ':reason' => $reason,
                         ':proof' => $proof_path
@@ -538,16 +527,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                             value="<?php echo htmlspecialchars($form_data['id_number'] ?? ''); ?>">
                     </div>
 
-                    <div class="form-group">
-                        <label for="department_affiliation">Department / Affiliation <span
-                                class="required-star">*</span></label>
-                        <select id="department_affiliation" name="department_affiliation" class="form-control-plain">
-                            <option value="" disabled <?php echo empty($form_data['department_affiliation']) ? 'selected' : ''; ?>>Select department or affiliation</option>
-                            <option value="College of Criminal Justice Education" <?php echo ($form_data['department_affiliation'] ?? '') === 'College of Criminal Justice Education' ? 'selected' : ''; ?>>College of Criminal Justice Education</option>
-                            <option value="Faculty Researcher" <?php echo ($form_data['department_affiliation'] ?? '') === 'Faculty Researcher' ? 'selected' : ''; ?>>Faculty Researcher</option>
-                            <option value="Alumni / Police Partner" <?php echo ($form_data['department_affiliation'] ?? '') === 'Alumni / Police Partner' ? 'selected' : ''; ?>>Alumni / Police Partner</option>
-                        </select>
-                    </div>
+
 
                     <div class="form-grid-2">
                         <div class="form-group">
@@ -786,14 +766,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 const fn = document.getElementById("first_name").value.trim();
                 const ln = document.getElementById("last_name").value.trim();
                 const idNum = document.getElementById("id_number").value.trim();
-                const deptAff = document.getElementById("department_affiliation").value;
                 const contact = document.getElementById("contact_number").value.trim();
                 const email = document.getElementById("email").value.trim();
 
                 if (!fn) { showClientError("First Name is required."); return; }
                 if (!ln) { showClientError("Last Name is required."); return; }
                 if (!idNum) { showClientError("ID Number is required."); return; }
-                if (!deptAff) { showClientError("Department / Affiliation is required."); return; }
                 if (!contact) { showClientError("Contact Number is required."); return; }
                 if (!email) { showClientError("Email Address is required."); return; }
 
@@ -851,7 +829,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             const pass = document.getElementById("password").value;
             const conf = document.getElementById("confirm_password").value;
 
-            if (!role) { showClientError("Requested Role is required."); return false; }
+            if (!role) { showClientError("Please select your requested role."); return false; }
             if (!reason) { showClientError("Reason for Access is required."); return false; }
             if (!pass) { showClientError("Password is required."); return false; }
 

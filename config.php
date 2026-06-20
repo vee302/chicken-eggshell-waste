@@ -50,6 +50,16 @@ if (!function_exists('env')) {
     }
 }
 
+// Define get_setting() helper function if not exists
+if (!function_exists('get_setting')) {
+    function get_setting($key, $default = null) {
+        if (isset($GLOBALS['system_settings'][$key])) {
+            return $GLOBALS['system_settings'][$key];
+        }
+        return $default;
+    }
+}
+
 // Load .env file natively
 $env_path = __DIR__ . '/.env';
 if (file_exists($env_path)) {
@@ -532,21 +542,122 @@ try {
 
 
     // ============================================================
-    // 10d. Create SYSTEM_SETTINGS table
+    // 10d. Create SYSTEM_SETTINGS table with migrations
     // ============================================================
-    $pdo->exec("CREATE TABLE IF NOT EXISTS `system_settings` (
-        `setting_key`   VARCHAR(100) PRIMARY KEY,
-        `setting_value` TEXT NOT NULL
+    $settingsTableExists = false;
+    try {
+        $checkTable = $pdo->query("SELECT 1 FROM `system_settings` LIMIT 1");
+        $settingsTableExists = ($checkTable !== false);
+    } catch (Exception $e) {
+        $settingsTableExists = false;
+    }
+
+    if ($settingsTableExists) {
+        // Table exists, check if it has the new column 'id'
+        $settingsCols = $pdo->query("SHOW COLUMNS FROM `system_settings`")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('id', $settingsCols, true)) {
+            // Count rows
+            $rowCount = (int)$pdo->query("SELECT COUNT(*) FROM `system_settings`")->fetchColumn();
+            if ($rowCount === 0) {
+                // Drop and recreate empty table
+                $pdo->exec("DROP TABLE IF EXISTS `system_settings`");
+                $settingsTableExists = false;
+            } else {
+                // Perform ALTER TABLE migration to preserve existing data
+                // 1. Fetch existing settings to migrate old key/values to new keys if they don't already exist in database
+                $existingData = [];
+                $stmt = $pdo->query("SELECT setting_key, setting_value FROM `system_settings`");
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $existingData[$row['setting_key']] = $row['setting_value'];
+                }
+
+                // 2. Drop primary key constraint on setting_key
+                $pdo->exec("ALTER TABLE `system_settings` DROP PRIMARY KEY");
+
+                // 3. Add id, updated_by, and updated_at columns
+                $pdo->exec("ALTER TABLE `system_settings` 
+                    ADD COLUMN `id` INT AUTO_INCREMENT PRIMARY KEY FIRST,
+                    ADD UNIQUE KEY `uk_setting_key` (`setting_key`),
+                    ADD COLUMN `updated_by` INT NULL,
+                    ADD COLUMN `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+                
+                // 4. Perform data migration of old settings if new settings are absent
+                $migrateKey = function($newK, $oldK, $defaultVal) use ($pdo, $existingData) {
+                    $chk = $pdo->prepare("SELECT COUNT(*) FROM `system_settings` WHERE `setting_key` = ?");
+                    $chk->execute([$newK]);
+                    if ((int)$chk->fetchColumn() === 0) {
+                        $val = $existingData[$oldK] ?? $defaultVal;
+                        $ins = $pdo->prepare("INSERT INTO `system_settings` (`setting_key`, `setting_value`) VALUES (?, ?)");
+                        $ins->execute([$newK, $val]);
+                    }
+                };
+
+                // Migrate simple mappings
+                $migrateKey('system_contact_email', 'system_email', 'admin@greenforensics.edu.ph');
+                $migrateKey('notification_email', 'system_email', 'admin@greenforensics.edu.ph');
+                $migrateKey('max_failed_login_attempts', 'max_login_attempts', '5');
+                $migrateKey('login_lockout_minutes', 'lockout_time', '15');
+
+                // Migrate role checkboxes based on old CSV string
+                $chkRoles = $pdo->prepare("SELECT COUNT(*) FROM `system_settings` WHERE `setting_key` = ?");
+                foreach (['criminology_student', 'faculty_researcher', 'alumni_police_partner'] as $role) {
+                    $newK = 'allow_role_' . $role;
+                    $chkRoles->execute([$newK]);
+                    if ((int)$chkRoles->fetchColumn() === 0) {
+                        $allowedCsv = $existingData['allowed_registration_roles'] ?? 'criminology_student,faculty_researcher,alumni_police_partner';
+                        $allowedRoles = explode(',', $allowedCsv);
+                        $val = in_array($role, $allowedRoles) ? '1' : '0';
+                        $ins = $pdo->prepare("INSERT INTO `system_settings` (`setting_key`, `setting_value`) VALUES (?, ?)");
+                        $ins->execute([$newK, $val]);
+                    }
+                }
+
+                // Delete old keys to clean up
+                $pdo->exec("DELETE FROM `system_settings` WHERE `setting_key` IN ('system_email', 'allowed_registration_roles', 'max_login_attempts', 'lockout_time', 'maintenance_mode')");
+            }
+        }
+    }
+
+    if (!$settingsTableExists) {
+        $pdo->exec("CREATE TABLE `system_settings` (
+            `id`            INT AUTO_INCREMENT PRIMARY KEY,
+            `setting_key`   VARCHAR(100) UNIQUE,
+            `setting_value` TEXT NULL,
+            `updated_by`    INT NULL,
+            `updated_at`    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+
+    // ============================================================
+    // 10e. Create SYSTEM_SETTINGS_LOGS table
+    // ============================================================
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `system_settings_logs` (
+        `id`            INT AUTO_INCREMENT PRIMARY KEY,
+        `setting_name`  VARCHAR(100) NOT NULL,
+        `old_value`     TEXT NULL,
+        `new_value`     TEXT NULL,
+        `updated_by`    INT NULL,
+        `updated_at`    DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // Seed default settings if they do not exist
     $defaultSettings = [
-        'system_name' => 'Green Forensics Evaluating System',
-        'system_email' => 'admin@greenforensics.edu.ph',
-        'allowed_registration_roles' => 'criminology_student,faculty_researcher,alumni_police_partner',
-        'maintenance_mode' => '0',
-        'max_login_attempts' => '5',
-        'lockout_time' => '15'
+        'system_contact_email' => 'admin@greenforensics.edu.ph',
+        'public_registration_enabled' => '1',
+        'require_proof_affiliation' => '0',
+        'require_terms_agreement' => '1',
+        'allow_role_criminology_student' => '1',
+        'allow_role_faculty_researcher' => '1',
+        'allow_role_alumni_police_partner' => '1',
+        'max_failed_login_attempts' => '5',
+        'login_lockout_minutes' => '15',
+        'max_fingerprint_upload_mb' => '5',
+        'max_proof_upload_mb' => '5',
+        'allowed_image_types' => 'jpg,jpeg,png,webp',
+        'allowed_proof_types' => 'jpg,jpeg,png,pdf',
+        'support_assistant_enabled' => '1',
+        'notification_email' => 'admin@greenforensics.edu.ph'
     ];
     $checkSetting = $pdo->prepare("SELECT COUNT(*) FROM `system_settings` WHERE `setting_key` = :key");
     $insertSetting = $pdo->prepare("INSERT INTO `system_settings` (`setting_key`, `setting_value`) VALUES (:key, :val)");
@@ -614,6 +725,16 @@ try {
         $ins->execute($acc);
     }
 
+    // Load system settings cache
+    $GLOBALS['system_settings'] = [];
+    try {
+        $stmt = $pdo->query("SELECT setting_key, setting_value FROM system_settings");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $GLOBALS['system_settings'][$row['setting_key']] = $row['setting_value'];
+        }
+    } catch (PDOException $e) {
+        // Ignore
+    }
 
 } catch (PDOException $e) {
     die("DATABASE ERROR: " . $e->getMessage());

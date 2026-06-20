@@ -24,9 +24,9 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 // Include database configuration
 require_once "config.php";
 
-// Lockout settings from environment configuration
-$max_attempts = (int)env('LOGIN_MAX_ATTEMPTS', 5);
-$lockout_minutes = (int)env('LOGIN_LOCKOUT_MINUTES', 15);
+// Lockout settings from database system settings with environment fallback
+$max_attempts = (int)get_setting('max_failed_login_attempts', env('LOGIN_MAX_ATTEMPTS', 5));
+$lockout_minutes = (int)get_setting('login_lockout_minutes', env('LOGIN_LOCKOUT_MINUTES', 15));
 
 $email = $password = "";
 $error_message = "";

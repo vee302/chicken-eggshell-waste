@@ -24,6 +24,11 @@ $error_message = "";
 $form_data = [];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])) {
+    $public_reg_enabled = (get_setting('public_registration_enabled', '1') === '1');
+    if (!$public_reg_enabled) {
+        $error_message = "Public registration is currently disabled. Please contact the Super Administrator.";
+    }
+    
     $first_name = trim($_POST["first_name"] ?? "");
     $middle_name = trim($_POST["middle_name"] ?? "");
     $last_name = trim($_POST["last_name"] ?? "");
@@ -60,6 +65,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "Super Administrator role is not available for public registration.";
     } elseif (!in_array($requested_role, ['criminology_student', 'faculty_researcher', 'alumni_police_partner'])) {
         $error_message = "Invalid requested role selected.";
+    } elseif (
+        ($requested_role === 'criminology_student' && get_setting('allow_role_criminology_student', '1') !== '1') ||
+        ($requested_role === 'faculty_researcher' && get_setting('allow_role_faculty_researcher', '1') !== '1') ||
+        ($requested_role === 'alumni_police_partner' && get_setting('allow_role_alumni_police_partner', '1') !== '1')
+    ) {
+        $error_message = "The selected role is not allowed for public registration.";
     } elseif (empty($reason)) {
         $error_message = "Reason for Access is required.";
     } elseif (empty($password)) {
@@ -76,30 +87,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "Confirm Password is required.";
     } elseif ($password !== $confirm_pass) {
         $error_message = "Passwords do not match.";
-    } elseif (!isset($_POST['terms_agreed']) || $_POST['terms_agreed'] !== '1') {
+    } elseif ((get_setting('require_terms_agreement', '1') === '1') && (!isset($_POST['terms_agreed']) || $_POST['terms_agreed'] !== '1')) {
         $error_message = "You must agree to the Terms of Use and Privacy Policy before registering.";
-    } else {
+    } elseif (empty($error_message)) {
         // Process file upload if provided
         $proof_path = null;
         $has_proof = isset($_FILES['proof_of_affiliation']) && $_FILES['proof_of_affiliation']['error'] !== UPLOAD_ERR_NO_FILE;
+        $require_proof = (get_setting('require_proof_affiliation', '0') === '1');
         $file_error = false;
+
+        $allowed_proof_exts_str = get_setting('allowed_proof_types', 'jpg,jpeg,png,pdf');
+        $allowed_exts = explode(',', $allowed_proof_exts_str);
+        $max_proof_mb = (int)get_setting('max_proof_upload_mb', 5);
+        $max_size = $max_proof_mb * 1024 * 1024;
 
         if ($has_proof) {
             $file = $_FILES['proof_of_affiliation'];
             if ($file['error'] !== UPLOAD_ERR_OK) {
-                $error_message = "Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.";
+                $error_message = "Invalid proof file. Only " . strtoupper($allowed_proof_exts_str) . " files up to " . $max_proof_mb . "MB are allowed.";
                 $file_error = true;
             } else {
-                $max_size = 5 * 1024 * 1024;
                 if ($file['size'] > $max_size) {
-                    $error_message = "Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.";
+                    $error_message = "Invalid proof file. Only " . strtoupper($allowed_proof_exts_str) . " files up to " . $max_proof_mb . "MB are allowed.";
                     $file_error = true;
                 } else {
-                    $allowed_exts = ['jpg', 'jpeg', 'png', 'pdf'];
                     $file_name = $file['name'];
                     $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-                    $allowed_mimes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+                    $allowed_mimes = [];
+                    foreach ($allowed_exts as $ext) {
+                        if ($ext === 'jpg' || $ext === 'jpeg') {
+                            $allowed_mimes[] = 'image/jpeg';
+                            $allowed_mimes[] = 'image/jpg';
+                        } elseif ($ext === 'png') {
+                            $allowed_mimes[] = 'image/png';
+                        } elseif ($ext === 'pdf') {
+                            $allowed_mimes[] = 'application/pdf';
+                        } elseif ($ext === 'webp') {
+                            $allowed_mimes[] = 'image/webp';
+                        }
+                    }
+
                     $file_mime = null;
                     if (function_exists('finfo_open')) {
                         $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -110,10 +138,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     }
 
                     if (!in_array($file_ext, $allowed_exts)) {
-                        $error_message = "Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.";
+                        $error_message = "Invalid proof file. Only " . strtoupper($allowed_proof_exts_str) . " files up to " . $max_proof_mb . "MB are allowed.";
                         $file_error = true;
                     } elseif ($file_mime !== null && !in_array($file_mime, $allowed_mimes)) {
-                        $error_message = "Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.";
+                        $error_message = "Invalid proof file. Only " . strtoupper($allowed_proof_exts_str) . " files up to " . $max_proof_mb . "MB are allowed.";
                         $file_error = true;
                     } else {
                         // Create proofs folder with index.html to prevent browsing (extra safety)
@@ -134,6 +162,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     }
                 }
             }
+        } elseif ($require_proof) {
+            $error_message = "Proof of affiliation file is required.";
+            $file_error = true;
         }
 
         if (!$file_error) {
@@ -440,6 +471,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     </header>
 
     <main class="login-container">
+        <?php if (get_setting('public_registration_enabled', '1') !== '1'): ?>
+            <div class="login-card" style="display: block; opacity: 1;">
+                <div class="card-header" style="text-align: center;">
+                    <h2>Registration Disabled</h2>
+                    <p style="margin-top: 15px; color: #D9534F; font-weight: 600; line-height: 1.5; font-size: 0.95rem;">
+                        Public registration is currently disabled. Please contact the Super Administrator.
+                    </p>
+                </div>
+                <div class="back-link-wrapper" style="margin-top: 2rem; border-top: 1.5px solid var(--cream); padding-top: 1.5rem; text-align: center;">
+                    <a href="login.php" class="back-link" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--dark-green); font-weight: 700;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Back to Login</span>
+                    </a>
+                </div>
+            </div>
+        <?php else: ?>
         <!-- Skeleton Loader -->
         <div class="login-card" id="skeletonCard">
             <div class="skeleton-loader">
@@ -562,9 +612,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                         <label for="requested_role">Requested Role <span class="required-star">*</span></label>
                         <select id="requested_role" name="requested_role" class="form-control-plain">
                             <option value="" disabled <?php echo empty($form_data['requested_role']) ? 'selected' : ''; ?>>Select your role</option>
+                            <?php if (get_setting('allow_role_criminology_student', '1') === '1'): ?>
                             <option value="criminology_student" <?php echo ($form_data['requested_role'] ?? '') === 'criminology_student' ? 'selected' : ''; ?>>Criminology Student</option>
+                            <?php endif; ?>
+                            <?php if (get_setting('allow_role_faculty_researcher', '1') === '1'): ?>
                             <option value="faculty_researcher" <?php echo ($form_data['requested_role'] ?? '') === 'faculty_researcher' ? 'selected' : ''; ?>>Faculty Researcher</option>
+                            <?php endif; ?>
+                            <?php if (get_setting('allow_role_alumni_police_partner', '1') === '1'): ?>
                             <option value="alumni_police_partner" <?php echo ($form_data['requested_role'] ?? '') === 'alumni_police_partner' ? 'selected' : ''; ?>>Alumni / Police Partner</option>
+                            <?php endif; ?>
                         </select>
                         <p class="field-hint">Super Administrator role is not available for public registration.</p>
                     </div>
@@ -576,10 +632,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     </div>
 
                     <div class="form-group">
-                        <label for="proof_of_affiliation">Proof of Affiliation (Optional)</label>
+                        <?php 
+                            $require_proof = (get_setting('require_proof_affiliation', '0') === '1');
+                            $allowed_proof_exts_str = get_setting('allowed_proof_types', 'jpg,jpeg,png,pdf');
+                            $max_proof_mb = (int)get_setting('max_proof_upload_mb', 5);
+                            $accept_attr = implode(',', array_map(function($e) { return '.' . trim($e); }, explode(',', $allowed_proof_exts_str)));
+                        ?>
+                        <label for="proof_of_affiliation">Proof of Affiliation <?php echo $require_proof ? '<span class="required-star">*</span>' : '(Optional)'; ?></label>
                         <input type="file" id="proof_of_affiliation" name="proof_of_affiliation"
-                            class="form-control-plain" accept=".jpg,.jpeg,.png,.pdf">
-                        <p class="field-hint">Allowed types: JPG, JPEG, PNG, PDF. Max file size: 5MB.</p>
+                            class="form-control-plain" accept="<?php echo htmlspecialchars($accept_attr); ?>">
+                        <p class="field-hint">Allowed types: <?php echo htmlspecialchars(strtoupper($allowed_proof_exts_str)); ?>. Max file size: <?php echo $max_proof_mb; ?>MB.</p>
                     </div>
 
                     <div class="form-group">
@@ -651,12 +713,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                         </div>
                     </div>
 
+                    <?php if (get_setting('require_terms_agreement', '1') === '1'): ?>
                     <div class="form-group" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
                         <label class="checkbox-container" style="display: flex; align-items: flex-start; gap: 8px; font-weight: 500; font-size: 0.85rem; cursor: pointer; color: var(--dark-green);">
                             <input type="checkbox" name="terms_agreed" id="terms_agreed" value="1" required style="margin-top: 3px; cursor: pointer; accent-color: var(--dark-green);">
                             <span style="text-align: left; line-height: 1.4;">I agree to the <a href="terms.php" target="_blank" rel="noopener noreferrer" style="color: var(--dark-green); font-weight: 700; text-decoration: underline;">Terms of Use</a> and <a href="privacy.php" target="_blank" rel="noopener noreferrer" style="color: var(--dark-green); font-weight: 700; text-decoration: underline;">Privacy Policy</a>.</span>
                         </label>
                     </div>
+                    <?php endif; ?>
 
                     <div class="form-nav">
                         <button type="button" class="btn-back" onclick="goToStep1()">Back</button>
@@ -693,6 +757,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     </footer>
 
     <script>
+        const CONFIG_REQUIRE_PROOF = <?php echo get_setting('require_proof_affiliation', '0') === '1' ? 'true' : 'false'; ?>;
+        const CONFIG_REQUIRE_TERMS = <?php echo get_setting('require_terms_agreement', '1') === '1' ? 'true' : 'false'; ?>;
+        const CONFIG_ALLOWED_PROOF_EXTS = <?php echo json_encode(explode(',', get_setting('allowed_proof_types', 'jpg,jpeg,png,pdf'))); ?>;
+        const CONFIG_MAX_PROOF_MB = <?php echo (int)get_setting('max_proof_upload_mb', 5); ?>;
+
         document.addEventListener("DOMContentLoaded", () => {
             const skeleton = document.getElementById("skeletonCard");
             const realCard = document.getElementById("realRegisterCard");
@@ -867,18 +936,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
             // Client-side file validation
             const fileInput = document.getElementById("proof_of_affiliation");
+            const fileErrorMsg = "Invalid proof file. Allowed types: " + CONFIG_ALLOWED_PROOF_EXTS.join(', ').toUpperCase() + " up to " + CONFIG_MAX_PROOF_MB + "MB.";
+            
             if (fileInput && fileInput.files && fileInput.files.length > 0) {
                 const file = fileInput.files[0];
-                const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
-                const allowedExtensions = /(\.jpg|\.jpeg|\.png|\.pdf)$/i;
-                if (!allowedTypes.includes(file.type) && !allowedExtensions.exec(file.name)) {
-                    showClientError("Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.");
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                if (!CONFIG_ALLOWED_PROOF_EXTS.includes(fileExt)) {
+                    showClientError(fileErrorMsg);
                     return false;
                 }
-                if (file.size > 5 * 1024 * 1024) {
-                    showClientError("Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.");
+                if (file.size > CONFIG_MAX_PROOF_MB * 1024 * 1024) {
+                    showClientError(fileErrorMsg);
                     return false;
                 }
+            } else if (CONFIG_REQUIRE_PROOF) {
+                showClientError("Proof of affiliation file is required.");
+                return false;
             }
 
             const pass = document.getElementById("password").value;
@@ -903,15 +976,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             if (!conf) { showClientError("Confirm Password is required."); return false; }
             if (pass !== conf) { showClientError("Passwords do not match."); return false; }
 
-            const termsChecked = document.getElementById("terms_agreed").checked;
-            if (!termsChecked) {
-                showClientError("You must agree to the Terms of Use and Privacy Policy before registering.");
-                return false;
+            if (CONFIG_REQUIRE_TERMS) {
+                const termsEl = document.getElementById("terms_agreed");
+                if (termsEl && !termsEl.checked) {
+                    showClientError("You must agree to the Terms of Use and Privacy Policy before registering.");
+                    return false;
+                }
             }
 
             return true;
         }
     </script>
+        <?php endif; ?>
 <?php include __DIR__ . '/support-assistant/support_widget.php'; ?>
 </body>
 

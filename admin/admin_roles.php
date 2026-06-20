@@ -11,35 +11,40 @@ $success = "";
 
 // Handle role change requests
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"]) && $_POST["action"] === "change_role") {
-    $uid = intval($_POST["user_id"] ?? 0);
-    $new_role = trim($_POST["new_role"] ?? "");
-
-    if (!in_array($new_role, ['super_admin','faculty_researcher','criminology_student','alumni_police_partner'])) {
-        $error = "Invalid role selection.";
-    } elseif ($uid === (int)$_SESSION["user_id"] && $new_role !== 'super_admin') {
-        $error = "For security reasons, you cannot demote yourself from Super Administrator.";
+    $token = $_POST["csrf_token"] ?? "";
+    if (empty($token) || !hash_equals($_SESSION["csrf_token"] ?? "", $token)) {
+        $error = "CSRF token validation failed. Unauthorized request.";
     } else {
-        try {
-            // Get user's current role and email
-            $stmt = $pdo->prepare("SELECT email, role FROM users WHERE id = :id LIMIT 1");
-            $stmt->execute([':id' => $uid]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $uid = intval($_POST["user_id"] ?? 0);
+        $new_role = trim($_POST["new_role"] ?? "");
 
-            if ($user) {
-                $email = $user['email'];
-                $old_role = $user['role'];
+        if (!in_array($new_role, ['super_admin','faculty_researcher','criminology_student','alumni_police_partner'])) {
+            $error = "Invalid role selection.";
+        } elseif ($uid === (int)$_SESSION["user_id"] && $new_role !== 'super_admin') {
+            $error = "For security reasons, you cannot demote yourself from Super Administrator.";
+        } else {
+            try {
+                // Get user's current role and email
+                $stmt = $pdo->prepare("SELECT email, role FROM users WHERE id = :id LIMIT 1");
+                $stmt->execute([':id' => $uid]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                // Update role
-                $upd = $pdo->prepare("UPDATE users SET role = :role WHERE id = :id");
-                $upd->execute([':role' => $new_role, ':id' => $uid]);
+                if ($user) {
+                    $email = $user['email'];
+                    $old_role = $user['role'];
 
-                log_activity("Change Role", "Changed role of $email from " . ($old_role ?: 'unassigned') . " to $new_role");
-                $success = "Successfully changed role of " . htmlspecialchars($email) . " to " . str_replace('_', ' ', $new_role) . ".";
-            } else {
-                $error = "User not found.";
+                    // Update role
+                    $upd = $pdo->prepare("UPDATE users SET role = :role WHERE id = :id");
+                    $upd->execute([':role' => $new_role, ':id' => $uid]);
+
+                    log_activity("Change Role", "Changed role of $email from " . ($old_role ?: 'unassigned') . " to $new_role");
+                    $success = "Successfully changed role of " . htmlspecialchars($email) . " to " . str_replace('_', ' ', $new_role) . ".";
+                } else {
+                    $error = "User not found.";
+                }
+            } catch (PDOException $e) {
+                $error = "Database error: " . $e->getMessage();
             }
-        } catch (PDOException $e) {
-            $error = "Database error: " . $e->getMessage();
         }
     }
 }
@@ -92,55 +97,6 @@ function role_label($r) {
         .alert { padding: .85rem 1.25rem; margin-bottom: 1.5rem; border-radius: 8px; font-size: 0.85rem; font-weight: 500; }
         .alert-danger { background-color: rgba(224, 122, 95, 0.15); color: var(--danger); border: 1px solid rgba(224, 122, 95, 0.2); }
         .alert-success { background-color: rgba(82, 183, 136, 0.15); color: var(--medium-green); border: 1px solid rgba(82, 183, 136, 0.2); }
-        
-        /* Permissions block */
-        .permissions-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.25rem;
-            margin-top: 1.5rem;
-        }
-        
-        .perm-card {
-            background:#fff;
-            border-radius: var(--border-radius);
-            padding: 1.25rem;
-            border: 1px solid rgba(27, 67, 50, 0.08);
-            box-shadow: var(--box-shadow);
-        }
-        
-        .perm-header {
-            font-weight: 700;
-            color: var(--dark-green);
-            font-size: 0.9rem;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            border-bottom: 1.5px solid var(--light-gray);
-            padding-bottom: 0.5rem;
-        }
-
-        .perm-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 0.35rem;
-        }
-
-        .perm-item {
-            font-size: 0.8rem;
-            color: #5f5f5f;
-            display: flex;
-            align-items: flex-start;
-            gap: 6px;
-        }
-
-        .perm-item::before {
-            content: '✓';
-            color: var(--medium-green);
-            font-weight: bold;
-        }
     </style>
 </head>
 
@@ -174,7 +130,7 @@ function role_label($r) {
                 <div class="page-header-wrap">
                     <div class="page-title">
                         <h1>Role Management & Access Permissions</h1>
-                        <p>Assign final security clearance roles, manage user access scopes, and audit portal permissions matrix.</p>
+                        <p>Assign and manage user roles after account approval.</p>
                     </div>
                 </div>
 
@@ -186,75 +142,7 @@ function role_label($r) {
                     <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
                 <?php endif; ?>
 
-                <!-- ROLE MATRIX / PERMISSIONS MATRIX CARD -->
-                <div class="dashboard-card" style="margin-bottom: 2rem;">
-                    <div class="card-title-wrap">
-                        <h3>
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
-                            <span>Security Roles Permission Matrix</span>
-                        </h3>
-                    </div>
-                    
-                    <div class="permissions-grid">
-                        <!-- Super Admin -->
-                        <div class="perm-card" style="border-left: 4px solid var(--medium-green);">
-                            <div class="perm-header">
-                                <span>Super Administrator</span>
-                            </div>
-                            <ul class="perm-list">
-                                <li class="perm-item">Full system access controls</li>
-                                <li class="perm-item">User approval & account management</li>
-                                <li class="perm-item">Role configuration reassignments</li>
-                                <li class="perm-item">Reports monitoring & activity logs</li>
-                                <li class="perm-item">Database backup & restoration</li>
-                                <li class="perm-item">General system configurations</li>
-                            </ul>
-                        </div>
 
-                        <!-- Faculty Researcher -->
-                        <div class="perm-card" style="border-left: 4px solid #2a6f97;">
-                            <div class="perm-header" style="color: #2a6f97;">
-                                <span>Faculty Researcher</span>
-                            </div>
-                            <ul class="perm-list">
-                                <li class="perm-item">View student fingerprint submissions</li>
-                                <li class="perm-item">Validate accuracy scores & submit decisions</li>
-                                <li class="perm-item">View comparative metrics & success data</li>
-                                <li class="perm-item">View safety & climate logger metrics</li>
-                                <li class="perm-item">Compile evaluation reports</li>
-                            </ul>
-                        </div>
-
-                        <!-- Criminology Student -->
-                        <div class="perm-card" style="border-left: 4px solid #f4a261;">
-                            <div class="perm-header" style="color: #f4a261;">
-                                <span>Criminology Student</span>
-                            </div>
-                            <ul class="perm-list">
-                                <li class="perm-item">Submit latent fingerprint evaluation data</li>
-                                <li class="perm-item">Upload fingerprint photography files</li>
-                                <li class="perm-item">View own records & historical data</li>
-                                <li class="perm-item">View automated image evaluation scores</li>
-                                <li class="perm-item">Submit safety and climate logs</li>
-                            </ul>
-                        </div>
-
-                        <!-- Alumni Police Partner -->
-                        <div class="perm-card" style="border-left: 4px solid #7251b5;">
-                            <div class="perm-header" style="color: #7251b5;">
-                                <span>Alumni / Police Partner</span>
-                            </div>
-                            <ul class="perm-list">
-                                <li class="perm-item">View approved forensic studies & reports</li>
-                                <li class="perm-item">View sustainable powder performance logs</li>
-                                <li class="perm-item">Submit partner feedback on trials</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- SEARCH & FILTERS -->
                 <div class="dashboard-card" style="margin-bottom:1.5rem; padding:1.25rem;">
@@ -282,15 +170,16 @@ function role_label($r) {
 
                 <!-- USERS ROLE TABLE -->
                 <div class="dashboard-card">
+                    <p style="font-size: 0.85rem; color: var(--gray); margin-bottom: 1.25rem; font-style: italic; margin-top: 0;">Super Administrator can assign user roles after approval.</p>
                     <div class="table-responsive">
                         <table class="custom-table">
                             <thead>
                                 <tr>
                                     <th>User Name</th>
                                     <th>Email Address</th>
-                                    <th>Department</th>
                                     <th>Current Role</th>
-                                    <th style="text-align: right;">Assign Role Action</th>
+                                    <th>Assign New Role</th>
+                                    <th style="text-align: right;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -301,26 +190,28 @@ function role_label($r) {
                                                 <?php echo htmlspecialchars($user['full_name']); ?>
                                             </td>
                                             <td><?php echo htmlspecialchars($user['email']); ?></td>
-                                            <td><?php echo htmlspecialchars($user['department'] ?: '—'); ?></td>
                                             <td>
                                                 <span style="font-size:0.75rem; font-weight:700; color: #52b788; background: rgba(82, 183, 136, 0.15); padding: 4px 8px; border-radius: 4px;">
                                                     <?php echo role_label($user['role'] ?? ''); ?>
                                                 </span>
                                             </td>
-                                            <td style="text-align: right;">
-                                                <form method="POST" action="admin_roles.php" style="display:inline-flex; gap:6px; align-items:center;"
+                                            <td>
+                                                <form id="role-form-<?php echo $user['id']; ?>" method="POST" action="admin_roles.php"
                                                       onsubmit="return <?php echo ($user['id'] === (int)$_SESSION['user_id']) ? 'confirm(\'Warning: Demoting yourself will lock you out of this panel. Continue?\')' : 'true'; ?>;">
                                                     <input type="hidden" name="action" value="change_role">
                                                     <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
-                                                    <select name="new_role" class="form-control-inline" style="padding: 4px 8px; font-size: 0.8rem;" required>
-                                                        <option value="" disabled>Select Role...</option>
-                                                        <option value="criminology_student" <?php echo ($user['role'] === 'criminology_student') ? 'selected' : ''; ?>>Criminology Student</option>
-                                                        <option value="faculty_researcher" <?php echo ($user['role'] === 'faculty_researcher') ? 'selected' : ''; ?>>Faculty Researcher</option>
-                                                        <option value="alumni_police_partner" <?php echo ($user['role'] === 'alumni_police_partner') ? 'selected' : ''; ?>>Alumni / Police Partner</option>
-                                                        <option value="super_admin" <?php echo ($user['role'] === 'super_admin') ? 'selected' : ''; ?>>Super Administrator</option>
-                                                    </select>
-                                                    <button type="submit" class="btn btn-primary btn-sm">Assign</button>
+                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                                                 </form>
+                                                <select name="new_role" form="role-form-<?php echo $user['id']; ?>" class="form-control-inline" style="padding: 4px 8px; font-size: 0.8rem;" required>
+                                                    <option value="" disabled>Select Role...</option>
+                                                    <option value="criminology_student" <?php echo ($user['role'] === 'criminology_student') ? 'selected' : ''; ?>>Criminology Student</option>
+                                                    <option value="faculty_researcher" <?php echo ($user['role'] === 'faculty_researcher') ? 'selected' : ''; ?>>Faculty Researcher</option>
+                                                    <option value="alumni_police_partner" <?php echo ($user['role'] === 'alumni_police_partner') ? 'selected' : ''; ?>>Alumni / Police Partner</option>
+                                                    <option value="super_admin" <?php echo ($user['role'] === 'super_admin') ? 'selected' : ''; ?>>Super Administrator</option>
+                                                </select>
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <button type="submit" form="role-form-<?php echo $user['id']; ?>" class="btn btn-primary btn-sm">Assign</button>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

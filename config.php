@@ -82,6 +82,8 @@ try {
         `failed_login_attempts` INT DEFAULT 0,
         `locked_until`       DATETIME NULL,
         `last_failed_login`  DATETIME NULL,
+        `terms_agreed`       TINYINT(1) DEFAULT 0,
+        `terms_agreed_at`    DATETIME NULL,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
@@ -142,6 +144,8 @@ try {
     $addUserColumn('failed_login_attempts', "`failed_login_attempts` INT DEFAULT 0 AFTER `status`");
     $addUserColumn('locked_until', "`locked_until` DATETIME NULL AFTER `failed_login_attempts`");
     $addUserColumn('last_failed_login', "`last_failed_login` DATETIME NULL AFTER `locked_until`");
+    $addUserColumn('terms_agreed', "`terms_agreed` TINYINT(1) DEFAULT 0 AFTER `last_failed_login`");
+    $addUserColumn('terms_agreed_at', "`terms_agreed_at` DATETIME NULL AFTER `terms_agreed`");
     $pdo->exec("UPDATE `users`
         SET `status` = 'active'
         WHERE `email` IN (

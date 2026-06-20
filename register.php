@@ -76,6 +76,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "Confirm Password is required.";
     } elseif ($password !== $confirm_pass) {
         $error_message = "Passwords do not match.";
+    } elseif (!isset($_POST['terms_agreed']) || $_POST['terms_agreed'] !== '1') {
+        $error_message = "You must agree to the Terms of Use and Privacy Policy before registering.";
     } else {
         // Process file upload if provided
         $proof_path = null;
@@ -146,8 +148,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     $hashed = password_hash($password, PASSWORD_DEFAULT);
 
                     $ins = $pdo->prepare("INSERT INTO users
-                        (first_name, middle_name, last_name, full_name, email, password, contact_number, id_number, department, affiliation, requested_role, reason_for_access, proof_of_affiliation, role, status)
-                        VALUES (:fn, :mn, :ln, :full, :email, :pass, :contact, :idnum, :dept, :aff, :reqrole, :reason, :proof, NULL, 'pending')");
+                        (first_name, middle_name, last_name, full_name, email, password, contact_number, id_number, department, affiliation, requested_role, reason_for_access, proof_of_affiliation, role, status, terms_agreed, terms_agreed_at)
+                        VALUES (:fn, :mn, :ln, :full, :email, :pass, :contact, :idnum, :dept, :aff, :reqrole, :reason, :proof, NULL, 'pending', 1, NOW())");
 
                     $ins->execute([
                         ':fn' => $first_name,
@@ -649,6 +651,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                         </div>
                     </div>
 
+                    <div class="form-group" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                        <label class="checkbox-container" style="display: flex; align-items: flex-start; gap: 8px; font-weight: 500; font-size: 0.85rem; cursor: pointer; color: var(--dark-green);">
+                            <input type="checkbox" name="terms_agreed" id="terms_agreed" value="1" required style="margin-top: 3px; cursor: pointer; accent-color: var(--dark-green);">
+                            <span style="text-align: left; line-height: 1.4;">I agree to the <a href="terms.php" target="_blank" rel="noopener noreferrer" style="color: var(--dark-green); font-weight: 700; text-decoration: underline;">Terms of Use</a> and <a href="privacy.php" target="_blank" rel="noopener noreferrer" style="color: var(--dark-green); font-weight: 700; text-decoration: underline;">Privacy Policy</a>.</span>
+                        </label>
+                    </div>
+
                     <div class="form-nav">
                         <button type="button" class="btn-back" onclick="goToStep1()">Back</button>
                         <button type="submit" name="submit_registration" class="btn-next" id="submitBtn"
@@ -677,6 +686,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
     <footer>
         <p>&copy; 2026 Green Forensics Project | LSPU CCJE San Pablo City Campus</p>
+        <p style="margin-top: 5px;">
+            <a href="terms.php" target="_blank" rel="noopener noreferrer" style="color: var(--gray); text-decoration: underline; margin-right: 10px;">Terms of Use</a>
+            <a href="privacy.php" target="_blank" rel="noopener noreferrer" style="color: var(--gray); text-decoration: underline;">Privacy Policy</a>
+        </p>
     </footer>
 
     <script>
@@ -889,6 +902,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
             if (!conf) { showClientError("Confirm Password is required."); return false; }
             if (pass !== conf) { showClientError("Passwords do not match."); return false; }
+
+            const termsChecked = document.getElementById("terms_agreed").checked;
+            if (!termsChecked) {
+                showClientError("You must agree to the Terms of Use and Privacy Policy before registering.");
+                return false;
+            }
 
             return true;
         }

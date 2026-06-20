@@ -376,6 +376,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <footer>
         <p>&copy; 2026 Green Forensics Project | LSPU CCJE San Pablo City Campus</p>
+        <p style="margin-top: 5px;">
+            <a href="terms.php" target="_blank" rel="noopener noreferrer" style="color: var(--gray); text-decoration: underline; margin-right: 10px;">Terms of Use</a>
+            <a href="privacy.php" target="_blank" rel="noopener noreferrer" style="color: var(--gray); text-decoration: underline;">Privacy Policy</a>
+        </p>
     </footer>
 
     <script>

@@ -78,6 +78,7 @@ $rootUrl = rtrim($baseUrl, '/');
             <button class="suggestion-btn" onclick="sendSuggestion('Terms of Use')">Terms of Use</button>
             <button class="suggestion-btn" onclick="sendSuggestion('Privacy Policy')">Privacy Policy</button>
             <button class="suggestion-btn" onclick="sendSuggestion('Contact Super Admin')">Contact Super Admin</button>
+            <button class="suggestion-btn" onclick="sendSuggestion('Request Account Unlock')">Request Account Unlock</button>
         </div>
     </div>
 

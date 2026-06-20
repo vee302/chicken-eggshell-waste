@@ -314,3 +314,42 @@
         border-radius: 12px;
     }
 }
+
+/* Account Unlock Button & Links */
+.chat-unlock-btn {
+    display: inline-block;
+    background-color: var(--chat-primary);
+    color: var(--chat-white) !important;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 6px;
+}
+
+.chat-unlock-btn:hover {
+    background-color: var(--chat-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: var(--chat-white) !important;
+}
+
+.chat-unlock-btn:active {
+    transform: translateY(0);
+}
+
+.chat-inline-link {
+    color: var(--chat-primary);
+    font-weight: 600;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.chat-inline-link:hover {
+    color: var(--chat-primary-hover);
+}

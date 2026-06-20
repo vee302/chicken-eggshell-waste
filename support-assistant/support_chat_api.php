@@ -31,8 +31,38 @@ if (empty($message)) {
     send_response(false, "Message cannot be empty.", 400);
 }
 
-// 1. Password Security Check
+// 1. Password Security & Account Unlock Check
 $lowerMessage = strtolower($message);
+
+// Check for unlock request intent first
+$unlockKeywords = [
+    'unlock account',
+    'locked account',
+    'cannot login',
+    'can\'t login',
+    'cant login',
+    'login failed',
+    'forgot password',
+    'request unlock',
+    'locked',
+    'lockout'
+];
+$matchedUnlock = false;
+foreach ($unlockKeywords as $keyword) {
+    if (strpos($lowerMessage, $keyword) !== false) {
+        $matchedUnlock = true;
+        break;
+    }
+}
+
+if ($matchedUnlock) {
+    send_response(
+        true,
+        "If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php"
+    );
+}
+
+// Fallback password warning
 if (strpos($lowerMessage, 'password') !== false || strpos($lowerMessage, 'passcode') !== false || strpos($lowerMessage, 'credential') !== false) {
     send_response(
         true,
@@ -63,7 +93,7 @@ debug_log("Attempting call with Model: $model");
 // 4. Call Google Gemini API
 $url = "https://generativelanguage.googleapis.com/v1beta/models/" . $model . ":generateContent?key=" . $apiKey;
 
-$systemInstruction = "You are the Green Forensics Support Assistant. Help users with the Green Forensics Evaluating System. Answer clearly, politely, and briefly. You can help with registration, pending accounts, login lockout, account unlock requests, fingerprint image upload, webcam capture, AI-assisted image quality evaluation, faculty validation, Terms of Use, Privacy Policy, and role-based dashboards. Do not ask users for passwords or private credentials. Fingerprint images are used only for academic research evaluation and image quality assessment, not biometric identification. If the user greets you, respond warmly and ask how you can help.";
+$systemInstruction = "You are the Green Forensics Support Assistant. Help users with the Green Forensics Evaluating System. Answer clearly, politely, and briefly. You can help with registration, pending accounts, login lockout, account unlock requests, fingerprint image upload, webcam capture, AI-assisted image quality evaluation, faculty validation, Terms of Use, Privacy Policy, and role-based dashboards. For account lockouts, password resets, failed logins, or unlock requests, guide the user to visit request_unlock.php. Do not ask for their password or private credentials. Fingerprint images are used only for academic research evaluation and image quality assessment, not biometric identification. If a user asks about locked account, login failed, forgot password, cannot login, or requesting an unlock, you must respond with: 'If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php'. If the user greets you, respond warmly and ask how you can help.";
 
 $data = [
     "contents" => [

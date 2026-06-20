@@ -54,6 +54,55 @@ function appendMessage(text, isUser = false) {
     scrollToBottom();
 }
 
+// Safe DOM-based message renderer that appends bot messages with links/buttons
+function appendBotMessageWithUnlock(text, useButton = false) {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('chat-message', 'bot-message');
+
+    const baseUrl = typeof window.GREEN_FORENSICS_BASE_URL !== 'undefined' ? window.GREEN_FORENSICS_BASE_URL : '';
+    const unlockUrl = baseUrl + '/request_unlock.php';
+
+    if (useButton) {
+        // Appends explanation text safely
+        messageDiv.appendChild(document.createTextNode(text));
+
+        // Appends styled button inside container safely
+        const btnContainer = document.createElement('div');
+        btnContainer.style.marginTop = '10px';
+        
+        const btn = document.createElement('a');
+        btn.href = unlockUrl;
+        btn.className = 'chat-unlock-btn';
+        btn.textContent = 'Open Request Unlock Page';
+        
+        btnContainer.appendChild(btn);
+        messageDiv.appendChild(btnContainer);
+    } else {
+        // Replace request_unlock.php with a link element safely
+        const keyword = 'request_unlock.php';
+        const parts = text.split(keyword);
+        
+        for (let i = 0; i < parts.length; i++) {
+            if (parts[i]) {
+                messageDiv.appendChild(document.createTextNode(parts[i]));
+            }
+            if (i < parts.length - 1) {
+                const link = document.createElement('a');
+                link.href = unlockUrl;
+                link.className = 'chat-inline-link';
+                link.textContent = keyword;
+                messageDiv.appendChild(link);
+            }
+        }
+    }
+
+    chatMessages.appendChild(messageDiv);
+    scrollToBottom();
+}
+
 // Simulated typing indicator (adds premium feel)
 function showTypingIndicator() {
     const chatMessages = document.getElementById('chatMessages');
@@ -123,7 +172,11 @@ function handleChatSubmit(event) {
         if (typing && typing.parentNode) {
             typing.parentNode.removeChild(typing);
         }
-        appendMessage(reply, false);
+        if (reply.includes('request_unlock.php')) {
+            appendBotMessageWithUnlock(reply, false);
+        } else {
+            appendMessage(reply, false);
+        }
     });
 }
 
@@ -135,10 +188,27 @@ function sendSuggestion(questionText) {
     // Bot response with typing indicator
     const typing = showTypingIndicator();
 
+    if (questionText === 'Request Account Unlock') {
+        setTimeout(() => {
+            if (typing && typing.parentNode) {
+                typing.parentNode.removeChild(typing);
+            }
+            appendBotMessageWithUnlock(
+                'If your account is locked after multiple failed login attempts, you can request an unlock for Super Admin review. Click the button below to open the Request Unlock page.',
+                true
+            );
+        }, 500);
+        return;
+    }
+
     getBotResponseAPI(questionText, (reply) => {
         if (typing && typing.parentNode) {
             typing.parentNode.removeChild(typing);
         }
-        appendMessage(reply, false);
+        if (reply.includes('request_unlock.php')) {
+            appendBotMessageWithUnlock(reply, false);
+        } else {
+            appendMessage(reply, false);
+        }
     });
 }

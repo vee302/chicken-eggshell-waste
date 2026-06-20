@@ -360,9 +360,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <span>Don't have an account?</span>
                     <a href="register.php" class="register-link">Register here</a>
                 </div>
+                <!--
                 <div>
                     <a href="request_unlock.php" class="register-link" style="color: var(--soft-green); border-bottom-color: rgba(107, 143, 113, 0.4);">Need help accessing your account? Request unlock</a>
                 </div>
+                -->
             </div>
 
             <div class="back-link-wrapper">

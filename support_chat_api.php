@@ -1,14 +1,26 @@
 <?php
+ob_start(); // Buffer output to prevent warnings or database notices from corrupting the JSON payload
 // support_chat_api.php - Backend API Handler for Gemini AI Support Assistant
 header('Content-Type: application/json');
 
 require_once "config.php";
 
+// Helper function to safely output JSON and exit
+function send_response($success, $reply, $http_code = 200) {
+    if (ob_get_length()) {
+        ob_clean();
+    }
+    http_response_code($http_code);
+    echo json_encode([
+        "success" => $success,
+        "reply" => $reply
+    ]);
+    exit;
+}
+
 // Ensure request is POST
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    http_response_code(405);
-    echo json_encode(["success" => false, "reply" => "Method Not Allowed"]);
-    exit;
+    send_response(false, "Method Not Allowed", 405);
 }
 
 // Read JSON input
@@ -16,19 +28,16 @@ $input = json_decode(file_get_contents('php://input'), true);
 $message = trim($input['message'] ?? '');
 
 if (empty($message)) {
-    http_response_code(400);
-    echo json_encode(["success" => false, "reply" => "Message cannot be empty."]);
-    exit;
+    send_response(false, "Message cannot be empty.", 400);
 }
 
 // 1. Password Security Check
 $lowerMessage = strtolower($message);
 if (strpos($lowerMessage, 'password') !== false || strpos($lowerMessage, 'passcode') !== false || strpos($lowerMessage, 'credential') !== false) {
-    echo json_encode([
-        "success" => true,
-        "reply" => "For security reasons, never share your password. If you need help with your password or your account is locked, please use the Request Unlock page or contact the Super Administrator directly."
-    ]);
-    exit;
+    send_response(
+        true,
+        "For security reasons, never share your password. If you need help with your password or your account is locked, please use the Request Unlock page or contact the Super Administrator directly."
+    );
 }
 
 // Helper for local diagnostic logging
@@ -44,11 +53,7 @@ if (empty($apiKey)) {
     $err = "Gemini API Error: GEMINI_API_KEY is not defined or empty in the environment configuration.";
     error_log($err);
     debug_log($err);
-    echo json_encode([
-        "success" => false,
-        "reply" => "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator."
-    ]);
-    exit;
+    send_response(false, "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator.");
 }
 
 // 3. Fetch Gemini Model (non-hardcoded)
@@ -110,11 +115,7 @@ if ($response === false || $httpCode !== 200) {
     $errMessage = "Gemini API Error. HTTP Code: $httpCode. cURL Error: $curlError. Response: " . ($response !== false ? $response : 'No response');
     error_log($errMessage);
     debug_log($errMessage);
-    echo json_encode([
-        "success" => false,
-        "reply" => "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator."
-    ]);
-    exit;
+    send_response(false, "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator.");
 }
 
 $responseData = json_decode($response, true);
@@ -124,15 +125,8 @@ if (empty($replyText)) {
     $errMessage = "Gemini API Error: empty response text structure. Response: " . $response;
     error_log($errMessage);
     debug_log($errMessage);
-    echo json_encode([
-        "success" => false,
-        "reply" => "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator."
-    ]);
-    exit;
+    send_response(false, "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator.");
 }
 
-echo json_encode([
-    "success" => true,
-    "reply" => trim($replyText)
-]);
+send_response(true, trim($replyText));
 ?>

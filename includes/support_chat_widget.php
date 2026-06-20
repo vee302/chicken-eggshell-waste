@@ -96,5 +96,6 @@ $baseUrl = rtrim(str_replace('\\', '/', $baseUrl), '/') . '/';
 <script>
     var supportChatPrefix = "<?php echo $prefix; ?>";
     var supportChatBaseUrl = "<?php echo $baseUrl; ?>";
+    var BASE_URL = "<?php echo rtrim($baseUrl, '/'); ?>";
 </script>
 <script src="<?php echo $prefix; ?>assets/js/support_chat.js"></script>

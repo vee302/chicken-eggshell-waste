@@ -632,6 +632,7 @@ register_shutdown_function(function () {
 
         $is_ajax = (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
             strpos($_SERVER['SCRIPT_NAME'], 'ajax_') !== false ||
+            strpos($_SERVER['SCRIPT_NAME'], 'support_chat_api.php') !== false ||
             strpos($_SERVER['SCRIPT_NAME'], 'check_registration_status.php') !== false ||
             $is_json;
 

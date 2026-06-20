@@ -111,8 +111,8 @@ function getBotResponse(userText) {
 
 // Fetch response from Gemini API backend
 function getBotResponseAPI(text, callback) {
-    const baseUrl = typeof supportChatBaseUrl !== 'undefined' ? supportChatBaseUrl : (typeof supportChatPrefix !== 'undefined' ? supportChatPrefix : '');
-    const url = baseUrl + 'support_chat_api.php';
+    const baseUrl = typeof BASE_URL !== 'undefined' ? BASE_URL : '';
+    const url = `${baseUrl}/support_chat_api.php`;
 
     fetch(url, {
         method: 'POST',

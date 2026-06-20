@@ -111,8 +111,8 @@ function getBotResponse(userText) {
 
 // Fetch response from Gemini API backend
 function getBotResponseAPI(text, callback) {
-    const prefix = typeof supportChatPrefix !== 'undefined' ? supportChatPrefix : '';
-    const url = prefix + 'ajax_support_chat.php';
+    const baseUrl = typeof supportChatBaseUrl !== 'undefined' ? supportChatBaseUrl : (typeof supportChatPrefix !== 'undefined' ? supportChatPrefix : '');
+    const url = baseUrl + 'support_chat_api.php';
 
     fetch(url, {
         method: 'POST',
@@ -128,16 +128,16 @@ function getBotResponseAPI(text, callback) {
         return response.json();
     })
     .then(data => {
-        if (data.status === 'success' && typeof data.reply !== 'undefined') {
+        if (data.success === true && typeof data.reply !== 'undefined') {
             callback(data.reply);
         } else {
-            // Fallback if status is fallback or error
-            callback(getBotResponse(text));
+            // Fallback if success is false
+            callback(data.reply || "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator.");
         }
     })
     .catch(error => {
-        console.error('Support Chat API error, falling back to rule-based logic:', error);
-        callback(getBotResponse(text));
+        console.error('Support Chat API error:', error);
+        callback("Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator.");
     });
 }
 

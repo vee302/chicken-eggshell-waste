@@ -1,0 +1,112 @@
+<?php
+// support_chat_api.php - Backend API Handler for Gemini AI Support Assistant
+header('Content-Type: application/json');
+
+require_once "config.php";
+
+// Ensure request is POST
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(405);
+    echo json_encode(["success" => false, "reply" => "Method Not Allowed"]);
+    exit;
+}
+
+// Read JSON input
+$input = json_decode(file_get_contents('php://input'), true);
+$message = trim($input['message'] ?? '');
+
+if (empty($message)) {
+    http_response_code(400);
+    echo json_encode(["success" => false, "reply" => "Message cannot be empty."]);
+    exit;
+}
+
+// 1. Password Security Check
+$lowerMessage = strtolower($message);
+if (strpos($lowerMessage, 'password') !== false || strpos($lowerMessage, 'passcode') !== false || strpos($lowerMessage, 'credential') !== false) {
+    echo json_encode([
+        "success" => true,
+        "reply" => "For security reasons, never share your password. If you need help with your password or your account is locked, please use the Request Unlock page or contact the Super Administrator directly."
+    ]);
+    exit;
+}
+
+// 2. Fetch Gemini API Key
+$apiKey = env('GEMINI_API_KEY');
+if (empty($apiKey)) {
+    error_log("Gemini API Error: GEMINI_API_KEY is not defined or empty in the environment configuration.");
+    echo json_encode([
+        "success" => false,
+        "reply" => "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator."
+    ]);
+    exit;
+}
+
+// 3. Fetch Gemini Model (non-hardcoded)
+$model = env('GEMINI_MODEL', 'gemini-1.5-flash');
+
+// 4. Call Google Gemini API
+$url = "https://generativelanguage.googleapis.com/v1beta/models/" . $model . ":generateContent?key=" . $apiKey;
+
+$systemInstruction = "You are the Green Forensics Support Assistant. Help users with the Green Forensics Evaluating System. Answer clearly, politely, and briefly. You can help with registration, pending accounts, login lockout, account unlock requests, fingerprint image upload, webcam capture, AI-assisted image quality evaluation, faculty validation, Terms of Use, Privacy Policy, and role-based dashboards. Do not ask users for passwords or private credentials. Fingerprint images are used only for academic research evaluation and image quality assessment, not biometric identification. If the user greets you, respond warmly and ask how you can help.";
+
+$data = [
+    "contents" => [
+        [
+            "parts" => [
+                ["text" => $message]
+            ]
+        ]
+    ],
+    "systemInstruction" => [
+        "parts" => [
+            ["text" => $systemInstruction]
+        ]
+    ],
+    "generationConfig" => [
+        "temperature" => 0.4,
+        "maxOutputTokens" => 150
+    ]
+];
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json'
+]);
+curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
+curl_close($ch);
+
+// If request fails or API returns error response code
+if ($response === false || $httpCode !== 200) {
+    error_log("Gemini API Error. HTTP Code: $httpCode. cURL Error: $curlError. Response: " . ($response !== false ? $response : 'No response'));
+    echo json_encode([
+        "success" => false,
+        "reply" => "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator."
+    ]);
+    exit;
+}
+
+$responseData = json_decode($response, true);
+$replyText = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+if (empty($replyText)) {
+    error_log("Gemini API Error: empty response text structure. Response: " . $response);
+    echo json_encode([
+        "success" => false,
+        "reply" => "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator."
+    ]);
+    exit;
+}
+
+echo json_encode([
+    "success" => true,
+    "reply" => trim($replyText)
+]);
+?>

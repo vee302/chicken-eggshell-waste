@@ -7,6 +7,16 @@ if (file_exists('assets/css/support_chat.css')) {
 } elseif (file_exists('../assets/css/support_chat.css')) {
     $prefix = '../';
 }
+
+// Dynamically determine the base URL directory path for AJAX requests
+$scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+$scriptDir = str_replace('\\', '/', $scriptDir);
+if ($prefix === '../') {
+    $baseUrl = dirname($scriptDir);
+} else {
+    $baseUrl = $scriptDir;
+}
+$baseUrl = rtrim(str_replace('\\', '/', $baseUrl), '/') . '/';
 ?>
 <!-- Support Chat Widget Stylesheet -->
 <link rel="stylesheet" href="<?php echo $prefix; ?>assets/css/support_chat.css">
@@ -85,5 +95,6 @@ if (file_exists('assets/css/support_chat.css')) {
 <!-- Support Chat Javascript -->
 <script>
     var supportChatPrefix = "<?php echo $prefix; ?>";
+    var supportChatBaseUrl = "<?php echo $baseUrl; ?>";
 </script>
 <script src="<?php echo $prefix; ?>assets/js/support_chat.js"></script>

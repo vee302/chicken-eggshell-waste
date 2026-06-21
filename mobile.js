@@ -292,7 +292,7 @@ if (window.innerWidth > 768) {
             const problemTargetPos = getTargetPosition(".problem-section .pedestal-plate");
             const heroState = getHeroJarState();
 
-            if (progress < 1.0) {
+            if (progress < 0.75) {
                 // Return to body as a fixed element if it's currently nested in the card
                 if (product.parentElement !== document.body) {
                     document.body.appendChild(product);
@@ -310,10 +310,6 @@ if (window.innerWidth > 768) {
                 const problemX = problemTargetPos.x;
                 const problemY = problemTargetPos.y;
                 const problemScale = 0.75;
-
-                // End target landed coordinates
-                const landedX = targetPos.x;
-                const landedY = targetPos.y;
 
                 if (progress < 0.15) {
                     // 1st Page: "GREEN FORENSICS" (Hero)
@@ -338,31 +334,12 @@ if (window.innerWidth > 768) {
                     y = baseY + bounceOffset;
 
                     rotation = Math.cos(t * Math.PI * 2.0) * 35 * envelope;
-                } else if (progress < 0.75) {
+                } else {
                     // 2nd Page: Locked exactly on the Glowing Pedestal center on mobile!
                     x = problemX;
                     y = problemY;
                     scale = problemScale;
                     rotation = -2;
-                } else {
-                    // Transition: Problem Pedestal to Card 4
-                    const t = (progress - 0.75) / 0.25;
-
-                    const baseX = problemX + (landedX - problemX) * t;
-                    const baseY = problemY + (landedY - problemY) * t;
-                    scale = problemScale + (finalLandedScale - problemScale) * t;
-
-                    // Landing dampening envelope
-                    const envelope = (t >= 0.92) ? (1.0 - (t - 0.92) / 0.08) : 1.0;
-
-                    // Perfect 2 sweeps down to Card 4
-                    const zigZagOffset = Math.sin(t * Math.PI * 2.0) * (window.innerWidth * 0.35) * envelope;
-                    x = baseX + zigZagOffset;
-
-                    const bounceOffset = Math.abs(Math.cos(t * Math.PI * 2.0)) * -20 * envelope;
-                    y = baseY + bounceOffset;
-
-                    rotation = -2 + (0 - (-2)) * t + Math.cos(t * Math.PI * 2.0) * 40 * envelope;
                 }
 
                 // Dynamic Stacking: Float in the front (z-index: 999) so it overlays backgrounds and pedestal

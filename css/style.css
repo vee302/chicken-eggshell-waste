@@ -176,8 +176,6 @@ body {
     align-items: center;
     justify-content: center;
     will-change: transform, opacity;
-    opacity: 0;
-    visibility: hidden;
 }
 
 /* Premium Jar Container */
@@ -2469,7 +2467,8 @@ img {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(250, 248, 241, 0.98); /* matching --cream background */
+    background-color: rgba(250, 248, 241, 0.98);
+    /* matching --cream background */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -2571,4 +2570,3 @@ img {
         line-height: 1.35 !important;
     }
 }
-

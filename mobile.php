@@ -909,24 +909,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
     <script src="mobile.js?v=<?= time() ?>"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // Accordion click handler (inline failsafe against JS caching)
-            const triggers = document.querySelectorAll('.benefit-accordion-trigger');
-            triggers.forEach(trigger => {
-                trigger.addEventListener('click', () => {
-                    const item = trigger.closest('.benefit-accordion-item');
-                    const isOpen = item.classList.contains('is-open');
-
-                    // Close all items first (single-open behavior)
-                    document.querySelectorAll('.benefit-accordion-item.is-open').forEach(openItem => {
-                        openItem.classList.remove('is-open');
-                    });
-
-                    // Open if not already open
-                    if (!isOpen) {
-                        item.classList.add('is-open');
-                    }
-                });
-            });
+            // Accordion click handler handled by mobile.js
 
             // ==========================================================================
             // EXPECTED RESULTS SCROLL ANIMATIONS (Bulletproof in-view Check & Fallback)

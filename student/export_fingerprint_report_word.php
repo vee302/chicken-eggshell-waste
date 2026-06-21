@@ -56,6 +56,26 @@ try {
     die("<h1>Database Error</h1><p>" . htmlspecialchars($e->getMessage()) . "</p>");
 }
 
+function safeFloat($value, $default = 0.0) {
+    if ($value === null || $value === '') {
+        return $default;
+    }
+    if (is_numeric($value)) {
+        return (float)$value;
+    }
+    return $default;
+}
+
+function formatScore($value) {
+    if ($value === null || $value === '') {
+        return 'N/A';
+    }
+    if (!is_numeric($value)) {
+        return 'N/A';
+    }
+    return number_format((float)$value, 1) . '%';
+}
+
 // Format trial ID for filename and contents
 $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_PAD_LEFT);
 $filename = "Fingerprint_Evaluation_Report_" . $trial_id_str . ".doc";
@@ -285,18 +305,18 @@ if ($trial['status'] === 'pending_validation') {
 
         <!-- Official Faculty Final Evaluation -->
         <?php if ($trial['status'] === 'approved'): 
-            $f_score = $trial['faculty_final_score'] !== null ? (float)$trial['faculty_final_score'] : 0;
-            $f_clarity = $trial['faculty_ridge_clarity_score'] !== null ? (float)$trial['faculty_ridge_clarity_score'] : 0;
-            $f_contrast = $trial['faculty_contrast_score'] !== null ? (float)$trial['faculty_contrast_score'] : 0;
-            $f_visibility = $trial['faculty_visibility_score'] !== null ? (float)$trial['faculty_visibility_score'] : 0;
-            $f_sharpness = $trial['faculty_ridge_clarity_score'] !== null ? (float)$trial['faculty_ridge_clarity_score'] : 0;
-            $f_adhesion = $trial['faculty_adhesion_score'] !== null ? (float)$trial['faculty_adhesion_score'] : 0;
+            $f_score = safeFloat($trial['faculty_final_score']);
+            $f_clarity = safeFloat($trial['faculty_ridge_clarity_score']);
+            $f_contrast = safeFloat($trial['faculty_contrast_score']);
+            $f_visibility = safeFloat($trial['faculty_visibility_score']);
+            $f_sharpness = safeFloat($trial['faculty_ridge_clarity_score']); // fallback
+            $f_adhesion = safeFloat($trial['faculty_adhesion_score']);
         ?>
             <div class="section-title">Official Faculty Final Evaluation</div>
             <table class="score-table">
                 <tr>
                     <th colspan="2" style="font-size: 11pt; padding: 10px;">Official Accuracy Score</th>
-                    <th colspan="3" style="font-size: 14pt; padding: 10px; color: #1b4332; background-color: #d2e2d5; font-weight: bold;"><?= number_format($f_score, 1) ?>%</th>
+                    <th colspan="3" style="font-size: 14pt; padding: 10px; color: #1b4332; background-color: #d2e2d5; font-weight: bold;"><?= formatScore($trial['faculty_final_score']) ?></th>
                 </tr>
                 <tr>
                     <th>Ridge Clarity</th>
@@ -306,11 +326,11 @@ if ($trial['status'] === 'pending_validation') {
                     <th>Adhesion Quality</th>
                 </tr>
                 <tr>
-                    <td><?= number_format($f_clarity, 1) ?>%</td>
-                    <td><?= number_format($f_contrast, 1) ?>%</td>
-                    <td><?= number_format($f_visibility, 1) ?>%</td>
-                    <td><?= number_format($f_sharpness, 1) ?>%</td>
-                    <td><?= number_format($f_adhesion, 1) ?>%</td>
+                    <td><?= formatScore($trial['faculty_ridge_clarity_score']) ?></td>
+                    <td><?= formatScore($trial['faculty_contrast_score']) ?></td>
+                    <td><?= formatScore($trial['faculty_visibility_score']) ?></td>
+                    <td><?= formatScore($trial['faculty_ridge_clarity_score']) ?></td>
+                    <td><?= formatScore($trial['faculty_adhesion_score']) ?></td>
                 </tr>
             </table>
         <?php endif; ?>
@@ -319,11 +339,11 @@ if ($trial['status'] === 'pending_validation') {
         <div class="section-title">AI Preliminary Results (Read-Only Reference)</div>
         <table class="score-table">
             <?php
-            $ai_acc = $trial['ai_accuracy_score'] !== null ? (float)$trial['ai_accuracy_score'] : (float)$trial['accuracy_score'];
-            $ai_clarity = $trial['ridge_clarity_score'] !== null ? (float)$trial['ridge_clarity_score'] : 0;
-            $ai_visibility = $trial['visibility_score'] !== null ? (float)$trial['visibility_score'] : 0;
-            $ai_adhesion = $trial['adhesion_score'] !== null ? (float)$trial['adhesion_score'] : 0;
-            $ai_contrast = $trial['contrast_score'] !== null ? (float)$trial['contrast_score'] : 0;
+            $ai_acc = $trial['ai_accuracy_score'] !== null ? $trial['ai_accuracy_score'] : $trial['accuracy_score'];
+            $ai_clarity = $trial['ridge_clarity_score'];
+            $ai_visibility = $trial['visibility_score'];
+            $ai_adhesion = $trial['adhesion_score'];
+            $ai_contrast = $trial['contrast_score'];
             ?>
             <tr>
                 <th>AI Accuracy</th>
@@ -333,11 +353,11 @@ if ($trial['status'] === 'pending_validation') {
                 <th>AI Contrast</th>
             </tr>
             <tr>
-                <td><?= number_format($ai_acc, 1) ?>%</td>
-                <td><?= number_format($ai_clarity, 1) ?>%</td>
-                <td><?= number_format($ai_visibility, 1) ?>%</td>
-                <td><?= number_format($ai_adhesion, 1) ?>%</td>
-                <td><?= number_format($ai_contrast, 1) ?>%</td>
+                <td><?= formatScore($ai_acc) ?></td>
+                <td><?= formatScore($ai_clarity) ?></td>
+                <td><?= formatScore($ai_visibility) ?></td>
+                <td><?= formatScore($ai_adhesion) ?></td>
+                <td><?= formatScore($ai_contrast) ?></td>
             </tr>
         </table>
 

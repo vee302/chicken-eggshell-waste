@@ -50,6 +50,26 @@ try {
     die("<h1>Database Error</h1><p>" . htmlspecialchars($e->getMessage()) . "</p>");
 }
 
+function safeFloat($value, $default = 0.0) {
+    if ($value === null || $value === '') {
+        return $default;
+    }
+    if (is_numeric($value)) {
+        return (float)$value;
+    }
+    return $default;
+}
+
+function formatScore($value) {
+    if ($value === null || $value === '') {
+        return 'N/A';
+    }
+    if (!is_numeric($value)) {
+        return 'N/A';
+    }
+    return number_format((float)$value, 1) . '%';
+}
+
 // Format trial ID
 $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_PAD_LEFT);
 ?>
@@ -429,42 +449,38 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
 
         <!-- Official Faculty Final Evaluation (Only for Approved records, shown FIRST) -->
         <?php if ($trial['status'] === 'approved'): 
-            $f_score = $trial['faculty_final_score'] !== null ? parseFloatCheck($trial['faculty_final_score']) : null;
-            $f_clarity = $trial['faculty_ridge_clarity_score'] !== null ? parseFloatCheck($trial['faculty_ridge_clarity_score']) : null;
-            $f_contrast = $trial['faculty_contrast_score'] !== null ? parseFloatCheck($trial['faculty_contrast_score']) : null;
-            $f_visibility = $trial['faculty_visibility_score'] !== null ? parseFloatCheck($trial['faculty_visibility_score']) : null;
-            $f_sharpness = $trial['faculty_ridge_clarity_score'] !== null ? parseFloatCheck($trial['faculty_ridge_clarity_score']) : null;
-            $f_adhesion = $trial['faculty_adhesion_score'] !== null ? parseFloatCheck($trial['faculty_adhesion_score']) : null;
-            
-            function parseFloatCheck($val) {
-                return (float)$val;
-            }
+            $f_score = safeFloat($trial['faculty_final_score']);
+            $f_clarity = safeFloat($trial['faculty_ridge_clarity_score']);
+            $f_contrast = safeFloat($trial['faculty_contrast_score']);
+            $f_visibility = safeFloat($trial['faculty_visibility_score']);
+            $f_sharpness = safeFloat($trial['faculty_ridge_clarity_score']); // fallback
+            $f_adhesion = safeFloat($trial['faculty_adhesion_score']);
         ?>
             <div class="section-title">Official Faculty Final Evaluation</div>
             <div class="scores-grid">
                 <div class="score-card main-score">
                     <span class="score-card-label">Official Accuracy Score</span>
-                    <span class="score-card-value"><?= number_format($f_score, 1) ?>%</span>
+                    <span class="score-card-value"><?= formatScore($trial['faculty_final_score']) ?></span>
                 </div>
                 <div class="score-card">
                     <div class="score-card-label">Ridge Clarity</div>
-                    <div class="score-card-value"><?= number_format($f_clarity, 1) ?>%</div>
+                    <div class="score-card-value"><?= formatScore($trial['faculty_ridge_clarity_score']) ?></div>
                 </div>
                 <div class="score-card">
                     <div class="score-card-label">Contrast Quality</div>
-                    <div class="score-card-value"><?= number_format($f_contrast, 1) ?>%</div>
+                    <div class="score-card-value"><?= formatScore($trial['faculty_contrast_score']) ?></div>
                 </div>
                 <div class="score-card">
                     <div class="score-card-label">Minutiae Visibility</div>
-                    <div class="score-card-value"><?= number_format($f_visibility, 1) ?>%</div>
+                    <div class="score-card-value"><?= formatScore($trial['faculty_visibility_score']) ?></div>
                 </div>
                 <div class="score-card">
                     <div class="score-card-label">Fingerprint Sharpness</div>
-                    <div class="score-card-value"><?= number_format($f_sharpness, 1) ?>%</div>
+                    <div class="score-card-value"><?= formatScore($trial['faculty_ridge_clarity_score']) ?></div>
                 </div>
                 <div class="score-card">
                     <div class="score-card-label">Adhesion Quality</div>
-                    <div class="score-card-value"><?= number_format($f_adhesion, 1) ?>%</div>
+                    <div class="score-card-value"><?= formatScore($trial['faculty_adhesion_score']) ?></div>
                 </div>
             </div>
         <?php endif; ?>
@@ -473,31 +489,31 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
         <div class="section-title">AI Preliminary Results (Read-Only Reference)</div>
         <div class="scores-grid">
             <?php
-            $ai_acc = $trial['ai_accuracy_score'] !== null ? (float)$trial['ai_accuracy_score'] : (float)$trial['accuracy_score'];
-            $ai_clarity = $trial['ridge_clarity_score'] !== null ? (float)$trial['ridge_clarity_score'] : 0;
-            $ai_visibility = $trial['visibility_score'] !== null ? (float)$trial['visibility_score'] : 0;
-            $ai_adhesion = $trial['adhesion_score'] !== null ? (float)$trial['adhesion_score'] : 0;
-            $ai_contrast = $trial['contrast_score'] !== null ? (float)$trial['contrast_score'] : 0;
+            $ai_acc = $trial['ai_accuracy_score'] !== null ? $trial['ai_accuracy_score'] : $trial['accuracy_score'];
+            $ai_clarity = $trial['ridge_clarity_score'];
+            $ai_visibility = $trial['visibility_score'];
+            $ai_adhesion = $trial['adhesion_score'];
+            $ai_contrast = $trial['contrast_score'];
             ?>
             <div class="score-card">
                 <div class="score-card-label">AI Accuracy</div>
-                <div class="score-card-value"><?= number_format($ai_acc, 1) ?>%</div>
+                <div class="score-card-value"><?= formatScore($ai_acc) ?></div>
             </div>
             <div class="score-card">
                 <div class="score-card-label">AI Ridge Clarity</div>
-                <div class="score-card-value"><?= number_format($ai_clarity, 1) ?>%</div>
+                <div class="score-card-value"><?= formatScore($ai_clarity) ?></div>
             </div>
             <div class="score-card">
                 <div class="score-card-label">AI Visibility</div>
-                <div class="score-card-value"><?= number_format($ai_visibility, 1) ?>%</div>
+                <div class="score-card-value"><?= formatScore($ai_visibility) ?></div>
             </div>
             <div class="score-card">
                 <div class="score-card-label">AI Adhesion</div>
-                <div class="score-card-value"><?= number_format($ai_adhesion, 1) ?>%</div>
+                <div class="score-card-value"><?= formatScore($ai_adhesion) ?></div>
             </div>
             <div class="score-card" style="grid-column: span 2;">
                 <div class="score-card-label">AI Contrast</div>
-                <div class="score-card-value"><?= number_format($ai_contrast, 1) ?>%</div>
+                <div class="score-card-value"><?= formatScore($ai_contrast) ?></div>
             </div>
         </div>
 

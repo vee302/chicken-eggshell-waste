@@ -324,136 +324,144 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             margin-bottom: 6px;
         }
 
-        /* Force A4 portrait one-page layout */
         @page {
             size: A4 portrait;
-            margin: 8mm;
+            margin: 6mm;
         }
 
         @media print {
             html, body {
                 width: 210mm;
-                min-height: 297mm;
+                height: 297mm;
                 margin: 0;
                 padding: 0;
                 background: white;
-                font-size: 10px;
+                font-family: Arial, sans-serif;
+                color: #12372a;
             }
 
             .print-report {
-                width: 100%;
-                max-width: none;
-                padding: 0;
+                width: 198mm;
+                min-height: 285mm;
                 margin: 0 auto;
+                padding: 6mm;
+                box-sizing: border-box;
                 box-shadow: none;
-                border-radius: 0;
-                page-break-inside: avoid;
-                break-inside: avoid;
+                transform: none;
             }
 
             .no-print,
             button,
+            .btn,
             .support-assistant,
             .chat-widget,
             .sidebar,
             .modal-overlay,
-            .print-btn-container {
+            .print-btn-container,
+            .dashboard-bg,
+            .dashboard-background {
                 display: none !important;
             }
 
-            /* Compact layout and margins */
+            /* Optimized layout, larger and highly readable */
             .report-header {
-                padding-bottom: 8px;
-                margin-bottom: 12px;
-                border-bottom: 1.5px solid #12372a;
+                padding-bottom: 12px;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #12372a;
             }
             .report-header h1 {
-                font-size: 16px;
+                font-size: 20px !important;
             }
             .report-header h2 {
-                font-size: 12px;
-                margin: 2px 0;
+                font-size: 14px !important;
+                margin: 4px 0 2px 0;
             }
             .report-header p {
-                font-size: 9px;
+                font-size: 13px !important;
                 margin: 2px 0 0 0;
             }
 
             .report-grid {
                 grid-template-columns: 1.2fr 0.8fr;
-                gap: 15px;
-                margin-bottom: 10px;
+                gap: 20px;
+                margin-bottom: 15px;
             }
 
             .info-table th, .info-table td {
-                padding: 4px 6px;
-                font-size: 10px;
+                padding: 6px 8px;
+                font-size: 12px !important;
             }
 
             .image-container {
-                padding: 8px;
-                min-height: 140px;
+                padding: 12px;
+                min-height: 200px;
             }
             
             .image-container img {
-                max-width: 150px;
-                max-height: 160px;
+                max-width: 210px !important;
+                max-height: 230px !important;
+                object-fit: contain !important;
             }
 
             .section-title {
-                font-size: 11px;
-                padding-bottom: 3px;
-                margin: 10px 0 6px 0;
+                font-size: 13px !important;
+                padding-bottom: 4px;
+                margin: 15px 0 10px 0;
+                border-bottom: 1px solid #2d6a4f;
             }
 
             .scores-grid {
                 grid-template-columns: repeat(3, 1fr);
-                gap: 8px;
-                margin-bottom: 8px;
+                gap: 12px;
+                margin-bottom: 12px;
             }
 
             .score-card {
-                padding: 6px;
+                padding: 10px 8px;
                 border-radius: 4px;
             }
             .score-card-label {
-                font-size: 8px;
+                font-size: 10px !important;
             }
             .score-card-value {
-                font-size: 12px;
+                font-size: 20px !important;
             }
 
             .score-card.main-score {
-                padding: 8px 12px;
+                padding: 12px 20px;
             }
             .score-card.main-score .score-card-label {
-                font-size: 10px;
+                font-size: 13px !important;
             }
             .score-card.main-score .score-card-value {
-                font-size: 16px;
+                font-size: 24px !important;
             }
 
             .remarks-box {
-                padding: 8px 12px;
-                font-size: 9px;
-                margin-top: 5px;
+                padding: 12px;
+                font-size: 12px !important;
+                margin-top: 8px;
                 border-radius: 4px;
             }
 
             .remarks-text {
-                max-height: 70px;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                max-height: 120px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                font-size: 12px !important;
+                display: -webkit-box;
+                -webkit-line-clamp: 5;
+                -webkit-box-orient: vertical;
             }
 
             /* Prevent page breaks */
-            .report-header,
-            .report-grid,
-            .section-title,
-            .scores-grid,
-            .remarks-box {
-                break-inside: avoid;
-                page-break-inside: avoid;
+            .print-report,
+            .report-section,
+            .info-section,
+            .metric-grid,
+            .remarks-section {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
             }
         }
     </style>
@@ -473,7 +481,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
         </div>
 
         <!-- Grid layout for Details & Image -->
-        <div class="report-grid">
+        <div class="report-grid info-section">
             <!-- Details Table -->
             <div>
                 <table class="info-table">
@@ -540,9 +548,11 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
 
         <!-- Conditional Status Renderings -->
         <?php if ($trial['status'] === 'pending_validation'): ?>
-            <div class="remarks-box" style="border-left: 4px solid #d97706; background-color: #fffbeb;">
-                <strong>Awaiting Faculty Validation</strong>
-                This fingerprint trial has been uploaded and preliminary metrics are calculated. Official ratings and faculty approval are currently pending review.
+            <div class="report-section remarks-section">
+                <div class="remarks-box" style="border-left: 4px solid #d97706; background-color: #fffbeb;">
+                    <strong>Awaiting Faculty Validation</strong>
+                    This fingerprint trial has been uploaded and preliminary metrics are calculated. Official ratings and faculty approval are currently pending review.
+                </div>
             </div>
         <?php endif; ?>
 
@@ -555,76 +565,82 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             $f_sharpness = safeFloat($trial['faculty_ridge_clarity_score']); // fallback
             $f_adhesion = safeFloat($trial['faculty_adhesion_score']);
         ?>
-            <div class="section-title">Official Faculty Final Evaluation</div>
-            <div class="scores-grid">
-                <div class="score-card main-score">
-                    <span class="score-card-label">Official Accuracy Score</span>
-                    <span class="score-card-value"><?= formatScore($trial['faculty_final_score']) ?></span>
-                </div>
-                <div class="score-card">
-                    <div class="score-card-label">Ridge Clarity</div>
-                    <div class="score-card-value"><?= formatScore($trial['faculty_ridge_clarity_score']) ?></div>
-                </div>
-                <div class="score-card">
-                    <div class="score-card-label">Contrast Quality</div>
-                    <div class="score-card-value"><?= formatScore($trial['faculty_contrast_score']) ?></div>
-                </div>
-                <div class="score-card">
-                    <div class="score-card-label">Minutiae Visibility</div>
-                    <div class="score-card-value"><?= formatScore($trial['faculty_visibility_score']) ?></div>
-                </div>
-                <div class="score-card">
-                    <div class="score-card-label">Fingerprint Sharpness</div>
-                    <div class="score-card-value"><?= formatScore($trial['faculty_ridge_clarity_score']) ?></div>
-                </div>
-                <div class="score-card">
-                    <div class="score-card-label">Adhesion Quality</div>
-                    <div class="score-card-value"><?= formatScore($trial['faculty_adhesion_score']) ?></div>
+            <div class="report-section">
+                <div class="section-title">Official Faculty Final Evaluation</div>
+                <div class="scores-grid metric-grid">
+                    <div class="score-card main-score">
+                        <span class="score-card-label">Official Accuracy Score</span>
+                        <span class="score-card-value"><?= formatScore($trial['faculty_final_score']) ?></span>
+                    </div>
+                    <div class="score-card">
+                        <div class="score-card-label">Ridge Clarity</div>
+                        <div class="score-card-value"><?= formatScore($trial['faculty_ridge_clarity_score']) ?></div>
+                    </div>
+                    <div class="score-card">
+                        <div class="score-card-label">Contrast Quality</div>
+                        <div class="score-card-value"><?= formatScore($trial['faculty_contrast_score']) ?></div>
+                    </div>
+                    <div class="score-card">
+                        <div class="score-card-label">Minutiae Visibility</div>
+                        <div class="score-card-value"><?= formatScore($trial['faculty_visibility_score']) ?></div>
+                    </div>
+                    <div class="score-card">
+                        <div class="score-card-label">Fingerprint Sharpness</div>
+                        <div class="score-card-value"><?= formatScore($trial['faculty_ridge_clarity_score']) ?></div>
+                    </div>
+                    <div class="score-card">
+                        <div class="score-card-label">Adhesion Quality</div>
+                        <div class="score-card-value"><?= formatScore($trial['faculty_adhesion_score']) ?></div>
+                    </div>
                 </div>
             </div>
         <?php endif; ?>
 
         <!-- AI Preliminary Results (Always shown as reference) -->
-        <div class="section-title">AI Preliminary Results (Read-Only Reference)</div>
-        <div class="scores-grid">
-            <?php
-            $ai_acc = $trial['ai_accuracy_score'] !== null ? $trial['ai_accuracy_score'] : $trial['accuracy_score'];
-            $ai_clarity = $trial['ridge_clarity_score'];
-            $ai_visibility = $trial['visibility_score'];
-            $ai_adhesion = $trial['adhesion_score'];
-            $ai_contrast = $trial['contrast_score'];
-            ?>
-            <div class="score-card">
-                <div class="score-card-label">AI Accuracy</div>
-                <div class="score-card-value"><?= formatScore($ai_acc) ?></div>
-            </div>
-            <div class="score-card">
-                <div class="score-card-label">AI Ridge Clarity</div>
-                <div class="score-card-value"><?= formatScore($ai_clarity) ?></div>
-            </div>
-            <div class="score-card">
-                <div class="score-card-label">AI Visibility</div>
-                <div class="score-card-value"><?= formatScore($ai_visibility) ?></div>
-            </div>
-            <div class="score-card">
-                <div class="score-card-label">AI Adhesion</div>
-                <div class="score-card-value"><?= formatScore($ai_adhesion) ?></div>
-            </div>
-            <div class="score-card" style="grid-column: span 2;">
-                <div class="score-card-label">AI Contrast</div>
-                <div class="score-card-value"><?= formatScore($ai_contrast) ?></div>
+        <div class="report-section">
+            <div class="section-title">AI Preliminary Results (Read-Only Reference)</div>
+            <div class="scores-grid metric-grid">
+                <?php
+                $ai_acc = $trial['ai_accuracy_score'] !== null ? $trial['ai_accuracy_score'] : $trial['accuracy_score'];
+                $ai_clarity = $trial['ridge_clarity_score'];
+                $ai_visibility = $trial['visibility_score'];
+                $ai_adhesion = $trial['adhesion_score'];
+                $ai_contrast = $trial['contrast_score'];
+                ?>
+                <div class="score-card">
+                    <div class="score-card-label">AI Accuracy</div>
+                    <div class="score-card-value"><?= formatScore($ai_acc) ?></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-card-label">AI Ridge Clarity</div>
+                    <div class="score-card-value"><?= formatScore($ai_clarity) ?></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-card-label">AI Visibility</div>
+                    <div class="score-card-value"><?= formatScore($ai_visibility) ?></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-card-label">AI Adhesion</div>
+                    <div class="score-card-value"><?= formatScore($ai_adhesion) ?></div>
+                </div>
+                <div class="score-card" style="grid-column: span 2;">
+                    <div class="score-card-label">AI Contrast</div>
+                    <div class="score-card-value"><?= formatScore($ai_contrast) ?></div>
+                </div>
             </div>
         </div>
 
         <!-- Faculty Remarks Section (Shown if status is approved, rejected, or needs_revision) -->
         <?php if ($trial['status'] !== 'pending_validation'): ?>
-            <div class="section-title">Validation Remarks</div>
-            <div class="remarks-box">
-                <strong>Faculty Review Remarks / Feedback:</strong>
-                <p class="remarks-text" style="margin: 0; white-space: pre-wrap;"><?= $trial['faculty_remarks'] ? htmlspecialchars($trial['faculty_remarks']) : 'No remarks or feedback provided by the faculty reviewer.' ?></p>
-                <div style="margin-top: 15px; font-size: 0.8rem; color: #4b5563; border-top: 1px solid #e5e7eb; padding-top: 8px; display: flex; justify-content: space-between;">
-                    <span><strong>Validated By:</strong> <?= htmlspecialchars($trial['faculty_reviewer'] ?: 'Faculty Reviewer') ?></span>
-                    <span><strong>Validated At:</strong> <?= $trial['validated_at'] ? date('F d, Y h:i A', strtotime($trial['validated_at'])) : '—' ?></span>
+            <div class="report-section remarks-section">
+                <div class="section-title">Validation Remarks</div>
+                <div class="remarks-box">
+                    <strong>Faculty Review Remarks / Feedback:</strong>
+                    <p class="remarks-text" style="margin: 0; white-space: pre-wrap;"><?= $trial['faculty_remarks'] ? htmlspecialchars($trial['faculty_remarks']) : 'No remarks or feedback provided by the faculty reviewer.' ?></p>
+                    <div style="margin-top: 15px; font-size: 0.8rem; color: #4b5563; border-top: 1px solid #e5e7eb; padding-top: 8px; display: flex; justify-content: space-between;">
+                        <span><strong>Validated By:</strong> <?= htmlspecialchars($trial['faculty_reviewer'] ?: 'Faculty Reviewer') ?></span>
+                        <span><strong>Validated At:</strong> <?= $trial['validated_at'] ? date('F d, Y h:i A', strtotime($trial['validated_at'])) : '—' ?></span>
+                    </div>
                 </div>
             </div>
         <?php endif; ?>

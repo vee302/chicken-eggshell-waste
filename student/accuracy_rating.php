@@ -685,7 +685,8 @@ try {
 
                 <div style="display:flex; gap:10px; margin-top:1.5rem;" class="no-print">
                     <button type="button" class="btn btn-secondary" onclick="closeInspectionModal()" style="flex:1; background:#334155; border-color:#334155; color:#fff;">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="printTrialDetails()" style="flex:1; background:#10b981; border-color:#10b981; color:#fff;">Print Details</button>
+                    <a id="printReportBtn" href="#" target="_blank" class="btn btn-primary" style="flex:1; background:#10b981; border-color:#10b981; color:#fff; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Print Report</a>
+                    <a id="exportWordBtn" href="#" class="btn btn-primary" style="flex:1; background:#2b6cb0; border-color:#2b6cb0; color:#fff; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Export to Word</a>
                 </div>
             </div>
 
@@ -756,6 +757,10 @@ document.getElementById('inspectionOverlay').addEventListener('click', e => {
 });
 
 function populateInspectionPanel(row) {
+    // Set Print and Export button links dynamically
+    document.getElementById('printReportBtn').href = 'print_fingerprint_report.php?test_id=' + row.id;
+    document.getElementById('exportWordBtn').href = 'export_fingerprint_report_word.php?test_id=' + row.id;
+
     // Fill student chip (username/nickname from email or name)
     const username = row.student_email ? row.student_email.split('@')[0] : (row.student_name ? row.student_name.toLowerCase().replace(/\s+/g, '') : 'student');
     document.getElementById('inspect-student-chip').textContent = username;
@@ -930,9 +935,7 @@ function populateInspectionPanel(row) {
     }
 }
 
-function printTrialDetails() {
-    window.print();
-}
+// printTrialDetails removed because print is now handled by dedicated printable page
 </script>
 <?php include dirname(__DIR__) . '/support-assistant/support_widget.php'; ?>
 </body>

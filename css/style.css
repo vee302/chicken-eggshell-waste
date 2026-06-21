@@ -176,6 +176,8 @@ body {
     align-items: center;
     justify-content: center;
     will-change: transform, opacity;
+    opacity: 0;
+    visibility: hidden;
 }
 
 /* Premium Jar Container */

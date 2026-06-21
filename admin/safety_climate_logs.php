@@ -109,35 +109,33 @@ try {
                         <thead>
                             <tr>
                                 <th>Student Name</th>
-                                <th>Faculty Reviewer</th>
                                 <th>Trial ID</th>
-                                <th>Date &amp; Time</th>
-                                <th>Temp (°C)</th>
-                                <th>Humidity (%)</th>
                                 <th>Powder Type</th>
                                 <th>Surface Type</th>
+                                <th>Temperature</th>
+                                <th>Humidity</th>
                                 <th>Health Feedback</th>
                                 <th>Irritation Status</th>
                                 <th>Remarks</th>
+                                <th>Date Submitted</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php if (empty($logs)): ?>
-                            <tr class="no-data-row"><td colspan="11" style="text-align:center;padding:2rem;color:#6c757d;">No safety logs recorded yet.</td></tr>
+                            <tr class="no-data-row"><td colspan="10" style="text-align:center;padding:2rem;color:#6c757d;">No safety logs recorded yet.</td></tr>
                         <?php else: ?>
                             <?php foreach ($logs as $log): ?>
                             <tr>
                                 <td><strong><?= htmlspecialchars($log['student_name']) ?></strong></td>
-                                <td><?= htmlspecialchars($log['validator_name'] ?: '—') ?></td>
                                 <td><?= htmlspecialchars($log['trial_code'] ?: 'N/A') ?></td>
-                                <td><?= htmlspecialchars($log['formatted_date']) ?></td>
-                                <td><span class="temp-pill"><?= $log['temperature'] !== null ? htmlspecialchars($log['temperature']) . '°C' : '—' ?></span></td>
-                                <td><span class="humid-pill"><?= $log['humidity'] !== null ? htmlspecialchars($log['humidity']) . '%' : '—' ?></span></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($log['powder_type']) ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($log['surface_type']) ?></td>
+                                <td><span class="temp-pill"><?= $log['temperature'] !== null ? htmlspecialchars($log['temperature']) . '°C' : '—' ?></span></td>
+                                <td><span class="humid-pill"><?= $log['humidity'] !== null ? htmlspecialchars($log['humidity']) . '%' : '—' ?></span></td>
                                 <td style="max-width:160px;font-size:.82rem;"><?= htmlspecialchars($log['health_feedback'] ?: '—') ?></td>
                                 <td><span class="badge-<?= htmlspecialchars($log['irritation_status']) ?>"><?= ucfirst(htmlspecialchars($log['irritation_status'])) ?></span></td>
                                 <td style="max-width:200px;font-size:.82rem;color:#6c757d;"><?= htmlspecialchars($log['remarks'] ?: '—') ?></td>
+                                <td><?= htmlspecialchars($log['formatted_date']) ?></td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -212,13 +210,12 @@ function renderSafetyLogs(logs) {
     countSpan.textContent = logs.length;
 
     if (logs.length === 0) {
-        tbody.innerHTML = '<tr class="no-data-row"><td colspan="11" style="text-align:center;padding:2rem;color:#6c757d;">No safety logs recorded yet.</td></tr>';
+        tbody.innerHTML = '<tr class="no-data-row"><td colspan="10" style="text-align:center;padding:2rem;color:#6c757d;">No safety logs recorded yet.</td></tr>';
         return;
     }
 
     tbody.innerHTML = logs.map(log => {
         const trialCode = log.trial_code ? escapeHtml(log.trial_code) : 'N/A';
-        const validatorName = log.validator_name ? escapeHtml(log.validator_name) : '—';
         const tempDisp = log.temperature !== null ? escapeHtml(log.temperature) + '°C' : '—';
         const humidDisp = log.humidity !== null ? escapeHtml(log.humidity) + '%' : '—';
         const capIrritation = log.irritation_status.charAt(0).toUpperCase() + log.irritation_status.slice(1);
@@ -226,16 +223,15 @@ function renderSafetyLogs(logs) {
         return `
             <tr>
                 <td><strong>${escapeHtml(log.student_name)}</strong></td>
-                <td>${validatorName}</td>
                 <td>${trialCode}</td>
-                <td>${escapeHtml(log.formatted_date)}</td>
-                <td><span class="temp-pill">${tempDisp}</span></td>
-                <td><span class="humid-pill">${humidDisp}</span></td>
                 <td style="text-transform:capitalize;">${escapeHtml(log.powder_type)}</td>
                 <td style="text-transform:capitalize;">${escapeHtml(log.surface_type)}</td>
+                <td><span class="temp-pill">${tempDisp}</span></td>
+                <td><span class="humid-pill">${humidDisp}</span></td>
                 <td style="max-width:160px;font-size:.82rem;">${escapeHtml(log.health_feedback)}</td>
                 <td><span class="badge-${escapeHtml(log.irritation_status)}">${capIrritation}</span></td>
                 <td style="max-width:200px;font-size:.82rem;color:#6c757d;">${escapeHtml(log.remarks)}</td>
+                <td>${escapeHtml(log.formatted_date)}</td>
             </tr>
         `;
     }).join('');

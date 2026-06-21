@@ -125,9 +125,9 @@ try {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="irritation_status">Irritation Status / Incident Category *</label>
+                            <label for="irritation_status">Irritation Status *</label>
                             <select name="irritation_status" id="irritation_status" class="form-control" required>
-                                <option value="none">None (Safe condition)</option>
+                                <option value="none">None</option>
                                 <option value="mild">Mild irritation</option>
                                 <option value="moderate">Moderate irritation</option>
                                 <option value="severe">Severe irritation</option>
@@ -221,7 +221,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute
 const myTrialsData = <?php echo json_encode($my_trials); ?>;
 let isSubmitting = false;
 
-// Auto-fill powder and surface types when selecting a trial
+// Auto-fill powder and surface types when selecting a trial, and disable them
 document.getElementById('trial_id').addEventListener('change', function() {
     const selectedId = this.value;
     const powderSelect = document.getElementById('powder_type');
@@ -232,10 +232,14 @@ document.getElementById('trial_id').addEventListener('change', function() {
         if (found) {
             powderSelect.value = found.powder_type;
             surfaceSelect.value = found.surface_type;
+            powderSelect.disabled = true;
+            surfaceSelect.disabled = true;
         }
     } else {
         powderSelect.value = "";
         surfaceSelect.value = "";
+        powderSelect.disabled = false;
+        surfaceSelect.disabled = false;
     }
 });
 
@@ -267,12 +271,25 @@ document.getElementById('form-safety-log').addEventListener('submit', function(e
     const btn = document.getElementById('btn-save-log');
     const originalText = btn.innerHTML;
     
-    btn.textContent = 'Saving...';
+    btn.innerHTML = 'Saving...';
     btn.disabled = true;
     isSubmitting = true;
 
+    // Temporarily enable select elements so they are submitted in FormData
+    const powderSelect = document.getElementById('powder_type');
+    const surfaceSelect = document.getElementById('surface_type');
+    const powderDisabled = powderSelect.disabled;
+    const surfaceDisabled = surfaceSelect.disabled;
+
+    powderSelect.disabled = false;
+    surfaceSelect.disabled = false;
+
     const formData = new FormData(this);
     formData.append('csrf_token', csrfToken);
+
+    // Re-disable if they were previously disabled
+    powderSelect.disabled = powderDisabled;
+    surfaceSelect.disabled = surfaceDisabled;
 
     fetch('ajax_submit_safety_climate_log.php', {
         method: 'POST',
@@ -291,15 +308,18 @@ document.getElementById('form-safety-log').addEventListener('submit', function(e
             showNotification('success', data.message);
             appendLogHistoryRow(data.data);
             document.getElementById('form-safety-log').reset();
+            // Re-enable selects since reset sets trial_id back to 'none'
+            powderSelect.disabled = false;
+            surfaceSelect.disabled = false;
         } else {
-            showNotification('error', data.message);
+            showNotification('error', data.message || 'Unable to save safety log. Please check the form and try again.');
         }
     })
     .catch(err => {
         isSubmitting = false;
         btn.innerHTML = originalText;
         btn.disabled = false;
-        showNotification('error', 'An error occurred. Please try again.');
+        showNotification('error', 'Unable to save safety log. Please check the form and try again.');
     });
 });
 

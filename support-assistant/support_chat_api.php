@@ -6,7 +6,8 @@ header('Content-Type: application/json');
 require_once dirname(__DIR__) . "/config.php";
 
 // Helper function to safely output JSON and exit
-function send_response($success, $reply, $http_code = 200) {
+function send_response($success, $reply, $http_code = 200)
+{
     if (ob_get_length()) {
         ob_clean();
     }
@@ -96,7 +97,8 @@ if ($matchedDeveloper) {
 
 
 // Helper for local diagnostic logging
-function debug_log($message) {
+function debug_log($message)
+{
     $file = dirname(__DIR__) . '/debug_log.txt';
     $timestamp = date('Y-m-d H:i:s');
     file_put_contents($file, "[$timestamp] $message\n", FILE_APPEND);
@@ -112,7 +114,7 @@ if (empty($apiKey)) {
 }
 
 // 3. Fetch Gemini Model (non-hardcoded)
-$model = env('GEMINI_MODEL', 'gemini-1.5-flash');
+$model = env('GEMINI_MODEL', 'gemini-3.5-flash');
 debug_log("Attempting call with Model: $model");
 
 // 4. Call Google Gemini API
@@ -128,14 +130,17 @@ $data = [
             ]
         ]
     ],
-    "systemInstruction" => [
+    "system_instruction" => [
         "parts" => [
             ["text" => $systemInstruction]
         ]
     ],
     "generationConfig" => [
         "temperature" => 0.4,
-        "maxOutputTokens" => 150
+        "maxOutputTokens" => 800,
+        "thinkingConfig" => [
+            "thinkingLevel" => "minimal"
+        ]
     ]
 ];
 

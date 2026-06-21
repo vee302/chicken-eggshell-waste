@@ -23,13 +23,52 @@ $student_id = $_SESSION['user_id'] ?? 0;
 $trial_id = isset($_POST['trial_id']) && $_POST['trial_id'] !== '' && $_POST['trial_id'] !== 'none' ? (int)$_POST['trial_id'] : null;
 $powder_type = trim($_POST['powder_type'] ?? '');
 $surface_type = trim($_POST['surface_type'] ?? '');
-$temperature = isset($_POST['temperature']) && $_POST['temperature'] !== '' ? floatval($_POST['temperature']) : null;
-$humidity = isset($_POST['humidity']) && $_POST['humidity'] !== '' ? floatval($_POST['humidity']) : null;
+$raw_temp = isset($_POST['temperature']) && $_POST['temperature'] !== '' ? $_POST['temperature'] : null;
+$raw_humid = isset($_POST['humidity']) && $_POST['humidity'] !== '' ? $_POST['humidity'] : null;
 $health_feedback = isset($_POST['health_feedback']) ? substr(trim($_POST['health_feedback']), 0, 255) : null;
 $irritation_status = trim($_POST['irritation_status'] ?? 'none');
 $remarks = isset($_POST['remarks']) && $_POST['remarks'] !== '' ? trim($_POST['remarks']) : null;
 
-// Validation rules
+// Validation for temperature and humidity if provided
+if ($raw_temp !== null) {
+    if (!is_numeric($raw_temp)) {
+        echo json_encode(['success' => false, 'message' => 'Temperature must be a numeric value.']);
+        exit;
+    }
+    $temperature = floatval($raw_temp);
+} else {
+    $temperature = null;
+}
+
+if ($raw_humid !== null) {
+    if (!is_numeric($raw_humid)) {
+        echo json_encode(['success' => false, 'message' => 'Humidity must be a numeric value.']);
+        exit;
+    }
+    $humidity = floatval($raw_humid);
+    if ($humidity < 0 || $humidity > 100) {
+        echo json_encode(['success' => false, 'message' => 'Humidity must be between 0 and 100.']);
+        exit;
+    }
+} else {
+    $humidity = null;
+}
+
+// Verify if the trial belongs to this student and override powder/surface values
+if ($trial_id !== null) {
+    $trial_stmt = $pdo->prepare("SELECT id, powder_type, surface_type FROM fingerprint_tests WHERE id = ? AND student_id = ?");
+    $trial_stmt->execute([$trial_id, $student_id]);
+    $trial_record = $trial_stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$trial_record) {
+        echo json_encode(['success' => false, 'message' => 'Invalid trial connection.']);
+        exit;
+    }
+    // Prevent client-side mismatch tampering by overriding with database values
+    $powder_type = $trial_record['powder_type'];
+    $surface_type = $trial_record['surface_type'];
+}
+
+// Basic validation rules
 if (empty($powder_type)) {
     echo json_encode(['success' => false, 'message' => 'Powder Type is required.']);
     exit;
@@ -40,34 +79,23 @@ if ($powder_type !== 'eggshell' && $powder_type !== 'commercial') {
 }
 
 if (empty($surface_type)) {
-    echo json_encode(['success' => false, 'message' => 'Surface Type is required.']);
+    echo json_encode(['success' => false, 'message' => 'Surface Material Type is required.']);
     exit;
 }
 $allowed_surfaces = ['glass','paper','wood','plastic','metal','ceramic','fabric'];
 if (!in_array($surface_type, $allowed_surfaces)) {
-    echo json_encode(['success' => false, 'message' => 'Invalid Surface Type.']);
+    echo json_encode(['success' => false, 'message' => 'Invalid Surface Material Type.']);
     exit;
 }
 
-if ($humidity !== null && ($humidity < 0 || $humidity > 100)) {
-    echo json_encode(['success' => false, 'message' => 'Humidity must be between 0 and 100.']);
+if (empty($irritation_status)) {
+    echo json_encode(['success' => false, 'message' => 'Irritation Status is required.']);
     exit;
 }
-
 $allowed_irritation = ['none','mild','moderate','severe'];
 if (!in_array($irritation_status, $allowed_irritation)) {
     echo json_encode(['success' => false, 'message' => 'Invalid Irritation Status.']);
     exit;
-}
-
-// Verify if the trial belongs to this student
-if ($trial_id !== null) {
-    $trial_stmt = $pdo->prepare("SELECT id FROM fingerprint_tests WHERE id = ? AND student_id = ?");
-    $trial_stmt->execute([$trial_id, $student_id]);
-    if ($trial_stmt->rowCount() === 0) {
-        echo json_encode(['success' => false, 'message' => 'Invalid trial connection.']);
-        exit;
-    }
 }
 
 try {

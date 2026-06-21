@@ -324,37 +324,136 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             margin-bottom: 6px;
         }
 
-        /* Print Media Style overrides */
+        /* Force A4 portrait one-page layout */
+        @page {
+            size: A4 portrait;
+            margin: 8mm;
+        }
+
         @media print {
-            body {
-                background: white;
+            html, body {
+                width: 210mm;
+                min-height: 297mm;
                 margin: 0;
                 padding: 0;
+                background: white;
+                font-size: 10px;
+            }
+
+            .print-report {
+                width: 100%;
+                max-width: none;
+                padding: 0;
+                margin: 0 auto;
+                box-shadow: none;
+                border-radius: 0;
+                page-break-inside: avoid;
+                break-inside: avoid;
             }
 
             .no-print,
-            .sidebar,
-            .support-assistant,
             button,
+            .support-assistant,
+            .chat-widget,
+            .sidebar,
             .modal-overlay,
             .print-btn-container {
                 display: none !important;
             }
 
-            .print-report {
-                width: 100%;
-                max-width: 100%;
-                margin: 0;
-                padding: 0;
-                box-shadow: none;
-                border-radius: 0;
-                color: #12372a;
-                font-family: Arial, sans-serif;
+            /* Compact layout and margins */
+            .report-header {
+                padding-bottom: 8px;
+                margin-bottom: 12px;
+                border-bottom: 1.5px solid #12372a;
+            }
+            .report-header h1 {
+                font-size: 16px;
+            }
+            .report-header h2 {
+                font-size: 12px;
+                margin: 2px 0;
+            }
+            .report-header p {
+                font-size: 9px;
+                margin: 2px 0 0 0;
             }
 
-            @page {
-                size: A4 portrait;
-                margin: 12mm;
+            .report-grid {
+                grid-template-columns: 1.2fr 0.8fr;
+                gap: 15px;
+                margin-bottom: 10px;
+            }
+
+            .info-table th, .info-table td {
+                padding: 4px 6px;
+                font-size: 10px;
+            }
+
+            .image-container {
+                padding: 8px;
+                min-height: 140px;
+            }
+            
+            .image-container img {
+                max-width: 150px;
+                max-height: 160px;
+            }
+
+            .section-title {
+                font-size: 11px;
+                padding-bottom: 3px;
+                margin: 10px 0 6px 0;
+            }
+
+            .scores-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+
+            .score-card {
+                padding: 6px;
+                border-radius: 4px;
+            }
+            .score-card-label {
+                font-size: 8px;
+            }
+            .score-card-value {
+                font-size: 12px;
+            }
+
+            .score-card.main-score {
+                padding: 8px 12px;
+            }
+            .score-card.main-score .score-card-label {
+                font-size: 10px;
+            }
+            .score-card.main-score .score-card-value {
+                font-size: 16px;
+            }
+
+            .remarks-box {
+                padding: 8px 12px;
+                font-size: 9px;
+                margin-top: 5px;
+                border-radius: 4px;
+            }
+
+            .remarks-text {
+                max-height: 70px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* Prevent page breaks */
+            .report-header,
+            .report-grid,
+            .section-title,
+            .scores-grid,
+            .remarks-box {
+                break-inside: avoid;
+                page-break-inside: avoid;
             }
         }
     </style>
@@ -522,7 +621,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             <div class="section-title">Validation Remarks</div>
             <div class="remarks-box">
                 <strong>Faculty Review Remarks / Feedback:</strong>
-                <p style="margin: 0; white-space: pre-wrap;"><?= $trial['faculty_remarks'] ? htmlspecialchars($trial['faculty_remarks']) : 'No remarks or feedback provided by the faculty reviewer.' ?></p>
+                <p class="remarks-text" style="margin: 0; white-space: pre-wrap;"><?= $trial['faculty_remarks'] ? htmlspecialchars($trial['faculty_remarks']) : 'No remarks or feedback provided by the faculty reviewer.' ?></p>
                 <div style="margin-top: 15px; font-size: 0.8rem; color: #4b5563; border-top: 1px solid #e5e7eb; padding-top: 8px; display: flex; justify-content: space-between;">
                     <span><strong>Validated By:</strong> <?= htmlspecialchars($trial['faculty_reviewer'] ?: 'Faculty Reviewer') ?></span>
                     <span><strong>Validated At:</strong> <?= $trial['validated_at'] ? date('F d, Y h:i A', strtotime($trial['validated_at'])) : '—' ?></span>

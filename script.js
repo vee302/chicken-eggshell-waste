@@ -386,9 +386,8 @@ if (window.innerWidth <= 768) {
                     rotation = problemRotation + (0 - problemRotation) * easeT;
                 }
 
-                // Dynamic Stacking: Float behind text content (z-index: 10) during the main scroll, 
-                // but switch to the absolute front (z-index: 999) as it approaches its landing place (progress >= 0.82)!
-                let currentZIndex = (progress < 0.82) ? 10 : 999;
+                // Dynamic Stacking: Float in the front (z-index: 999) so it overlays backgrounds and pedestal
+                let currentZIndex = 999;
 
                 // Apply dynamic fixed calculations
                 gsap.set(product, {

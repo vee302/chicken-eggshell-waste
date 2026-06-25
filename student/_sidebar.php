@@ -151,5 +151,54 @@ function nav_active(string $page, string $current): string {
             </div>
         </div>
     </div>
-
 </aside>
+
+<!-- Mobile Bottom Navigation Bar -->
+<nav class="student-mobile-nav">
+    <a href="student_dashboard.php" class="student-mobile-nav-item<?= nav_active('dashboard', $active_page ?? '') ?>" id="mobile-nav-dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="9"/>
+            <rect x="14" y="3" width="7" height="5"/>
+            <rect x="14" y="12" width="7" height="9"/>
+            <rect x="3" y="16" width="7" height="5"/>
+        </svg>
+        <span class="student-mobile-nav-label">Dashboard</span>
+    </a>
+    <a href="upload_fingerprint.php" class="student-mobile-nav-item<?= nav_active('upload_fingerprint', $active_page ?? '') ?>" id="mobile-nav-upload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <span class="student-mobile-nav-label">Upload</span>
+    </a>
+    <a href="surface_performance.php" class="student-mobile-nav-item<?= nav_active('surface_performance', $active_page ?? '') ?>" id="mobile-nav-surface">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+            <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+        </svg>
+        <span class="student-mobile-nav-label">Surface</span>
+    </a>
+    <a href="accuracy_rating.php" class="student-mobile-nav-item<?= nav_active('accuracy_rating', $active_page ?? '') ?>" id="mobile-nav-accuracy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+            <polyline points="16 7 22 7 22 13"/>
+        </svg>
+        <span class="student-mobile-nav-label">Accuracy</span>
+    </a>
+    <a href="safety_climate_log.php" class="student-mobile-nav-item<?= nav_active('safety_climate_log', $active_page ?? '') ?>" id="mobile-nav-safety">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span class="student-mobile-nav-label">Safety</span>
+    </a>
+    <a href="student_records.php" class="student-mobile-nav-item<?= nav_active('student_records', $active_page ?? '') ?>" id="mobile-nav-records">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <span class="student-mobile-nav-label">Records</span>
+    </a>
+</nav>

@@ -864,6 +864,13 @@ body {
 }
 
 /* ============================================================
+   MOBILE BOTTOM NAVIGATION
+   ============================================================ */
+.student-mobile-nav {
+    display: none;
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 1024px) {
@@ -874,22 +881,22 @@ body {
 
 @media (max-width: 768px) {
     .menu-toggle {
-        display: block;
+        display: none !important;
     }
 
     .student-sidebar {
-        transform: translateX(-100%);
-        box-shadow: none;
+        display: none !important;
     }
 
-    .student-sidebar.active {
-        transform: translateX(0);
-        box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+    #sidebarOverlay {
+        display: none !important;
     }
 
     .student-main {
         margin-left: 0 !important;
-        width: 100%;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     .student-header {
@@ -917,6 +924,108 @@ body {
 
     .header-role-chip {
         display: none;
+    }
+
+    /* Mobile Bottom Navigation Bar (Facebook Mobile Style with Green Forensics theme) */
+    .student-mobile-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: calc(64px + env(safe-area-inset-bottom, 0px));
+        background-color: var(--white);
+        border-top: 1px solid rgba(27, 67, 50, 0.08);
+        box-shadow: 0 -4px 16px rgba(27, 67, 50, 0.06);
+        z-index: 2000;
+        justify-content: space-around;
+        align-items: center;
+        padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px)) 6px;
+        box-sizing: border-box;
+    }
+
+    .student-mobile-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        height: 100%;
+        text-decoration: none;
+        color: var(--gray);
+        gap: 3px;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+        text-align: center;
+        padding: 4px 2px;
+    }
+
+    .student-mobile-nav-item svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        stroke-width: 2.2;
+        fill: none;
+        transition: stroke 0.2s ease, transform 0.2s ease;
+    }
+
+    .student-mobile-nav-label {
+        font-size: 0.62rem;
+        font-weight: 600;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        transition: color 0.2s ease;
+    }
+
+    /* Active State (Green color and soft background pill) */
+    .student-mobile-nav-item.active {
+        color: var(--medium-green) !important;
+        font-weight: 700 !important;
+        background-color: rgba(45, 106, 79, 0.08);
+    }
+
+    .student-mobile-nav-item.active svg {
+        stroke: var(--medium-green) !important;
+        transform: scale(1.05);
+    }
+}
+
+/* Scaling dynamic adjust for very narrow mobile viewports (e.g. iPhone SE / 320px) */
+@media (max-width: 380px) {
+    .student-mobile-nav {
+        height: calc(58px + env(safe-area-inset-bottom, 0px));
+        padding: 3px 4px calc(3px + env(safe-area-inset-bottom, 0px)) 4px;
+    }
+    
+    .student-mobile-nav-label {
+        font-size: 0.56rem !important;
+    }
+    
+    .student-mobile-nav-item svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .student-mobile-nav-item {
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+        border-radius: 10px;
+        gap: 2px;
+    }
+
+    .student-main {
+        padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+}
+
+/* Hide mobile navigation bar when printing */
+@media print {
+    .student-mobile-nav {
+        display: none !important;
     }
 }
 

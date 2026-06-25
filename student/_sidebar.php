@@ -24,6 +24,26 @@ function nav_active(string $page, string $current): string {
     return $page === $current ? ' active' : '';
 }
 ?>
+<style>
+    /* Desktop safety guard: Prevent cached CSS from showing mobile UI on desktop */
+    .student-mobile-topbar,
+    .student-mobile-nav,
+    .mobile-profile-container,
+    .mobile-profile-dropdown {
+        display: none !important;
+    }
+    @media (max-width: 768px) {
+        .student-mobile-topbar {
+            display: flex !important;
+        }
+        .student-mobile-nav {
+            display: flex !important;
+        }
+        .mobile-profile-container {
+            display: block !important;
+        }
+    }
+</style>
 <aside class="student-sidebar" id="sidebar">
 
     <!-- Brand Header -->

@@ -864,8 +864,9 @@ body {
 }
 
 /* ============================================================
-   MOBILE BOTTOM NAVIGATION
+   MOBILE TOP & BOTTOM NAVIGATION
    ============================================================ */
+.student-mobile-topbar,
 .student-mobile-nav {
     display: none;
 }
@@ -892,15 +893,16 @@ body {
         display: none !important;
     }
 
+    .student-header {
+        display: none !important;
+    }
+
     .student-main {
         margin-left: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
+        padding-top: calc(60px + env(safe-area-inset-top, 0px)) !important;
         padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
-    }
-
-    .student-header {
-        padding: 0 1rem;
     }
 
     .student-content {
@@ -924,6 +926,89 @@ body {
 
     .header-role-chip {
         display: none;
+    }
+
+    /* Mobile Top App Bar (Facebook Mobile Style with Green Forensics theme) */
+    .student-mobile-topbar {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: calc(60px + env(safe-area-inset-top, 0px));
+        background-color: var(--white);
+        border-bottom: 1px solid rgba(27, 67, 50, 0.08);
+        box-shadow: 0 4px 12px rgba(27, 67, 50, 0.03);
+        z-index: 1500;
+        justify-content: space-between;
+        align-items: center;
+        padding: calc(env(safe-area-inset-top, 0px) + 2px) 16px 2px 16px;
+        box-sizing: border-box;
+    }
+
+    .mobile-topbar-brand {
+        display: flex;
+        align-items: center;
+    }
+
+    .mobile-brand-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: var(--dark-green);
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        font-family: var(--font-sans);
+    }
+
+    .mobile-topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .mobile-action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: var(--cream);
+        border: none;
+        color: var(--dark-green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        padding: 0;
+        outline: none;
+    }
+
+    .mobile-action-btn:hover {
+        background-color: var(--light-gray);
+        transform: scale(1.05);
+    }
+
+    .mobile-action-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+    }
+
+    .mobile-profile-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--medium-green), var(--soft-green));
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.78rem;
+        border: 2px solid rgba(116, 198, 157, 0.4);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        user-select: none;
     }
 
     /* Mobile Bottom Navigation Bar (Facebook Mobile Style with Green Forensics theme) */
@@ -1022,8 +1107,9 @@ body {
     }
 }
 
-/* Hide mobile navigation bar when printing */
+/* Hide mobile topbar and bottom navigation bar when printing */
 @media print {
+    .student-mobile-topbar,
     .student-mobile-nav {
         display: none !important;
     }

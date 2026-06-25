@@ -153,6 +153,32 @@ function nav_active(string $page, string $current): string {
     </div>
 </aside>
 
+<!-- Mobile Top App Bar -->
+<header class="student-mobile-topbar">
+    <div class="mobile-topbar-brand">
+        <span class="mobile-brand-title">Crim Student</span>
+    </div>
+    <div class="mobile-topbar-actions">
+        <!-- New Submission (+) Action -->
+        <a href="upload_fingerprint.php" class="mobile-action-btn" id="mobile-action-upload" title="New Submission">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+        </a>
+        <!-- Chat Assistant Action -->
+        <button type="button" class="mobile-action-btn" id="mobile-action-chat" onclick="toggleSupportChat()" title="Support Assistant">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+        </button>
+        <!-- Profile Initial Avatar -->
+        <div class="mobile-profile-avatar" title="<?= htmlspecialchars($s_name) ?>">
+            <?= htmlspecialchars($initials) ?>
+        </div>
+    </div>
+</header>
+
 <!-- Mobile Bottom Navigation Bar -->
 <nav class="student-mobile-nav">
     <a href="student_dashboard.php" class="student-mobile-nav-item<?= nav_active('dashboard', $active_page ?? '') ?>" id="mobile-nav-dashboard">

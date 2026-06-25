@@ -1583,3 +1583,63 @@ input:checked + .switch-slider:before {
     from { transform: translate(-50%, 10px); opacity: 0; }
     to { transform: translate(-50%, 0); opacity: 1; }
 }
+
+/* ============================================================
+   MOBILE NAVIGATION SAFETY & DESKTOP OVERRIDES
+   ============================================================ */
+/* Default desktop state: mobile UI must be hidden */
+.student-mobile-topbar,
+.student-mobile-nav,
+.student-mobile-profile-menu,
+.mobile-profile-container,
+.mobile-profile-dropdown {
+    display: none !important;
+}
+
+/* Prevent mobile SVG icons from becoming huge */
+.student-mobile-topbar svg,
+.student-mobile-nav svg,
+.student-mobile-profile-menu svg,
+.mobile-profile-dropdown svg {
+    width: 20px !important;
+    height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    flex-shrink: 0;
+}
+
+/* Desktop safety guard */
+@media (min-width: 769px) {
+    .student-mobile-topbar,
+    .student-mobile-nav,
+    .student-mobile-profile-menu,
+    .mobile-profile-container,
+    .mobile-profile-dropdown {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    .student-sidebar {
+        display: flex !important;
+    }
+}
+
+/* Mobile only */
+@media (max-width: 768px) {
+    .student-sidebar {
+        display: none !important;
+    }
+
+    .student-mobile-topbar {
+        display: flex !important;
+    }
+
+    .student-mobile-nav {
+        display: flex !important;
+    }
+    
+    .mobile-profile-container {
+        display: block !important;
+    }
+}

@@ -204,13 +204,55 @@ function getOfflineSupportAnswer($message)
     return "I can help with registration, account approval, fingerprint upload, validation status, reports, safety logs, and logout.";
 }
 
+// Helper to query Pollinations AI when Gemini key is missing/exhausted
+function callPollinationsAI($message, $systemInstruction)
+{
+    $url = "https://text.pollinations.ai/";
+    $data = [
+        "messages" => [
+            ["role" => "system", "content" => $systemInstruction],
+            ["role" => "user", "content" => $message]
+        ],
+        "model" => "openai",
+        "json" => false
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 8); // Fast timeout to prevent long loading states
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode === 200 && !empty($response)) {
+        return trim($response);
+    }
+    return null;
+}
+
+$systemInstruction = "You are the Green Forensics Support Assistant. Help users with the Green Forensics Evaluating System. Answer clearly, politely, and briefly. You can help with registration, pending accounts, login lockout, account unlock requests, fingerprint image upload, webcam capture, AI-assisted image quality evaluation, faculty validation, Terms of Use, Privacy Policy, and role-based dashboards. For account lockouts, password resets, failed logins, or unlock requests, guide the user to visit request_unlock.php. Do not ask for their password or private credentials. Fingerprint images are used only for academic research evaluation and image quality assessment, not biometric identification. If a user asks about locked account, login failed, forgot password, cannot login, or requesting an unlock, you must respond with: 'If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php'. If a user asks who the developer of the system is, respond with: 'Ang developer nitong system ay si Yvez Jayvee Gesmundo ang full stock developer. ang frontend ay si Marron Brimbuela at si Kevin Cloud Fajardo.' If the user greets you, respond warmly and ask how you can help.";
+
 // 2. Fetch Gemini API Key
 $apiKey = env('GEMINI_API_KEY');
 if (empty($apiKey)) {
     $err = "Gemini API Error: GEMINI_API_KEY is not defined or empty in the environment configuration.";
     debug_log($err, true);
-    $reply = getOfflineSupportAnswer($message);
-    send_response(true, $reply, "offline");
+    $pollinationsReply = callPollinationsAI($message, $systemInstruction);
+    if ($pollinationsReply !== null) {
+        send_response(true, $pollinationsReply, "pollinations");
+    } else {
+        $reply = getOfflineSupportAnswer($message);
+        send_response(true, $reply, "offline");
+    }
 }
 
 // 3. Fetch Gemini Model (non-hardcoded)
@@ -219,8 +261,6 @@ debug_log("Attempting call with Model: $model");
 
 // 4. Call Google Gemini API
 $url = "https://generativelanguage.googleapis.com/v1beta/models/" . $model . ":generateContent?key=" . $apiKey;
-
-$systemInstruction = "You are the Green Forensics Support Assistant. Help users with the Green Forensics Evaluating System. Answer clearly, politely, and briefly. You can help with registration, pending accounts, login lockout, account unlock requests, fingerprint image upload, webcam capture, AI-assisted image quality evaluation, faculty validation, Terms of Use, Privacy Policy, and role-based dashboards. For account lockouts, password resets, failed logins, or unlock requests, guide the user to visit request_unlock.php. Do not ask for their password or private credentials. Fingerprint images are used only for academic research evaluation and image quality assessment, not biometric identification. If a user asks about locked account, login failed, forgot password, cannot login, or requesting an unlock, you must respond with: 'If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php'. If a user asks who the developer of the system is, respond with: 'Ang developer nitong system ay si Yvez Jayvee Gesmundo ang full stock developer. ang frontend ay si Marron Brimbuela at si Kevin Cloud Fajardo.' If the user greets you, respond warmly and ask how you can help.";
 
 $data = [
     "contents" => [
@@ -269,8 +309,13 @@ curl_close($ch);
 if ($response === false || $httpCode !== 200) {
     $errMessage = "Gemini API Error. HTTP Code: $httpCode. cURL Error: $curlError. Response: " . ($response !== false ? $response : 'No response');
     debug_log($errMessage, true);
-    $reply = getOfflineSupportAnswer($message);
-    send_response(true, $reply, "offline");
+    $pollinationsReply = callPollinationsAI($message, $systemInstruction);
+    if ($pollinationsReply !== null) {
+        send_response(true, $pollinationsReply, "pollinations");
+    } else {
+        $reply = getOfflineSupportAnswer($message);
+        send_response(true, $reply, "offline");
+    }
 }
 
 $responseData = json_decode($response, true);
@@ -279,8 +324,13 @@ $replyText = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? ''
 if (empty($replyText)) {
     $errMessage = "Gemini API Error: empty response text structure. Response: " . $response;
     debug_log($errMessage, true);
-    $reply = getOfflineSupportAnswer($message);
-    send_response(true, $reply, "offline");
+    $pollinationsReply = callPollinationsAI($message, $systemInstruction);
+    if ($pollinationsReply !== null) {
+        send_response(true, $pollinationsReply, "pollinations");
+    } else {
+        $reply = getOfflineSupportAnswer($message);
+        send_response(true, $reply, "offline");
+    }
 }
 
 send_response(true, trim($replyText), "gemini");

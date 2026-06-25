@@ -995,6 +995,10 @@ body {
         fill: none;
     }
 
+    .mobile-profile-container {
+        position: relative;
+    }
+
     .mobile-profile-avatar {
         width: 36px;
         height: 36px;
@@ -1009,7 +1013,70 @@ body {
         border: 2px solid rgba(116, 198, 157, 0.4);
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         user-select: none;
+        cursor: pointer;
     }
+
+    .mobile-profile-dropdown {
+        display: none;
+        position: absolute;
+        top: 44px;
+        right: 0;
+        background-color: var(--white);
+        border: 1px solid rgba(27, 67, 50, 0.08);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(27, 67, 50, 0.12);
+        width: 140px;
+        z-index: 2500;
+        overflow: hidden;
+    }
+
+    .mobile-profile-dropdown.active {
+        display: block;
+        animation: dropdown-fade-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes dropdown-fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .mobile-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        text-decoration: none;
+        color: var(--dark-green);
+        font-size: 0.82rem;
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+    }
+
+    .mobile-dropdown-item:hover {
+        background-color: var(--cream);
+    }
+
+    .mobile-dropdown-item.logout {
+        color: var(--danger);
+    }
+
+    .mobile-dropdown-item.logout:hover {
+        background-color: rgba(224, 122, 95, 0.08);
+    }
+
+    .mobile-dropdown-item svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+    }
+
 
     /* Mobile Bottom Navigation Bar (Facebook Mobile Style with Green Forensics theme) */
     .student-mobile-nav {

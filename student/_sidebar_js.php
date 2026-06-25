@@ -34,5 +34,25 @@
                 }
             }
         });
+
+        // Toggle mobile profile dropdown
+        const profileBtn = document.getElementById('mobileProfileBtn');
+        const profileDropdown = document.getElementById('mobileProfileDropdown');
+
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('active');
+            });
+            
+            // Close when clicking outside
+            document.addEventListener('click', e => {
+                if (profileDropdown.classList.contains('active')) {
+                    if (!profileDropdown.contains(e.target) && e.target !== profileBtn) {
+                        profileDropdown.classList.remove('active');
+                    }
+                }
+            });
+        }
     });
 </script>

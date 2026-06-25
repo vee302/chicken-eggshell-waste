@@ -172,9 +172,21 @@ function nav_active(string $page, string $current): string {
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
         </button>
-        <!-- Profile Initial Avatar -->
-        <div class="mobile-profile-avatar" title="<?= htmlspecialchars($s_name) ?>">
-            <?= htmlspecialchars($initials) ?>
+        <!-- Profile Initial Avatar with Dropdown -->
+        <div class="mobile-profile-container">
+            <div class="mobile-profile-avatar" id="mobileProfileBtn" title="<?= htmlspecialchars($s_name) ?>">
+                <?= htmlspecialchars($initials) ?>
+            </div>
+            <div class="mobile-profile-dropdown" id="mobileProfileDropdown">
+                <a href="../logout.php" class="mobile-dropdown-item logout" id="mobile-nav-logout-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    <span>Logout</span>
+                </a>
+            </div>
         </div>
     </div>
 </header>

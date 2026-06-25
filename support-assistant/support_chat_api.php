@@ -195,8 +195,8 @@ function getOfflineSupportAnswer($message)
         return "Safety & Climate Log records powder type, surface type, temperature, humidity, irritation status, and remarks during fingerprint testing.";
     }
 
-    // 14. Greetings like "hi", "hello", "help"
-    if (preg_match('/\bhi\b/', $lowerMessage) || preg_match('/\bhello\b/', $lowerMessage) || preg_match('/\bhelp\b/', $lowerMessage) || preg_match('/\bhey\b/', $lowerMessage)) {
+    // 14. Greetings like "hi", "hello", "help", "kumusta", "kamusta", "tulong"
+    if (preg_match('/\bhi\b/', $lowerMessage) || preg_match('/\bhello\b/', $lowerMessage) || preg_match('/\bhelp\b/', $lowerMessage) || preg_match('/\bhey\b/', $lowerMessage) || preg_match('/\bkumusta\b/', $lowerMessage) || preg_match('/\bkamusta\b/', $lowerMessage) || preg_match('/\btulong\b/', $lowerMessage)) {
         return "Hi! I can help you with account approval, fingerprint upload, validation status, reports, safety logs, and logout. What do you need help with?";
     }
 

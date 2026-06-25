@@ -42,6 +42,9 @@ function nav_active(string $page, string $current): string {
         .mobile-profile-container {
             display: block !important;
         }
+        .mobile-profile-dropdown.active {
+            display: block !important;
+        }
     }
 </style>
 <aside class="student-sidebar" id="sidebar">

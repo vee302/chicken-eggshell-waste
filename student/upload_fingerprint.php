@@ -14,13 +14,28 @@ $msg = $msg_type = '';
 $images = [];
 try {
     $stmt = $pdo->prepare("
-        SELECT id, trial_id, image_path, image_label, status, submitted_at, powder_type, surface_type 
-        FROM fingerprint_tests 
-        WHERE student_id = ? AND image_path IS NOT NULL AND image_path != '' 
-        ORDER BY submitted_at DESC LIMIT 20
+        SELECT ft.*, COALESCE(ft.faculty_remarks, fr.remarks) AS faculty_remarks, faculty.full_name AS faculty_validator
+        FROM fingerprint_tests ft
+        LEFT JOIN users faculty ON ft.validated_by = faculty.id
+        LEFT JOIN faculty_remarks fr ON fr.test_id = ft.id AND fr.id = (
+            SELECT MAX(fr2.id) FROM faculty_remarks fr2 WHERE fr2.test_id = ft.id
+        )
+        WHERE ft.student_id = ? AND ft.image_path IS NOT NULL AND ft.image_path != '' 
+        ORDER BY ft.submitted_at DESC LIMIT 20
     ");
     $stmt->execute([$student_id]);
     $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($images as &$img) {
+        $img['image_exists'] = false;
+        if (!empty($img['image_path'])) {
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $img['image_path'];
+            if (file_exists($filePath)) {
+                $img['image_exists'] = true;
+            }
+        }
+    }
+    unset($img);
 } catch (PDOException $e) {}
 ?>
 <!DOCTYPE html>
@@ -181,10 +196,17 @@ try {
                     <div class="image-gallery">
                         <?php foreach ($images as $img): ?>
                         <div class="image-thumb">
-                            <?php if ($img['image_path'] && file_exists(dirname(__DIR__) . '/uploads/fingerprints/' . $img['image_path'])): ?>
+                            <?php if ($img['image_path'] && $img['image_exists']): ?>
                                 <img src="../view_fingerprint.php?test_id=<?= $img['id'] ?>" alt="Fingerprint image">
                             <?php else: ?>
-                                <div style="height:130px; background:#f4f6f0; display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:0.75rem; font-weight:600;">Image not found</div>
+                                <div style="height:130px; background:#f4f6f0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gray); font-size:0.72rem; text-align:center; padding:10px;">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gray); margin-bottom: 6px;">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                                        <polyline points="21 15 16 10 5 21"/>
+                                    </svg>
+                                    <span>No image preview available</span>
+                                </div>
                             <?php endif; ?>
                             <div class="image-thumb-info">
                                 <div class="image-thumb-label" style="font-size: 0.8rem; font-weight:700; color:var(--dark-green);"><?= htmlspecialchars($img['trial_id']) ?></div>
@@ -193,10 +215,13 @@ try {
                                     <?= htmlspecialchars($img['powder_type']) ?> | <?= htmlspecialchars($img['surface_type']) ?>
                                 </div>
                                 <div class="image-thumb-date" style="font-size:0.68rem;"><?= date('M d, Y', strtotime($img['submitted_at'])) ?></div>
-                                <div style="margin-top: 4px;">
-                                    <span class="badge badge-<?= $img['status'] ?>" style="font-size: 0.65rem; padding: 2px 6px;">
+                                <div style="margin-top: 4px; display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                                    <span class="badge badge-<?= $img['status'] ?>" style="font-size: 0.65rem; padding: 2px 6px; flex-shrink: 0;">
                                         <?= $img['status'] === 'pending_validation' ? 'Pending Validation' : ($img['status'] === 'needs_revision' ? 'Needs Revision' : ucfirst($img['status'])) ?>
                                     </span>
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick='openDetailModal(<?= htmlspecialchars(json_encode($img), ENT_QUOTES, "UTF-8") ?>)' style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.72rem; border-radius: 6px; justify-content: center;">View Details</button>
                                 </div>
                             </div>
                         </div>
@@ -1206,6 +1231,9 @@ function appendGalleryCard(data) {
     const card = document.createElement('div');
     card.className = 'image-thumb';
     
+    // Explicitly set flags for modal usage
+    data.image_exists = true;
+    
     card.innerHTML = `
         <img src="../view_fingerprint.php?test_id=${data.id}" alt="Fingerprint image">
         <div class="image-thumb-info">
@@ -1215,13 +1243,22 @@ function appendGalleryCard(data) {
                 ${data.powder_type} | ${data.surface_type}
             </div>
             <div class="image-thumb-date" style="font-size:0.68rem;">Just now</div>
-            <div style="margin-top: 4px;">
-                <span class="badge badge-pending" style="font-size: 0.65rem; padding: 2px 6px;">
+            <div style="margin-top: 4px; display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                <span class="badge badge-pending_validation" style="font-size: 0.65rem; padding: 2px 6px; flex-shrink: 0;">
                     Pending Validation
                 </span>
             </div>
+            <div style="margin-top: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.72rem; border-radius: 6px; justify-content: center;">View Details</button>
+            </div>
         </div>
     `;
+    
+    // Bind modal trigger to card button
+    const btn = card.querySelector('button');
+    if (btn) {
+        btn.onclick = () => openDetailModal(data);
+    }
     
     gallery.insertBefore(card, gallery.firstChild);
 
@@ -1232,7 +1269,370 @@ function appendGalleryCard(data) {
         countSpan.textContent = `${count} image${count !== 1 ? 's' : ''}`;
     }
 }
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function openDetailModal(row) {
+    document.getElementById('detailOverlay').classList.add('open');
+
+    const username = row.student_email ? row.student_email.split('@')[0] : (row.student_name ? row.student_name.toLowerCase().replace(/\s+/g, '') : 'student');
+    document.getElementById('det-student-chip').textContent = username;
+
+    document.getElementById('det-trial-id').textContent = row.trial_id || 'TR-' + String(row.id).padStart(4, '0');
+    document.getElementById('det-powder').textContent = row.powder_type || '';
+    document.getElementById('det-surface').textContent = row.surface_type || '';
+    document.getElementById('det-label').textContent = row.image_label || 'Untitled';
+    
+    const evalDate = row.ai_evaluated_at ? new Date(row.ai_evaluated_at.replace(/-/g, "/")).toLocaleString() : (row.submitted_at ? new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString() : '—');
+    document.getElementById('det-evaluation-date').textContent = evalDate;
+
+    document.getElementById('det-image-path').textContent = row.image_path ? 'uploads/' + row.image_path : '—';
+
+    const img = document.getElementById('det-img');
+    const imgWrapper = document.getElementById('det-img-wrapper');
+    const imgMissing = document.getElementById('det-img-missing');
+    
+    if (row.image_path && row.image_exists) {
+        img.src = '../view_fingerprint.php?test_id=' + row.id;
+        imgWrapper.style.display = 'flex';
+        if (imgMissing) imgMissing.style.display = 'none';
+    } else {
+        imgWrapper.style.display = 'none';
+        if (imgMissing) imgMissing.style.display = 'block';
+    }
+
+    const aiAccuracy = row.ai_accuracy_score !== null ? parseFloat(row.ai_accuracy_score) : (row.accuracy_score !== null ? parseFloat(row.accuracy_score) : 0);
+    const aiClarity = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score) : 0;
+    const aiVisibility = row.visibility_score !== null ? parseFloat(row.visibility_score) : 0;
+    const aiAdhesion = row.adhesion_score !== null ? parseFloat(row.adhesion_score) : 0;
+    const aiContrast = row.contrast_score !== null ? parseFloat(row.contrast_score) : 0;
+
+    const hasFacultyScores = row.faculty_final_score !== null;
+    const fAccuracy = hasFacultyScores ? parseFloat(row.faculty_final_score) : aiAccuracy;
+    const fClarity = hasFacultyScores && row.faculty_ridge_clarity_score !== null ? parseFloat(row.faculty_ridge_clarity_score) : aiClarity;
+    const fVisibility = hasFacultyScores && row.faculty_visibility_score !== null ? parseFloat(row.faculty_visibility_score) : aiVisibility;
+    const fAdhesion = hasFacultyScores && row.faculty_adhesion_score !== null ? parseFloat(row.faculty_adhesion_score) : aiAdhesion;
+    const fContrast = hasFacultyScores && row.faculty_contrast_score !== null ? parseFloat(row.faculty_contrast_score) : aiContrast;
+
+    const aiDetailsHtml = `
+        <div style="margin-top: 1rem; border-top: 1px solid #27354f; padding-top: 0.85rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">AI Preliminary Results (Read-Only)</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #cbd5e1;">
+                <div style="display: flex; justify-content: space-between;"><span>AI Accuracy:</span> <strong>${aiAccuracy > 0 ? aiAccuracy.toFixed(1) + '%' : '—'}</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>AI Ridge Clarity:</span> <span>${aiClarity > 0 ? aiClarity.toFixed(1) + '%' : '—'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span>AI Visibility:</span> <span>${aiVisibility > 0 ? aiVisibility.toFixed(1) + '%' : '—'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span>AI Adhesion:</span> <span>${aiAdhesion > 0 ? aiAdhesion.toFixed(1) + '%' : '—'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span>AI Contrast:</span> <span>${aiContrast > 0 ? aiContrast.toFixed(1) + '%' : '—'}</span></div>
+            </div>
+        </div>
+    `;
+
+    const extraAiContainer = document.getElementById('det-ai-prelim-container');
+    if (extraAiContainer) {
+        extraAiContainer.innerHTML = aiDetailsHtml;
+    }
+
+    const overallScoreHuge = document.getElementById('det-val-accuracy-huge');
+    const badgeEl = document.getElementById('det-val-quality-badge');
+    const badgeDesc = document.querySelector('.quality-badge-desc');
+
+    if (row.status === 'approved') {
+        overallScoreHuge.textContent = Math.round(fAccuracy) + '%';
+        badgeEl.textContent = 'APPROVED';
+        badgeEl.style.color = '#10b981';
+        badgeEl.style.borderColor = 'rgba(16, 185, 129, 0.25)';
+        badgeEl.style.background = 'rgba(16, 185, 129, 0.12)';
+        if (badgeDesc) badgeDesc.textContent = 'Faculty Approved Official Score';
+
+        document.getElementById('det-val-clarity').textContent = fClarity > 0 ? fClarity.toFixed(1) + '%' : '—';
+        document.getElementById('det-val-contrast').textContent = fContrast > 0 ? fContrast.toFixed(1) + '%' : '—';
+        document.getElementById('det-val-visibility').textContent = fVisibility > 0 ? fVisibility.toFixed(1) + '%' : '—';
+        document.getElementById('det-val-sharpness').textContent = fClarity > 0 ? fClarity.toFixed(1) + '%' : '—';
+        document.getElementById('det-val-adhesion').textContent = fAdhesion > 0 ? fAdhesion.toFixed(1) + '%' : '—';
+
+        document.getElementById('det-fill-clarity').style.width = fClarity + '%';
+        document.getElementById('det-fill-contrast').style.width = fContrast + '%';
+        document.getElementById('det-fill-visibility').style.width = fVisibility + '%';
+        document.getElementById('det-fill-sharpness').style.width = fClarity + '%';
+        document.getElementById('det-fill-adhesion').style.width = fAdhesion + '%';
+        
+    } else {
+        overallScoreHuge.textContent = '—';
+        
+        if (row.status === 'pending_validation') {
+            badgeEl.textContent = 'AWAITING REVIEW';
+            badgeEl.style.color = '#f59e0b';
+            badgeEl.style.borderColor = 'rgba(245, 158, 11, 0.25)';
+            badgeEl.style.background = 'rgba(245, 158, 11, 0.12)';
+            if (badgeDesc) badgeDesc.textContent = 'Awaiting Faculty Validation';
+        } else if (row.status === 'rejected') {
+            badgeEl.textContent = 'REJECTED';
+            badgeEl.style.color = '#ef4444';
+            badgeEl.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+            badgeEl.style.background = 'rgba(239, 68, 68, 0.12)';
+            if (badgeDesc) badgeDesc.textContent = 'Rejected';
+        } else if (row.status === 'needs_revision') {
+            badgeEl.textContent = 'REVISION NEEDED';
+            badgeEl.style.color = '#3b82f6';
+            badgeEl.style.borderColor = 'rgba(59, 130, 246, 0.25)';
+            badgeEl.style.background = 'rgba(59, 130, 246, 0.12)';
+            if (badgeDesc) badgeDesc.textContent = 'Needs Revision';
+        }
+
+        document.getElementById('det-val-clarity').textContent = '—';
+        document.getElementById('det-val-contrast').textContent = '—';
+        document.getElementById('det-val-visibility').textContent = '—';
+        document.getElementById('det-val-sharpness').textContent = '—';
+        document.getElementById('det-val-adhesion').textContent = '—';
+
+        document.getElementById('det-fill-clarity').style.width = '0%';
+        document.getElementById('det-fill-contrast').style.width = '0%';
+        document.getElementById('det-fill-visibility').style.width = '0%';
+        document.getElementById('det-fill-sharpness').style.width = '0%';
+        document.getElementById('det-fill-adhesion').style.width = '0%';
+    }
+
+    document.getElementById('det-ai-score').textContent = aiAccuracy > 0 ? aiAccuracy.toFixed(1) + '%' : 'Awaiting AI Evaluation';
+
+    const statusVal = document.getElementById('det-status');
+    const reviewerRow = document.getElementById('det-reviewer-row');
+    const validatedAtRow = document.getElementById('det-validated-date-row');
+    const remarksRow = document.getElementById('det-remarks');
+    const remarksLabel = document.getElementById('det-remarks-label');
+    const facultyScoreRow = document.getElementById('det-faculty-row');
+
+    if (row.status === 'pending_validation') {
+        statusVal.innerHTML = '<span class="badge badge-pending_validation">Pending Validation</span>';
+        reviewerRow.style.display = 'none';
+        validatedAtRow.style.display = 'none';
+        facultyScoreRow.style.display = 'flex';
+        
+        document.getElementById('det-faculty-score-label').textContent = 'Faculty Final Score:';
+        document.getElementById('det-faculty-score').textContent = 'Awaiting Faculty Validation';
+        
+        remarksLabel.textContent = 'Notes:';
+        remarksRow.innerHTML = 'This record is still awaiting faculty review.';
+    } else {
+        reviewerRow.style.display = 'flex';
+        validatedAtRow.style.display = 'flex';
+        
+        document.getElementById('det-reviewer').textContent = row.faculty_validator || 'Faculty Reviewer';
+        document.getElementById('det-validated-at').textContent = row.validated_at ? new Date(row.validated_at.replace(/-/g, "/")).toLocaleString() : '—';
+        
+        remarksLabel.textContent = 'Faculty Remarks:';
+        remarksRow.innerHTML = row.faculty_remarks ? escapeHtml(row.faculty_remarks).replace(/\n/g, '<br>') : 'No remarks provided.';
+
+        if (row.status === 'approved') {
+            statusVal.innerHTML = '<span class="badge badge-approved">Approved</span>';
+            facultyScoreRow.style.display = 'flex';
+            document.getElementById('det-faculty-score-label').textContent = 'Faculty Final Score:';
+            document.getElementById('det-faculty-score').textContent = fAccuracy.toFixed(1) + '%';
+        } else if (row.status === 'rejected') {
+            statusVal.innerHTML = '<span class="badge badge-rejected">Rejected</span>';
+            facultyScoreRow.style.display = 'none';
+            remarksRow.innerHTML += `<div style="margin-top: 12px; padding: 10px 14px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; border-radius: 6px; color: #fca5a5; font-size: 0.82rem;">
+                <strong>Action Needed:</strong> Upload a clearer fingerprint image for validation.
+            </div>`;
+        } else if (row.status === 'needs_revision') {
+            statusVal.innerHTML = '<span class="badge badge-needs_revision">Needs Revision</span>';
+            facultyScoreRow.style.display = 'none';
+            remarksRow.innerHTML += `<div style="margin-top: 12px; padding: 10px 14px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 6px; color: #93c5fd; font-size: 0.82rem;">
+                <strong>Action Needed:</strong> Revise the details or re-upload a clearer image according to feedback.
+            </div>`;
+        }
+    }
+}
+
+function closeDetailModal() {
+    document.getElementById('detailOverlay').classList.remove('open');
+}
+
+document.getElementById('detailOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('detailOverlay')) closeDetailModal();
+});
 </script>
+
+<!-- VIEW DETAILS MODAL -->
+<div class="detail-overlay" id="detailOverlay">
+    <div class="detail-modal">
+        <div class="detail-modal-header">
+            <h3>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981; margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Detailed Quality Inspection
+            </h3>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span class="student-chip" id="det-student-chip">student</span>
+                <button class="modal-close-btn" onclick="closeDetailModal()">&times;</button>
+            </div>
+        </div>
+        <div class="detail-modal-body">
+            <div id="modalContent">
+                <div class="inspect-grid">
+                    <!-- Left Column: Minutiae Mapping -->
+                    <div>
+                        <div class="column-title">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            MINUTIAE MAPPING
+                        </div>
+                        <div class="inspect-img-box" id="det-img-wrapper">
+                            <img src="" alt="Fingerprint Preview" id="det-img">
+                        </div>
+                        <div style="text-align:center; color: var(--gray); font-weight:600; margin-bottom:1rem; display:none;" id="det-img-missing">
+                            No image preview available
+                        </div>
+                        <div class="inspect-img-caption">
+                            Green indicators represent bifurcation/ridge ending coordinate clusters mapped by OpenCV.
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Evaluation Coefficient -->
+                    <div>
+                        <div class="column-title">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                            EVALUATION COEFFICIENT
+                        </div>
+                        
+                        <div class="coefficient-header">
+                            <div class="overall-score-huge" id="det-val-accuracy-huge">—</div>
+                            <div class="overall-score-badge-wrap">
+                                <span class="quality-badge" id="det-val-quality-badge">GOOD</span>
+                                <span class="quality-badge-desc">Overall Print Quality Standard</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bars -->
+                        <div class="metric-item">
+                            <div class="metric-info">
+                                <span>Ridge Clarity</span>
+                                <span id="det-val-clarity">—</span>
+                            </div>
+                            <div class="metric-bar-track">
+                                <div class="metric-bar-fill" id="det-fill-clarity"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-info">
+                                <span>Contrast Quality</span>
+                                <span id="det-val-contrast">—</span>
+                            </div>
+                            <div class="metric-bar-track">
+                                <div class="metric-bar-fill" id="det-fill-contrast"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-info">
+                                <span>Minutiae Visibility</span>
+                                <span id="det-val-visibility">—</span>
+                            </div>
+                            <div class="metric-bar-track">
+                                <div class="metric-bar-fill" id="det-fill-visibility"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-info">
+                                <span>Fingerprint Sharpness</span>
+                                <span id="det-val-sharpness">—</span>
+                            </div>
+                            <div class="metric-bar-track">
+                                <div class="metric-bar-fill" id="det-fill-sharpness"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-info">
+                                <span>Adhesion Quality</span>
+                                <span id="det-val-adhesion">—</span>
+                            </div>
+                            <div class="metric-bar-track">
+                                <div class="metric-bar-fill" id="det-fill-adhesion"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Preliminary Results Container -->
+                        <div id="det-ai-prelim-container"></div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section: Lab Analysis Notes -->
+                <div class="analysis-notes-box">
+                    <div class="analysis-notes-title">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        Lab Analysis Notes
+                    </div>
+
+                    <div class="notes-content-wrap">
+                        <div class="notes-label" id="det-remarks-label">Faculty Remarks:</div>
+                        <div class="notes-text" id="det-remarks"></div>
+                    </div>
+
+                    <!-- Details Grid -->
+                    <div class="info-details-grid">
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Trial ID:</span>
+                            <span class="info-detail-value" id="det-trial-id"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Powder Type:</span>
+                            <span class="info-detail-value" id="det-powder" style="text-transform: capitalize;"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Surface Type:</span>
+                            <span class="info-detail-value" id="det-surface" style="text-transform: capitalize;"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Image Label:</span>
+                            <span class="info-detail-value" id="det-label"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Status:</span>
+                            <span class="info-detail-value" id="det-status"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">AI Preliminary Score:</span>
+                            <span class="info-detail-value" id="det-ai-score"></span>
+                        </div>
+                        <div class="info-detail-row" id="det-faculty-row">
+                            <span class="info-detail-label" id="det-faculty-score-label">Faculty Final Score:</span>
+                            <span class="info-detail-value" id="det-faculty-score"></span>
+                        </div>
+                        <div class="info-detail-row" id="det-reviewer-row">
+                            <span class="info-detail-label">Faculty Reviewer:</span>
+                            <span class="info-detail-value" id="det-reviewer"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Image Path:</span>
+                            <span class="info-detail-value" id="det-image-path" style="font-family: monospace; font-size: 0.75rem; color:#10b981; word-break: break-all;"></span>
+                        </div>
+                        <div class="info-detail-row">
+                            <span class="info-detail-label">Evaluation Date:</span>
+                            <span class="info-detail-value" id="det-evaluation-date"></span>
+                        </div>
+                        <div class="info-detail-row" id="det-validated-date-row">
+                            <span class="info-detail-label">Validation Date:</span>
+                            <span class="info-detail-value" id="det-validated-at"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:1.5rem;" class="no-print">
+                    <button type="button" class="btn btn-secondary" onclick="closeDetailModal()" style="flex:1; background:#334155; border-color:#334155; color:#fff;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php include dirname(__DIR__) . '/support-assistant/support_widget.php'; ?>
 </body>
 </html>

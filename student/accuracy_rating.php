@@ -479,8 +479,11 @@ try {
                                             <div class="score-bar-track">
                                                 <div class="score-bar-fill" style="width:<?= min(100, $displayScore) ?>%"></div>
                                             </div>
-                                            <span style="font-size:.75rem;color:var(--gray);width:35px;text-align:right;"><?= number_format($displayScore, 0) ?>%</span>
                                         </div>
+                                    <?php elseif ($t['status'] === 'rejected'): ?>
+                                        <span style="font-size:.75rem;color:var(--danger);font-style:italic;">No final score</span>
+                                    <?php elseif ($t['status'] === 'needs_revision'): ?>
+                                        <span style="font-size:.75rem;color:var(--warning);font-style:italic;">Needs Revision</span>
                                     <?php else: ?>
                                         <span style="font-size:.75rem;color:var(--gray);font-style:italic;">Awaiting Faculty Validation</span>
                                     <?php endif; ?>
@@ -928,9 +931,15 @@ function populateInspectionPanel(row) {
         } else if (row.status === 'rejected') {
             statusVal.innerHTML = '<span class="badge badge-rejected">Rejected</span>';
             facultyScoreRow.style.display = 'none';
+            remarksRow.innerHTML += `<div style="margin-top: 12px; padding: 10px 14px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; border-radius: 6px; color: #fca5a5; font-size: 0.82rem;">
+                <strong>Action Needed:</strong> Upload a clearer fingerprint image for validation.
+            </div>`;
         } else if (row.status === 'needs_revision') {
             statusVal.innerHTML = '<span class="badge badge-needs_revision">Needs Revision</span>';
             facultyScoreRow.style.display = 'none';
+            remarksRow.innerHTML += `<div style="margin-top: 12px; padding: 10px 14px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 6px; color: #93c5fd; font-size: 0.82rem;">
+                <strong>Action Needed:</strong> Revise the details or re-upload a clearer image according to feedback.
+            </div>`;
         }
     }
 }

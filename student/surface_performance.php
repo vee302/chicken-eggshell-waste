@@ -10,7 +10,12 @@ $student_id   = $_SESSION['user_id']  ?? 0;
 
 // Group by surface and powder type for this student
 $surface_data = [];
+$best_surface = 'N/A';
+$lowest_surface = 'N/A';
+$total_approved_trials = 0;
+
 try {
+    // 1. Group by surface and powder type for card rendering
     $stmt = $pdo->prepare("
         SELECT surface_type, powder_type,
                COUNT(*) AS trial_count,
@@ -24,6 +29,34 @@ try {
     ");
     $stmt->execute([$student_id]);
     $surface_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // 2. Calculate total approved trials
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM fingerprint_tests 
+        WHERE student_id = ? AND status = 'approved'
+    ");
+    $stmt->execute([$student_id]);
+    $total_approved_trials = $stmt->fetchColumn() ?: 0;
+
+    // 3. Find Best and Lowest performing surfaces (by average score of approved trials)
+    $stmt = $pdo->prepare("
+        SELECT surface_type, AVG(accuracy_score) AS avg_surf_score
+        FROM fingerprint_tests
+        WHERE student_id = ? AND status = 'approved' AND accuracy_score IS NOT NULL
+        GROUP BY surface_type
+        ORDER BY avg_surf_score DESC
+    ");
+    $stmt->execute([$student_id]);
+    $surfaces = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!empty($surfaces)) {
+        $best_row = $surfaces[0];
+        $best_surface = ucfirst($best_row['surface_type']) . ' (' . round($best_row['avg_surf_score'], 1) . '%)';
+        
+        $lowest_row = end($surfaces);
+        $lowest_surface = ucfirst($lowest_row['surface_type']) . ' (' . round($lowest_row['avg_surf_score'], 1) . '%)';
+    }
 } catch (PDOException $e) {}
 ?>
 <!DOCTYPE html>
@@ -35,7 +68,13 @@ try {
     <title>Surface Performance — Green Forensics</title>
     <link rel="stylesheet" href="../css/student_style.css?v=1.0">
     <style>
-        .surface-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+        .surface-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 360px));
+            gap: 1.5rem;
+            justify-content: center;
+            margin: 0 auto;
+        }
         .surface-card { background: var(--white); border-radius: 14px; overflow: hidden; box-shadow: var(--box-shadow); border: 1px solid rgba(27,67,50,.05); }
         .surface-card-head { background: var(--dark-green); color: var(--white); padding: 1.1rem 1.4rem; }
         .surface-card-head h3 { font-size: .95rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
@@ -77,6 +116,51 @@ try {
                     <p>Breakdown of your fingerprint accuracy scores by surface type and powder used.</p>
                 </div>
                 <a href="upload_fingerprint.php" class="btn btn-primary">+ New Trial</a>
+            </div>
+
+            <!-- SUMMARY STATS -->
+            <div class="stats-grid" style="margin-bottom: 1.75rem;">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Best Performing Surface</span>
+                        <div class="stat-icon" style="background:rgba(82,183,136,.12);color:#2d6a4f;">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                                <polyline points="16 7 22 7 22 13"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" style="font-size: 1.4rem; color: #2d6a4f; font-weight:800;"><?= htmlspecialchars($best_surface) ?></div>
+                    <div class="stat-desc">Surface with highest average score</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Lowest Performing Surface</span>
+                        <div class="stat-icon" style="background:rgba(224,122,95,.12);color:#c0392b;">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/>
+                                <polyline points="16 17 22 17 22 11"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" style="font-size: 1.4rem; color: #c0392b; font-weight:800;"><?= htmlspecialchars($lowest_surface) ?></div>
+                    <div class="stat-desc">Surface with lowest average score</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Total Approved Trials</span>
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" style="font-size: 1.8rem; font-weight:800;"><?= $total_approved_trials ?></div>
+                    <div class="stat-desc">Approved records for evaluations</div>
+                </div>
             </div>
 
             <?php if (empty($surface_data)): ?>

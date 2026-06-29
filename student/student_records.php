@@ -527,6 +527,10 @@ try {
                                                 <div class="score-bar-fill" style="width:<?= min(100, $displayScore) ?>%"></div>
                                             </div>
                                         </div>
+                                    <?php elseif ($r['status'] === 'rejected'): ?>
+                                        <div style="font-size: 0.75rem; color: var(--danger); font-style:italic;">No final score</div>
+                                    <?php elseif ($r['status'] === 'needs_revision'): ?>
+                                        <div style="font-size: 0.75rem; color: var(--warning); font-style:italic;">Needs Revision</div>
                                     <?php else: ?>
                                         <div style="font-size: 0.75rem; color: var(--gray); font-style:italic;">Awaiting Faculty Validation</div>
                                     <?php endif; ?>
@@ -839,7 +843,7 @@ function renderRecordsTable(records) {
                         <img src="../view_fingerprint.php?test_id=${r.id}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
                     </a>`;
             } else {
-                imageHtml = '<span style="font-size: 0.72rem; color: var(--danger); font-weight:600;">Image not found</span>';
+                imageHtml = '<span style="font-size: 0.72rem; color: var(--gray); font-style:italic;">No image preview available</span>';
             }
         }
 
@@ -850,7 +854,7 @@ function renderRecordsTable(records) {
                 <div class="score-bar-track">
                     <div class="score-bar-fill" style="width:${Math.min(100, r.accuracy_score)}%"></div>
                 </div>
-            </div>` : '<div style="font-size: 0.75rem; color: var(--gray); font-style:italic;">Awaiting review</div>';
+            </div>` : (r.status === 'rejected' ? '<div style="font-size: 0.75rem; color: var(--danger); font-style:italic;">No final score</div>' : (r.status === 'needs_revision' ? '<div style="font-size: 0.75rem; color: var(--warning); font-style:italic;">Needs Revision</div>' : '<div style="font-size: 0.75rem; color: var(--gray); font-style:italic;">Awaiting Faculty Validation</div>'));
 
         const remarksHtml = r.faculty_remarks ? escapeHtml(r.faculty_remarks) : '<em>No remarks yet</em>';
 
@@ -1062,9 +1066,15 @@ function openDetailModal(row) {
         } else if (row.status === 'rejected') {
             statusVal.innerHTML = '<span class="badge badge-rejected">Rejected</span>';
             facultyScoreRow.style.display = 'none';
+            remarksRow.innerHTML += `<div style="margin-top: 12px; padding: 10px 14px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; border-radius: 6px; color: #fca5a5; font-size: 0.82rem;">
+                <strong>Action Needed:</strong> Upload a clearer fingerprint image for validation.
+            </div>`;
         } else if (row.status === 'needs_revision') {
             statusVal.innerHTML = '<span class="badge badge-needs_revision">Needs Revision</span>';
             facultyScoreRow.style.display = 'none';
+            remarksRow.innerHTML += `<div style="margin-top: 12px; padding: 10px 14px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 6px; color: #93c5fd; font-size: 0.82rem;">
+                <strong>Action Needed:</strong> Revise the details or re-upload a clearer image according to feedback.
+            </div>`;
         }
     }
 

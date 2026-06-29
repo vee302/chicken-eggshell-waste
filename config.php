@@ -362,14 +362,22 @@ try {
                             SET scl.surface_type = ft.surface_type");
             }
             
-            // Add temperature if not present
+            // Add temperature if not present, otherwise ensure type is DECIMAL(5,2)
             if (!in_array('temperature', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `temperature` DECIMAL(5,2) DEFAULT NULL");
+            } else {
+                try {
+                    $pdo->exec("ALTER TABLE `safety_climate_log` MODIFY COLUMN `temperature` DECIMAL(5,2) DEFAULT NULL");
+                } catch (Exception $e) {}
             }
             
-            // Add humidity if not present
+            // Add humidity if not present, otherwise ensure type is DECIMAL(5,2)
             if (!in_array('humidity', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `humidity` DECIMAL(5,2) DEFAULT NULL");
+            } else {
+                try {
+                    $pdo->exec("ALTER TABLE `safety_climate_log` MODIFY COLUMN `humidity` DECIMAL(5,2) DEFAULT NULL");
+                } catch (Exception $e) {}
             }
             
             // Add health_feedback if not present

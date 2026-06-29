@@ -31,25 +31,23 @@ $remarks = isset($_POST['remarks']) && $_POST['remarks'] !== '' ? trim($_POST['r
 
 // Validation for temperature and humidity if provided
 if ($raw_temp !== null) {
-    if (!is_numeric($raw_temp)) {
-        echo json_encode(['success' => false, 'message' => 'Temperature must be a numeric value.']);
+    $temp_float = filter_var($raw_temp, FILTER_VALIDATE_FLOAT);
+    if ($temp_float === false || $temp_float < 0 || $temp_float > 60) {
+        echo json_encode(['success' => false, 'message' => 'Please enter a valid ambient temperature between 0°C and 60°C.']);
         exit;
     }
-    $temperature = floatval($raw_temp);
+    $temperature = $temp_float;
 } else {
     $temperature = null;
 }
 
 if ($raw_humid !== null) {
-    if (!is_numeric($raw_humid)) {
-        echo json_encode(['success' => false, 'message' => 'Humidity must be a numeric value.']);
+    $humid_float = filter_var($raw_humid, FILTER_VALIDATE_FLOAT);
+    if ($humid_float === false || $humid_float < 0 || $humid_float > 100) {
+        echo json_encode(['success' => false, 'message' => 'Please enter a valid humidity value between 0% and 100%.']);
         exit;
     }
-    $humidity = floatval($raw_humid);
-    if ($humidity < 0 || $humidity > 100) {
-        echo json_encode(['success' => false, 'message' => 'Humidity must be between 0 and 100.']);
-        exit;
-    }
+    $humidity = $humid_float;
 } else {
     $humidity = null;
 }
@@ -132,6 +130,6 @@ try {
         'data' => $new_log
     ]);
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'An error occurred while saving the safety log. Please try again.']);
 }
 exit;

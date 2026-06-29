@@ -139,7 +139,7 @@ try {
                         <div class="form-group">
                             <label for="temperature">Ambient Temperature (°C)</label>
                             <input type="number" name="temperature" id="temperature" class="form-control"
-                                   step="0.1" placeholder="e.g. 25.0">
+                                   step="0.1" min="0" max="60" placeholder="e.g. 25.0">
                         </div>
                         <div class="form-group">
                             <label for="humidity">Relative Humidity (%)</label>
@@ -271,6 +271,26 @@ document.getElementById('form-safety-log').addEventListener('submit', function(e
     const btn = document.getElementById('btn-save-log');
     const originalText = btn.innerHTML;
     
+    // Client-side validation checks
+    const tempInput = document.getElementById('temperature');
+    const humidInput = document.getElementById('humidity');
+    
+    if (tempInput && tempInput.value !== '') {
+        const tempVal = parseFloat(tempInput.value);
+        if (isNaN(tempVal) || tempVal < 0 || tempVal > 60) {
+            showNotification('error', 'Please enter a valid ambient temperature between 0°C and 60°C.');
+            return;
+        }
+    }
+    
+    if (humidInput && humidInput.value !== '') {
+        const humidVal = parseFloat(humidInput.value);
+        if (isNaN(humidVal) || humidVal < 0 || humidVal > 100) {
+            showNotification('error', 'Please enter a valid humidity value between 0% and 100%.');
+            return;
+        }
+    }
+
     btn.innerHTML = 'Saving...';
     btn.disabled = true;
     isSubmitting = true;

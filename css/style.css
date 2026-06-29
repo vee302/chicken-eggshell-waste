@@ -1273,27 +1273,10 @@ section {
     grid-row: 3;
 }
 
-/* Dark Green Card for SDG (Card 6) */
+/* Bottom row card 3 for SDG (Card 6) */
 .bento-card.card-dark-green {
     grid-column: 3;
     grid-row: 3;
-    background-color: #31422F; /* Dark green accent */
-    border: none;
-    box-shadow: 0 4px 20px rgba(49, 66, 47, 0.15);
-}
-
-.bento-card.card-dark-green:hover {
-    background-color: #31422F !important;
-    box-shadow: 0 18px 40px rgba(49, 66, 47, 0.25) !important;
-    border-color: transparent !important;
-}
-
-.bento-card.card-dark-green h3 {
-    color: #FFFFFF;
-}
-
-.bento-card.card-dark-green p {
-    color: rgba(255, 255, 255, 0.85);
 }
 
 /* ===================================

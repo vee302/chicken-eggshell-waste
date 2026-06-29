@@ -1098,6 +1098,96 @@ if (window.innerWidth <= 768) {
     // ===================================
     // INITIALIZE ALL SYSTEMS
     // ===================================
+    // COOKIE CONSENT SYSTEM
+    // ===================================
+
+    function initCookieConsent() {
+        const banner = document.getElementById('cookieConsentBanner');
+        const modal = document.getElementById('cookiePreferencesModal');
+        const btnCustomize = document.getElementById('btnCookieCustomize');
+        const btnReject = document.getElementById('btnCookieReject');
+        const btnAccept = document.getElementById('btnCookieAccept');
+        const btnCloseModal = document.getElementById('btnCookiePreferencesClose');
+        const btnSavePreferences = document.getElementById('btnCookieSavePreferences');
+        const overlay = document.querySelector('.cookie-preferences-overlay');
+        
+        if (!banner) return;
+
+        // Check if consent already saved in localStorage
+        const consent = localStorage.getItem('cookieConsent');
+        if (!consent) {
+            // Show banner after 1.5 seconds delay with a smooth fade-in
+            setTimeout(() => {
+                banner.classList.add('active');
+            }, 1500);
+        }
+
+        function hideBanner() {
+            banner.classList.add('fading-out');
+            setTimeout(() => {
+                banner.classList.remove('active', 'fading-out');
+            }, 400);
+        }
+
+        // Accept All cookies
+        btnAccept.addEventListener('click', () => {
+            localStorage.setItem('cookieConsent', 'accepted');
+            localStorage.setItem('cookiePreferenceNecessary', 'true');
+            localStorage.setItem('cookiePreferencePreferences', 'true');
+            localStorage.setItem('cookiePreferenceAnalytics', 'true');
+            hideBanner();
+        });
+
+        // Reject All cookies
+        btnReject.addEventListener('click', () => {
+            localStorage.setItem('cookieConsent', 'rejected');
+            localStorage.setItem('cookiePreferenceNecessary', 'true');
+            localStorage.setItem('cookiePreferencePreferences', 'false');
+            localStorage.setItem('cookiePreferenceAnalytics', 'false');
+            hideBanner();
+        });
+
+        // Open customize modal
+        btnCustomize.addEventListener('click', () => {
+            const preferences = localStorage.getItem('cookiePreferencePreferences') === 'true';
+            const analytics = localStorage.getItem('cookiePreferenceAnalytics') === 'true';
+            
+            const preferencesCheckbox = document.getElementById('cookiePreferences');
+            const analyticsCheckbox = document.getElementById('cookieAnalytics');
+            
+            if (preferencesCheckbox) preferencesCheckbox.checked = preferences;
+            if (analyticsCheckbox) analyticsCheckbox.checked = analytics;
+            
+            modal.classList.add('active');
+        });
+
+        // Close customize modal
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+        
+        if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
+        if (overlay) overlay.addEventListener('click', closeModal);
+
+        // Save customized preferences
+        btnSavePreferences.addEventListener('click', () => {
+            const preferencesCheckbox = document.getElementById('cookiePreferences');
+            const analyticsCheckbox = document.getElementById('cookieAnalytics');
+            
+            const preferences = preferencesCheckbox ? preferencesCheckbox.checked : false;
+            const analytics = analyticsCheckbox ? analyticsCheckbox.checked : false;
+            
+            localStorage.setItem('cookieConsent', 'customized');
+            localStorage.setItem('cookiePreferenceNecessary', 'true');
+            localStorage.setItem('cookiePreferencePreferences', preferences ? 'true' : 'false');
+            localStorage.setItem('cookiePreferenceAnalytics', analytics ? 'true' : 'false');
+            
+            closeModal();
+            hideBanner();
+        });
+    }
+
+    // ===================================
 
     function init() {
         // Create floating particles in background
@@ -1117,6 +1207,9 @@ if (window.innerWidth <= 768) {
 
         // Initialize Camera Interface Controller
         initCameraCapture();
+
+        // Initialize Cookie Consent Banner
+        initCookieConsent();
 
         // Refresh triggers to ensure correct layout margins
         ScrollTrigger.refresh();

@@ -993,6 +993,75 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
             }
         });
     </script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookieConsentBanner" class="cookie-consent-banner">
+        <div class="cookie-consent-content">
+            <h4 class="cookie-consent-title">We value your privacy</h4>
+            <p class="cookie-consent-description">
+                We use cookies to enhance your browsing experience, remember your preferences, and analyze site traffic. By clicking “Accept”, you consent to our use of cookies. <a href="#" class="cookie-policy-link">Cookie Policy</a>
+            </p>
+        </div>
+        <div class="cookie-consent-buttons">
+            <button type="button" id="btnCookieCustomize" class="cookie-btn cookie-btn-customize">Customize</button>
+            <button type="button" id="btnCookieReject" class="cookie-btn cookie-btn-reject">Reject All</button>
+            <button type="button" id="btnCookieAccept" class="cookie-btn cookie-btn-accept">Accept</button>
+        </div>
+    </div>
+
+    <!-- Cookie Preferences Modal -->
+    <div id="cookiePreferencesModal" class="cookie-preferences-modal">
+        <div class="cookie-preferences-overlay"></div>
+        <div class="cookie-preferences-container">
+            <div class="cookie-preferences-header">
+                <h3>Cookie Preferences</h3>
+                <button type="button" id="btnCookiePreferencesClose" class="cookie-preferences-close">&times;</button>
+            </div>
+            <div class="cookie-preferences-body">
+                <p>Customize your cookie settings below. Necessary cookies are required for the website to function properly.</p>
+                
+                <div class="cookie-preference-item">
+                    <div class="cookie-preference-info">
+                        <label>Necessary Cookies</label>
+                        <span class="cookie-preference-desc">Required for basic website features like secure login and session management.</span>
+                    </div>
+                    <div class="cookie-preference-toggle">
+                        <input type="checkbox" checked disabled>
+                    </div>
+                </div>
+
+                <div class="cookie-preference-item">
+                    <div class="cookie-preference-info">
+                        <label for="cookiePreferences">Preferences Cookies</label>
+                        <span class="cookie-preference-desc">Allow the website to remember choices you make (such as UI themes or settings).</span>
+                    </div>
+                    <div class="cookie-preference-toggle">
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="cookiePreferences">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="cookie-preference-item">
+                    <div class="cookie-preference-info">
+                        <label for="cookieAnalytics">Analytics Cookies</label>
+                        <span class="cookie-preference-desc">Help us analyze site usage and performance to improve user experience.</span>
+                    </div>
+                    <div class="cookie-preference-toggle">
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="cookieAnalytics">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="cookie-preferences-footer">
+                <button type="button" id="btnCookieSavePreferences" class="cookie-btn cookie-btn-save">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+
 <?php include __DIR__ . '/support-assistant/support_widget.php'; ?>
 </body>
 

@@ -35,9 +35,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
             $upd->execute([':key' => 'lockout_time', ':val' => $lockout]);
 
             log_activity("Update Settings", "Updated system configurations (Maintenance Mode: " . ($maintenance === "1" ? "ON" : "OFF") . ")");
-            $success = "System settings updated successfully!";
+            $success = "System configuration updated successfully.";
         } catch (PDOException $e) {
-            $error = "Database error: " . $e->getMessage();
+            $error = "Unable to update system configuration. Please try again.";
         }
     }
 }
@@ -300,6 +300,7 @@ $lockout_time = $settings['lockout_time'] ?? '15';
                                 <div class="switch-label-details">
                                     <h4>Toggle Maintenance State</h4>
                                     <p>Offline mode redirects students/faculty researchers to a temporary offline card during schema structure edits.</p>
+                                    <p style="font-size: 0.78rem; color: var(--gray); margin-top: 4px;">When enabled, student, faculty, and partner portals will be temporarily redirected to the maintenance page.</p>
                                 </div>
                                 <label class="switch">
                                     <input type="checkbox" name="maintenance_mode" value="1" <?php echo ($maintenance_mode === "1") ? 'checked' : ''; ?>>

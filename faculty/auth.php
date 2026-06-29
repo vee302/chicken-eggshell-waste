@@ -10,6 +10,9 @@ if (session_status() == PHP_SESSION_NONE) {
  * Redirects to login or shows Unauthorized Access if not.
  */
 function check_faculty_auth() {
+    // Check maintenance mode first
+    require_once __DIR__ . '/../maintenance_check.php';
+
     // 1. Must be logged in
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         header('Location: ../login.php');

@@ -914,6 +914,17 @@ if (window.innerWidth > 768) {
         
         if (!banner) return;
 
+        // Internal debug function to inspect saved settings
+        function logCookieStatus(action) {
+            console.log(`[Cookie Consent - ${action}]`);
+            console.log(`  cookieConsent   :`, localStorage.getItem('cookieConsent'));
+            console.log(`  cookiePreference:`, localStorage.getItem('cookiePreference'));
+            console.log(`  cookieAnalytics :`, localStorage.getItem('cookieAnalytics'));
+        }
+
+        // Print initial status in console for verification
+        logCookieStatus('Page Load');
+
         // Check if consent already saved in localStorage
         const consent = localStorage.getItem('cookieConsent');
         if (!consent) {
@@ -923,6 +934,7 @@ if (window.innerWidth > 768) {
             }, 1500);
         }
 
+        // Close banner with animation
         function hideBanner() {
             banner.classList.add('fading-out');
             setTimeout(() => {
@@ -933,25 +945,26 @@ if (window.innerWidth > 768) {
         // Accept All cookies
         btnAccept.addEventListener('click', () => {
             localStorage.setItem('cookieConsent', 'accepted');
-            localStorage.setItem('cookiePreferenceNecessary', 'true');
-            localStorage.setItem('cookiePreferencePreferences', 'true');
-            localStorage.setItem('cookiePreferenceAnalytics', 'true');
+            localStorage.setItem('cookiePreference', 'true');
+            localStorage.setItem('cookieAnalytics', 'true');
+            logCookieStatus('Accept All Clicked');
             hideBanner();
         });
 
         // Reject All cookies
         btnReject.addEventListener('click', () => {
             localStorage.setItem('cookieConsent', 'rejected');
-            localStorage.setItem('cookiePreferenceNecessary', 'true');
-            localStorage.setItem('cookiePreferencePreferences', 'false');
-            localStorage.setItem('cookiePreferenceAnalytics', 'false');
+            localStorage.setItem('cookiePreference', 'false');
+            localStorage.setItem('cookieAnalytics', 'false');
+            logCookieStatus('Reject All Clicked');
             hideBanner();
         });
 
         // Open customize modal
         btnCustomize.addEventListener('click', () => {
-            const preferences = localStorage.getItem('cookiePreferencePreferences') === 'true';
-            const analytics = localStorage.getItem('cookiePreferenceAnalytics') === 'true';
+            // Read saved settings or default to false
+            const preferences = localStorage.getItem('cookiePreference') === 'true';
+            const analytics = localStorage.getItem('cookieAnalytics') === 'true';
             
             const preferencesCheckbox = document.getElementById('cookiePreferences');
             const analyticsCheckbox = document.getElementById('cookieAnalytics');
@@ -979,10 +992,10 @@ if (window.innerWidth > 768) {
             const analytics = analyticsCheckbox ? analyticsCheckbox.checked : false;
             
             localStorage.setItem('cookieConsent', 'customized');
-            localStorage.setItem('cookiePreferenceNecessary', 'true');
-            localStorage.setItem('cookiePreferencePreferences', preferences ? 'true' : 'false');
-            localStorage.setItem('cookiePreferenceAnalytics', analytics ? 'true' : 'false');
+            localStorage.setItem('cookiePreference', preferences ? 'true' : 'false');
+            localStorage.setItem('cookieAnalytics', analytics ? 'true' : 'false');
             
+            logCookieStatus('Preferences Saved');
             closeModal();
             hideBanner();
         });

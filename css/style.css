@@ -1162,6 +1162,9 @@ section {
     grid-template-rows: auto auto auto;
     gap: 1.75rem;
     margin-top: 3.5rem;
+    width: min(100% - 48px, 1120px);
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Base Bento Card Style */
@@ -1848,12 +1851,7 @@ section {
         width: 100%;
     }
 
-    /* Benefits padding for floating product visual (jar on the right at 26vw) */
-    .bento-grid {
-        padding-right: 32% !important;
-        padding-left: 0 !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-    }
+
 
     /* CTA alignment for floating product visual (jar on the right at 18vw) */
     .cta-content {

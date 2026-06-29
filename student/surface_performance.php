@@ -81,7 +81,7 @@ try {
 
             <?php if (empty($surface_data)): ?>
                 <div class="dashboard-card" style="text-align:center;padding:3rem;">
-                    <p style="color:var(--gray);">No trial data yet. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload a fingerprint to see results.</a></p>
+                    <p style="color:var(--gray);">No evaluation records found yet. Upload your first fingerprint image to begin evaluation. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload now →</a></p>
                 </div>
             <?php else: ?>
                 <div class="surface-grid">

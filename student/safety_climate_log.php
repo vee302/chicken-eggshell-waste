@@ -192,7 +192,7 @@ try {
                         </thead>
                         <tbody>
                         <?php if (empty($logs)): ?>
-                            <tr class="no-data-row"><td colspan="9" style="text-align:center;color:#6c757d;padding:2rem;">No safety and climate logs submitted yet.</td></tr>
+                            <tr class="no-data-row"><td colspan="9" style="text-align:center;color:#6c757d;padding:2rem;">No safety or climate log records found yet. Fill out the form above to record your first log.</td></tr>
                         <?php else: ?>
                             <?php foreach ($logs as $log): ?>
                             <tr>

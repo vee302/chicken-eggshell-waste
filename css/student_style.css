@@ -672,6 +672,16 @@ body {
     background: var(--dark-green);
 }
 
+.btn-new-submission {
+    box-shadow: 0 4px 12px rgba(45, 106, 79, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-new-submission:hover {
+    box-shadow: 0 6px 16px rgba(27, 67, 50, 0.35);
+    transform: translateY(-2px);
+}
+
 .btn-secondary {
     background: var(--cream);
     color: var(--dark-green);
@@ -800,8 +810,8 @@ body {
 .quicklink-card:hover {
     background: var(--white);
     border-color: var(--medium-green);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(27, 67, 50, 0.1);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(27, 67, 50, 0.12);
 }
 
 .quicklink-icon {
@@ -813,6 +823,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.quicklink-card:hover .quicklink-icon {
+    background: var(--medium-green);
+    color: var(--white);
+    transform: scale(1.05);
 }
 
 .quicklink-label {
@@ -877,6 +894,35 @@ body {
 @media (max-width: 1024px) {
     .form-grid-2 {
         grid-template-columns: 1fr;
+    }
+    
+    .menu-toggle {
+        display: block !important; /* Show toggle on tablet */
+    }
+
+    .student-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: none;
+    }
+
+    .student-sidebar.active {
+        transform: translateX(0) !important;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .student-main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    #sidebarOverlay.active {
+        display: block !important;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 999;
     }
 }
 

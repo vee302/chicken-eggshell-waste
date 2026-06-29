@@ -449,7 +449,7 @@ try {
                         </thead>
                         <tbody>
                         <?php if (empty($trials)): ?>
-                            <tr><td colspan="8" style="text-align:center;color:#6c757d;padding:2rem;">No trial records yet. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload a fingerprint →</a></td></tr>
+                            <tr><td colspan="8" style="text-align:center;color:#6c757d;padding:2rem;">No evaluation records found yet. Upload your first fingerprint image to begin evaluation. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload now →</a></td></tr>
                         <?php else: ?>
                             <?php foreach ($trials as $i => $t): ?>
                             <tr data-trial-id="<?= $t['id'] ?>">
@@ -467,7 +467,7 @@ try {
                                         <?php elseif ($t['status'] === 'needs_revision'): ?>
                                             Needs Revision
                                         <?php elseif ($t['status'] === 'rejected'): ?>
-                                            Rejected
+                                            —
                                         <?php else: ?>
                                             N/A
                                         <?php endif; ?>

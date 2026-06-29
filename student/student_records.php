@@ -477,9 +477,9 @@ try {
                         <?php if (empty($records)): ?>
                             <tr class="no-data-row">
                                 <td colspan="10" style="text-align:center;color:#6c757d;padding:2.5rem;">
-                                    No records found.
+                                    No submissions or records found matching the active filters.
                                     <?php if (!$filter_status && !$filter_powder && !$filter_surface): ?>
-                                        <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first image →</a>
+                                        <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first fingerprint image to begin evaluation →</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -514,7 +514,7 @@ try {
                                         <?php elseif ($r['status'] === 'needs_revision'): ?>
                                             Needs Revision
                                         <?php elseif ($r['status'] === 'rejected'): ?>
-                                            Rejected
+                                            —
                                         <?php else: ?>
                                             N/A
                                         <?php endif; ?>
@@ -803,13 +803,13 @@ function renderRecordsTable(records) {
         
         let linkHtml = '';
         if (!status && !powder && !surface) {
-            linkHtml = '<br><a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first image →</a>';
+            linkHtml = '<br>Upload your first fingerprint image to begin evaluation. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload now →</a>';
         }
         
         tbody.innerHTML = `
             <tr class="no-data-row">
                 <td colspan="10" style="text-align:center;color:#6c757d;padding:2.5rem;">
-                    No records found.${linkHtml}
+                    No submissions or records found matching the active filters.${linkHtml}
                 </td>
             </tr>`;
         return;
@@ -844,7 +844,7 @@ function renderRecordsTable(records) {
         }
 
         const isApproved = r.status === 'approved';
-        const scoreText = isApproved ? (r.accuracy_score !== null ? parseFloat(r.accuracy_score).toFixed(1) + '%' : '—') : (r.status === 'pending_validation' ? 'Awaiting Validation' : (r.status === 'needs_revision' ? 'Needs Revision' : (r.status === 'rejected' ? 'Rejected' : 'N/A')));
+        const scoreText = isApproved ? (r.accuracy_score !== null ? parseFloat(r.accuracy_score).toFixed(1) + '%' : '—') : (r.status === 'pending_validation' ? 'Awaiting Validation' : (r.status === 'needs_revision' ? 'Needs Revision' : (r.status === 'rejected' ? '—' : 'N/A')));
         const scoreBarHtml = (isApproved && r.accuracy_score !== null) ? `
             <div class="score-bar">
                 <div class="score-bar-track">

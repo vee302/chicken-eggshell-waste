@@ -392,7 +392,7 @@ try {
                     <h1>Dashboard Overview</h1>
                     <p>Welcome back, <?= htmlspecialchars($student_name) ?>. Here is a summary of your forensic submissions.</p>
                 </div>
-                <a href="upload_fingerprint.php" class="btn btn-primary" id="btn-submit-new">
+                <a href="upload_fingerprint.php" class="btn btn-primary btn-new-submission" id="btn-submit-new">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
                          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -560,13 +560,14 @@ try {
                                 <th>Accuracy</th>
                                 <th>Status</th>
                                 <th>Date Submitted</th>
+                                <th style="text-align:right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="recentSubmissionsBody">
                         <?php if (empty($recent)): ?>
                             <tr>
-                                <td colspan="5" style="text-align:center;color:#6c757d;padding:2rem;">
-                                    No submissions yet. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first fingerprint →</a>
+                                <td colspan="6" style="text-align:center;color:#6c757d;padding:2rem;">
+                                    No submissions yet. Upload your first fingerprint image to begin evaluation. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload now →</a>
                                 </td>
                             </tr>
                         <?php else: ?>
@@ -584,7 +585,7 @@ try {
                                         } elseif ($row['status'] === 'needs_revision') {
                                             echo 'Needs Revision';
                                         } elseif ($row['status'] === 'rejected') {
-                                            echo 'Rejected';
+                                            echo '—';
                                         } else {
                                             echo 'N/A';
                                         }
@@ -604,6 +605,9 @@ try {
                                     </span>
                                 </td>
                                 <td><?= date('M d, Y', strtotime($row['submitted_at'])) ?></td>
+                                <td style="text-align:right;">
+                                    <button class="btn btn-secondary btn-sm view-details-btn" onclick='event.stopPropagation(); openDetailModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, "UTF-8") ?>)' style="padding: 0.35rem 0.75rem; font-size: 0.75rem; border-radius: 6px;">View Details</button>
+                                </td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -884,8 +888,8 @@ function renderRecentTable(records) {
     if (records.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" style="text-align:center;color:#6c757d;padding:2rem;">
-                    No submissions yet. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first fingerprint →</a>
+                <td colspan="6" style="text-align:center;color:#6c757d;padding:2rem;">
+                    No submissions yet. Upload your first fingerprint image to begin evaluation. <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload now →</a>
                 </td>
             </tr>`;
         return;
@@ -906,8 +910,9 @@ function renderRecentTable(records) {
     records.forEach(r => {
         let row = tbody.querySelector(`tr[data-trial-db-id="${r.id}"]`);
         
+        const isApproved = r.status === 'approved';
         const displayScore = r.faculty_final_score !== null ? parseFloat(r.faculty_final_score) : (r.accuracy_score !== null ? parseFloat(r.accuracy_score) : null);
-        const scoreText = isApproved ? (displayScore !== null ? displayScore.toFixed(1) + '%' : '—') : (r.status === 'pending_validation' ? 'Awaiting Faculty Validation' : (r.status === 'needs_revision' ? 'Needs Revision' : (r.status === 'rejected' ? 'Rejected' : 'N/A')));
+        const scoreText = isApproved ? (displayScore !== null ? displayScore.toFixed(1) + '%' : '—') : (r.status === 'pending_validation' ? 'Awaiting Faculty Validation' : (r.status === 'needs_revision' ? 'Needs Revision' : (r.status === 'rejected' ? '—' : 'N/A')));
         
         const rowHtml = `
             <td style="text-transform:capitalize;">${escapeHtml(r.powder_type)}</td>
@@ -917,6 +922,9 @@ function renderRecentTable(records) {
                 <span class="badge ${getBadgeClass(r.status)}">${getStatusLabel(r.status)}</span>
             </td>
             <td>${new Date(r.submitted_at.replace(/-/g, "/")).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+            <td style="text-align:right;">
+                <button class="btn btn-secondary btn-sm view-details-btn" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; border-radius: 6px;">View Details</button>
+            </td>
         `;
 
         if (row) {
@@ -937,6 +945,13 @@ function renderRecentTable(records) {
         const trNode = tbody.querySelector(`tr[data-trial-db-id="${r.id}"]`);
         if (trNode) {
             trNode.onclick = () => openDetailModal(r);
+            const btnNode = trNode.querySelector('.view-details-btn');
+            if (btnNode) {
+                btnNode.onclick = (e) => {
+                    e.stopPropagation();
+                    openDetailModal(r);
+                };
+            }
         }
     });
 }

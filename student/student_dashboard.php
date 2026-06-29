@@ -94,9 +94,9 @@ try {
 
         /* Dark theme Detailed Quality Inspection modal scoped under #detailOverlay */
         #detailOverlay .detail-modal {
-            background: #111a2e !important; /* Deep dark navy background */
-            color: #f8fafc !important;
-            border: 1px solid #1e293b !important;
+            background: #10261D !important; /* Charcoal forest green background */
+            color: #F4F4F0 !important; /* Off-white text */
+            border: 1px solid rgba(167, 201, 177, 0.18) !important; /* Sage border */
             max-width: 800px !important;
             width: 95% !important;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
@@ -104,15 +104,15 @@ try {
             border-radius: 16px !important;
         }
         #detailOverlay .detail-modal-header {
-            background: #1e293b !important;
-            border-bottom: 1px solid #334155 !important;
-            color: #f8fafc !important;
+            background: #123524 !important; /* Dark header panel */
+            border-bottom: 1px solid rgba(167, 201, 177, 0.18) !important;
+            color: #F4F4F0 !important;
             padding: 1.1rem 1.5rem !important;
             border-top-left-radius: 15px !important;
             border-top-right-radius: 15px !important;
         }
         #detailOverlay .detail-modal-header h3 {
-            color: #f8fafc !important;
+            color: #F4F4F0 !important;
             font-size: 1.2rem !important;
             display: flex;
             align-items: center;
@@ -121,7 +121,7 @@ try {
             margin: 0;
         }
         #detailOverlay .modal-close-btn {
-            color: #94a3b8 !important;
+            color: rgba(244, 244, 240, 0.70) !important;
             background: none !important;
             border: none !important;
             font-size: 1.6rem !important;
@@ -129,7 +129,7 @@ try {
             opacity: 0.8 !important;
         }
         #detailOverlay .modal-close-btn:hover {
-            color: #f8fafc !important;
+            color: #F4F4F0 !important;
             opacity: 1 !important;
         }
         #detailOverlay .detail-modal-body {
@@ -154,21 +154,21 @@ try {
         .column-title {
             font-size: 0.78rem;
             font-weight: 700;
-            color: #94a3b8;
+            color: rgba(244, 244, 240, 0.70);
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
             gap: 8px;
-            border-bottom: 1px solid #1e293b;
+            border-bottom: 1px solid rgba(167, 201, 177, 0.18);
             padding-bottom: 0.5rem;
         }
 
         /* Image Preview Box */
         .inspect-img-box {
-            background: #090d16;
-            border: 1px solid #1e293b;
+            background: #0d1e17; /* Slate green */
+            border: 1px solid rgba(167, 201, 177, 0.18);
             border-radius: 12px;
             padding: 1.25rem;
             text-align: center;
@@ -186,7 +186,7 @@ try {
         }
         .inspect-img-caption {
             font-size: 0.75rem;
-            color: #64748b;
+            color: rgba(244, 244, 240, 0.50);
             text-align: center;
             line-height: 1.5;
             margin-top: 0.5rem;
@@ -198,15 +198,15 @@ try {
             align-items: center;
             gap: 1.5rem;
             margin-bottom: 1.5rem;
-            background: #151e33;
+            background: #163B2A; /* Card background */
             padding: 14px 20px;
             border-radius: 12px;
-            border: 1px solid #27354f;
+            border: 1px solid rgba(167, 201, 177, 0.18);
         }
         .overall-score-huge {
-            font-size: 3.8rem;
+            font-size: 3.5rem;
             font-weight: 800;
-            color: #10b981; /* Neon Green */
+            color: #2FBF71; /* Accent green */
             line-height: 1;
             font-feature-settings: "tnum";
         }
@@ -216,14 +216,14 @@ try {
             gap: 6px;
         }
         .quality-badge {
-            background: rgba(16, 185, 129, 0.15);
-            color: #10b981;
+            background: rgba(47, 191, 113, 0.15);
+            color: #2FBF71;
             padding: 5px 12px;
             border-radius: 20px;
             font-weight: 700;
             font-size: 0.72rem;
             text-transform: uppercase;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            border: 1px solid rgba(47, 191, 113, 0.30);
             display: inline-block;
             text-align: center;
             width: fit-content;
@@ -231,7 +231,7 @@ try {
         }
         .quality-badge-desc {
             font-size: 0.75rem;
-            color: #94a3b8;
+            color: rgba(244, 244, 240, 0.70);
         }
 
         /* Dark Progress Bars */
@@ -243,22 +243,22 @@ try {
             justify-content: space-between;
             font-size: 0.85rem;
             font-weight: 700;
-            color: #f1f5f9;
+            color: #F4F4F0;
             margin-bottom: 6px;
         }
         .metric-info span:last-child {
-            color: #10b981;
+            color: #2FBF71;
         }
         .metric-bar-track {
             height: 6px;
-            background: #1e293b;
+            background: #0d1e17;
             border-radius: 3px;
             overflow: hidden;
             width: 100%;
         }
         .metric-bar-fill {
             height: 100%;
-            background: #10b981;
+            background: #2FBF71;
             border-radius: 3px;
             transition: width 0.8s ease-out;
             width: 0%;
@@ -266,8 +266,8 @@ try {
 
         /* Lab Analysis Notes Box */
         .analysis-notes-box {
-            background: #151e33;
-            border: 1px solid #27354f;
+            background: #163B2A;
+            border: 1px solid rgba(167, 201, 177, 0.18);
             border-radius: 12px;
             padding: 1.5rem;
             margin-top: 1.5rem;
@@ -275,12 +275,12 @@ try {
         .analysis-notes-title {
             font-size: 0.9rem;
             font-weight: 700;
-            color: #f8fafc;
+            color: #F4F4F0;
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
             gap: 8px;
-            border-bottom: 1px solid #27354f;
+            border-bottom: 1px solid rgba(167, 201, 177, 0.18);
             padding-bottom: 0.6rem;
         }
         .notes-content-wrap {
@@ -289,7 +289,7 @@ try {
         .notes-label {
             font-size: 0.8rem;
             font-weight: 700;
-            color: #94a3b8;
+            color: rgba(244, 244, 240, 0.70);
             margin-bottom: 6px;
             display: flex;
             align-items: center;
@@ -297,13 +297,16 @@ try {
         }
         .notes-text {
             font-size: 0.88rem;
-            color: #cbd5e1;
+            color: #F4F4F0;
             line-height: 1.55;
-            background: #090d16;
-            padding: 0.85rem 1.1rem;
+            background: #0d1e17;
+            padding: 1rem 1.25rem;
             border-radius: 8px;
             min-height: 45px;
-            border: 1px solid #27354f;
+            border-left: 4px solid #2FBF71;
+            border-top: none;
+            border-right: none;
+            border-bottom: none;
         }
 
         /* Info Details Grid */
@@ -322,28 +325,28 @@ try {
             display: flex;
             justify-content: space-between;
             padding: 6px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(167, 201, 177, 0.10);
             align-items: center;
         }
         .info-detail-label {
-            color: #94a3b8;
+            color: rgba(244, 244, 240, 0.70);
             font-weight: 600;
         }
         .info-detail-value {
-            color: #f1f5f9;
+            color: #F4F4F0;
             font-weight: 700;
             text-align: right;
         }
 
         /* Student chip */
         .student-chip {
-            background: rgba(16, 185, 129, 0.12);
-            color: #10b981;
+            background: rgba(47, 191, 113, 0.12);
+            color: #2FBF71;
             padding: 4px 12px;
             border-radius: 12px;
             font-size: 0.78rem;
             font-weight: 700;
-            border: 1px solid rgba(16, 185, 129, 0.25);
+            border: 1px solid rgba(47, 191, 113, 0.25);
             text-transform: lowercase;
         }
     </style>
@@ -650,73 +653,75 @@ try {
                             Image not found.
                         </div>
                         <div class="inspect-img-caption">
-                            Green indicators represent bifurcation/ridge ending coordinate clusters mapped by OpenCV.
+                            Fingerprint image preview used for quality inspection.
                         </div>
                     </div>
 
                     <!-- Right Column: Evaluation Coefficient -->
                     <div>
                         <div class="column-title">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#2FBF71;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                             EVALUATION COEFFICIENT
                         </div>
                         
-                        <div class="coefficient-header">
+                        <div class="coefficient-header" id="det-coefficient-container">
                             <div class="overall-score-huge" id="det-val-accuracy-huge">—</div>
                             <div class="overall-score-badge-wrap">
                                 <span class="quality-badge" id="det-val-quality-badge">GOOD</span>
-                                <span class="quality-badge-desc">Overall Print Quality Standard</span>
+                                <span class="quality-badge-desc" id="det-quality-badge-desc">Faculty Final Score</span>
                             </div>
                         </div>
 
                         <!-- Progress Bars -->
-                        <div class="metric-item">
-                            <div class="metric-info">
-                                <span>Ridge Clarity</span>
-                                <span id="det-val-clarity">—</span>
+                        <div id="det-metrics-container">
+                            <div class="metric-item">
+                                <div class="metric-info">
+                                    <span>Ridge Clarity</span>
+                                    <span id="det-val-clarity">—</span>
+                                </div>
+                                <div class="metric-bar-track">
+                                    <div class="metric-bar-fill" id="det-fill-clarity"></div>
+                                </div>
                             </div>
-                            <div class="metric-bar-track">
-                                <div class="metric-bar-fill" id="det-fill-clarity"></div>
-                            </div>
-                        </div>
 
-                        <div class="metric-item">
-                            <div class="metric-info">
-                                <span>Contrast Quality</span>
-                                <span id="det-val-contrast">—</span>
+                            <div class="metric-item">
+                                <div class="metric-info">
+                                    <span>Contrast Quality</span>
+                                    <span id="det-val-contrast">—</span>
+                                </div>
+                                <div class="metric-bar-track">
+                                    <div class="metric-bar-fill" id="det-fill-contrast"></div>
+                                </div>
                             </div>
-                            <div class="metric-bar-track">
-                                <div class="metric-bar-fill" id="det-fill-contrast"></div>
-                            </div>
-                        </div>
 
-                        <div class="metric-item">
-                            <div class="metric-info">
-                                <span>Minutiae Visibility</span>
-                                <span id="det-val-visibility">—</span>
+                            <div class="metric-item">
+                                <div class="metric-info">
+                                    <span>Minutiae Visibility</span>
+                                    <span id="det-val-visibility">—</span>
+                                </div>
+                                <div class="metric-bar-track">
+                                    <div class="metric-bar-fill" id="det-fill-visibility"></div>
+                                </div>
                             </div>
-                            <div class="metric-bar-track">
-                                <div class="metric-bar-fill" id="det-fill-visibility"></div>
-                            </div>
-                        </div>
 
-                        <div class="metric-item">
-                            <div class="metric-info">
-                                <span>Fingerprint Sharpness</span>
-                                <span id="det-val-sharpness">—</span>
+                            <div class="metric-item">
+                                <div class="metric-info">
+                                    <span>Fingerprint Sharpness</span>
+                                    <span id="det-val-sharpness">—</span>
+                                </div>
+                                <div class="metric-bar-track">
+                                    <div class="metric-bar-fill" id="det-fill-sharpness"></div>
+                                </div>
                             </div>
-                            <div class="metric-bar-track">
-                                <div class="metric-bar-fill" id="det-fill-sharpness"></div>
-                            </div>
-                        </div>
 
-                        <div class="metric-item">
-                            <div class="metric-info">
-                                <span>Adhesion Quality</span>
-                                <span id="det-val-adhesion">—</span>
-                            </div>
-                            <div class="metric-bar-track">
-                                <div class="metric-bar-fill" id="det-fill-adhesion"></div>
+                            <div class="metric-item">
+                                <div class="metric-info">
+                                    <span>Adhesion Quality</span>
+                                    <span id="det-val-adhesion">—</span>
+                                </div>
+                                <div class="metric-bar-track">
+                                    <div class="metric-bar-fill" id="det-fill-adhesion"></div>
+                                </div>
                             </div>
                         </div>
                         
@@ -772,8 +777,8 @@ try {
                             <span class="info-detail-value" id="det-reviewer"></span>
                         </div>
                         <div class="info-detail-row">
-                            <span class="info-detail-label">Image Path:</span>
-                            <span class="info-detail-value" id="det-image-path" style="font-family: monospace; font-size: 0.75rem; color:#10b981; word-break: break-all;"></span>
+                            <span class="info-detail-label">Image File:</span>
+                            <span class="info-detail-value" id="det-image-path" style="font-family: monospace; font-size: 0.75rem; color:#2FBF71; word-break: break-all;"></span>
                         </div>
                         <div class="info-detail-row">
                             <span class="info-detail-label">Evaluation Date:</span>
@@ -786,8 +791,12 @@ try {
                     </div>
                 </div>
 
-                <div style="display:flex; gap:10px; margin-top:1.5rem;" class="no-print">
-                    <button type="button" class="btn btn-secondary" onclick="closeDetailModal()" style="flex:1; background:#334155; border-color:#334155; color:#fff;">Close</button>
+                <div style="text-align: center; margin-top: 1.25rem; font-size: 0.78rem; color: rgba(244, 244, 240, 0.5); font-style: italic;" class="no-print">
+                    This result is read-only and based on faculty-approved evaluation.
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:1rem;" class="no-print">
+                    <button type="button" class="btn btn-secondary" onclick="closeDetailModal()" style="flex:1; background:#163B2A; border-color:rgba(167, 201, 177, 0.25); color:#F4F4F0;">Close</button>
                 </div>
             </div>
         </div>
@@ -970,8 +979,16 @@ function openDetailModal(row) {
     const evalDate = row.ai_evaluated_at ? new Date(row.ai_evaluated_at.replace(/-/g, "/")).toLocaleString() : (row.submitted_at ? new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString() : '—');
     document.getElementById('det-evaluation-date').textContent = evalDate;
 
-    // Image path
-    document.getElementById('det-image-path').textContent = row.image_path ? 'uploads/' + row.image_path : '—';
+    // Image filename with [View Image] link
+    const imgFilename = row.image_path ? row.image_path.split('/').pop() : '—';
+    const imgPathEl = document.getElementById('det-image-path');
+    if (imgPathEl) {
+        if (row.image_path && row.image_exists) {
+            imgPathEl.innerHTML = `${imgFilename} <a href="../view_fingerprint.php?test_id=${row.id}" target="_blank" style="color: #2FBF71; text-decoration: underline; margin-left: 8px; font-size: 0.75rem; font-weight: 600;">[View Image]</a>`;
+        } else {
+            imgPathEl.textContent = imgFilename;
+        }
+    }
 
     // Image viewer logic
     const img = document.getElementById('det-img');
@@ -1004,9 +1021,9 @@ function openDetailModal(row) {
 
     // Render comparison list or details
     const aiDetailsHtml = `
-        <div style="margin-top: 1rem; border-top: 1px solid #27354f; padding-top: 0.85rem;">
-            <div style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">AI Preliminary Results (Read-Only)</div>
-            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #cbd5e1;">
+        <div style="margin-top: 1rem; border-top: 1px solid rgba(167, 201, 177, 0.18); padding-top: 0.85rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: rgba(244, 244, 240, 0.70); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">AI Preliminary Results (Read-Only)</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #F4F4F0;">
                 <div style="display: flex; justify-content: space-between;"><span>AI Accuracy:</span> <strong>${aiAccuracy > 0 ? aiAccuracy.toFixed(1) + '%' : '—'}</strong></div>
                 <div style="display: flex; justify-content: space-between;"><span>AI Ridge Clarity:</span> <span>${aiClarity > 0 ? aiClarity.toFixed(1) + '%' : '—'}</span></div>
                 <div style="display: flex; justify-content: space-between;"><span>AI Visibility:</span> <span>${aiVisibility > 0 ? aiVisibility.toFixed(1) + '%' : '—'}</span></div>
@@ -1024,15 +1041,18 @@ function openDetailModal(row) {
     // Update main progress bars to show Faculty Final score if approved, otherwise show placeholder or hide
     const overallScoreHuge = document.getElementById('det-val-accuracy-huge');
     const badgeEl = document.getElementById('det-val-quality-badge');
-    const badgeDesc = document.querySelector('.quality-badge-desc');
+    const badgeDesc = document.getElementById('det-quality-badge-desc');
 
     if (row.status === 'approved') {
+        overallScoreHuge.style.display = 'block';
+        document.getElementById('det-metrics-container').style.display = 'block';
+
         overallScoreHuge.textContent = Math.round(fAccuracy) + '%';
         badgeEl.textContent = 'APPROVED';
-        badgeEl.style.color = '#10b981';
-        badgeEl.style.borderColor = 'rgba(16, 185, 129, 0.25)';
-        badgeEl.style.background = 'rgba(16, 185, 129, 0.12)';
-        if (badgeDesc) badgeDesc.textContent = 'Faculty Approved Official Score';
+        badgeEl.style.color = '#2FBF71';
+        badgeEl.style.borderColor = 'rgba(47, 191, 113, 0.25)';
+        badgeEl.style.background = 'rgba(47, 191, 113, 0.12)';
+        if (badgeDesc) badgeDesc.textContent = 'Faculty Final Score';
 
         // Set text labels
         document.getElementById('det-val-clarity').textContent = fClarity > 0 ? fClarity.toFixed(1) + '%' : '—';
@@ -1049,6 +1069,8 @@ function openDetailModal(row) {
         document.getElementById('det-fill-adhesion').style.width = fAdhesion + '%';
         
     } else {
+        overallScoreHuge.style.display = 'none';
+        document.getElementById('det-metrics-container').style.display = 'none';
         overallScoreHuge.textContent = '—';
         
         if (row.status === 'pending_validation') {
@@ -1095,6 +1117,25 @@ function openDetailModal(row) {
     const remarksLabel = document.getElementById('det-remarks-label');
     const facultyScoreRow = document.getElementById('det-faculty-row');
 
+    // Simple remarks formatter helper
+    function formatFacultyRemarks(remarks) {
+        if (!remarks) return 'No remarks provided.';
+        const clean = remarks.trim().toLowerCase();
+        if (clean === 'good' || clean === 'ok' || clean === 'okay') {
+            return 'The fingerprint image shows acceptable quality for forensic evaluation.';
+        }
+        if (clean === 'poor' || clean === 'blurry') {
+            return 'The fingerprint image has insufficient ridge clarity and is unclear for standard evaluation.';
+        }
+        if (clean === 'rejected') {
+            return 'The submitted print was rejected due to quality standard issues.';
+        }
+        if (clean === 'excellent') {
+            return 'The fingerprint shows excellent ridge flow clarity and visibility.';
+        }
+        return escapeHtml(remarks).replace(/\n/g, '<br>');
+    }
+
     if (row.status === 'pending_validation') {
         statusVal.innerHTML = '<span class="badge badge-pending_validation">Pending Validation</span>';
         reviewerRow.style.display = 'none';
@@ -1114,7 +1155,7 @@ function openDetailModal(row) {
         document.getElementById('det-validated-at').textContent = row.validated_at ? new Date(row.validated_at.replace(/-/g, "/")).toLocaleString() : '—';
         
         remarksLabel.textContent = 'Faculty Remarks:';
-        remarksRow.innerHTML = row.faculty_remarks ? escapeHtml(row.faculty_remarks).replace(/\n/g, '<br>') : 'No remarks provided.';
+        remarksRow.innerHTML = formatFacultyRemarks(row.faculty_remarks);
 
         if (row.status === 'approved') {
             statusVal.innerHTML = '<span class="badge badge-approved">Approved</span>';
@@ -1125,7 +1166,7 @@ function openDetailModal(row) {
             statusVal.innerHTML = '<span class="badge badge-rejected">Rejected</span>';
             facultyScoreRow.style.display = 'none';
             remarksRow.innerHTML += `<div style="margin-top: 12px; padding: 10px 14px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; border-radius: 6px; color: #fca5a5; font-size: 0.82rem;">
-                <strong>Action Needed:</strong> Upload a clearer fingerprint image for validation.
+                <strong>Action Needed:</strong> Please upload a clearer fingerprint image for reevaluation.
             </div>`;
         } else if (row.status === 'needs_revision') {
             statusVal.innerHTML = '<span class="badge badge-needs_revision">Needs Revision</span>';

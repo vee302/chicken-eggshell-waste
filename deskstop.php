@@ -532,35 +532,47 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 <h2 class="section-title">Why It Matters</h2>
             </div>
 
-            <div class="benefits-grid">
-                <div class="benefit-card">
-                    <h3>Eco-Friendly & Biodegradable</h3>
-                    <p>Natural calcium carbonate breaks down safely without environmental harm</p>
+            <div class="bento-grid">
+                <div class="bento-card card-large">
+                    <div class="bento-card-content">
+                        <h3>Eco-Friendly &amp; Biodegradable</h3>
+                        <p>Natural calcium carbonate breaks down safely without environmental harm</p>
+                    </div>
                 </div>
 
-                <div class="benefit-card">
-                    <h3>Cost-Effective Alternative</h3>
-                    <p>Utilizes waste material, reducing production costs significantly</p>
+                <div class="bento-card card-stacked-1">
+                    <div class="bento-card-content">
+                        <h3>Cost-Effective Alternative</h3>
+                        <p>Utilizes waste material, reducing production costs significantly</p>
+                    </div>
                 </div>
 
-                <div class="benefit-card">
-                    <h3>Safer for Forensic Users</h3>
-                    <p>Non-toxic composition eliminates health risks from heavy metals</p>
+                <div class="bento-card card-stacked-2">
+                    <div class="bento-card-content">
+                        <h3>Safer for Forensic Users</h3>
+                        <p>Non-toxic composition eliminates health risks from heavy metals</p>
+                    </div>
                 </div>
 
-                <div class="benefit-card">
-                    <h3>Supports Waste Reduction</h3>
-                    <p>Transforms food industry waste into valuable forensic resource</p>
+                <div class="bento-card card-bottom-1">
+                    <div class="bento-card-content">
+                        <h3>Supports Waste Reduction</h3>
+                        <p>Transforms food industry waste into valuable forensic resource</p>
+                    </div>
                 </div>
 
-                <div class="benefit-card">
-                    <h3>Criminology Training Tool</h3>
-                    <p>Ideal for educational institutions and student practice</p>
+                <div class="bento-card card-bottom-2">
+                    <div class="bento-card-content">
+                        <h3>Criminology Training Tool</h3>
+                        <p>Ideal for educational institutions and student practice</p>
+                    </div>
                 </div>
 
-                <div class="benefit-card">
-                    <h3>Supports SDG 12 & 13</h3>
-                    <p>Aligns with sustainable consumption and climate action goals</p>
+                <div class="bento-card card-dark-green card-bottom-3">
+                    <div class="bento-card-content">
+                        <h3>Supports SDG 12 &amp; 13</h3>
+                        <p>Aligns with sustainable consumption and climate action goals</p>
+                    </div>
                 </div>
             </div>
         </div>

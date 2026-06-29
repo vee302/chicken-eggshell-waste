@@ -600,30 +600,48 @@ if (window.innerWidth > 768) {
             }
         });
 
-        gsap.from('.benefits-section .section-label, .benefits-section .section-title', {
-            opacity: 0,
-            y: 40,
-            duration: 1,
-            stagger: 0.15,
-            scrollTrigger: {
-                trigger: '.benefits-section',
-                start: 'top 80%',
-                toggleActions: 'play none none none'
+        // Benefits section (Bento Grid) reveal with enter & exit scroll animations
+        gsap.fromTo('.benefits-section .section-label, .benefits-section .section-title', 
+            {
+                opacity: 0,
+                y: 35
+            },
+            {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                stagger: 0.12,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: '.benefits-section',
+                    start: 'top 85%',
+                    end: 'bottom 15%',
+                    toggleActions: 'play reverse play reverse'
+                }
             }
-        });
+        );
 
-        gsap.from('.benefit-card', {
-            opacity: 0,
-            y: 50,
-            duration: 1,
-            stagger: 0.1,
-            ease: "power2.out",
-            scrollTrigger: {
-                trigger: '.benefits-grid',
-                start: 'top 70%',
-                toggleActions: 'play none none none'
+        gsap.fromTo('.bento-card', 
+            {
+                opacity: 0.08, // Slightly invisible when out of viewport
+                y: 45,
+                scale: 0.96
+            },
+            {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.85,
+                stagger: 0.12,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: '.bento-grid',
+                    start: 'top 78%',
+                    end: 'bottom 22%',
+                    toggleActions: 'play reverse play reverse'
+                }
             }
-        });
+        );
 
         gsap.from('.stakeholders-section .section-label, .stakeholders-section .section-title', {
             opacity: 0,
@@ -878,30 +896,7 @@ if (window.innerWidth > 768) {
         }
     }
 
-    // ===================================
-    // BENEFITS ACCORDION
-    // ===================================
-
-    function initBenefitsAccordion() {
-        const triggers = document.querySelectorAll('.benefit-accordion-trigger');
-
-        triggers.forEach(trigger => {
-            trigger.addEventListener('click', () => {
-                const item = trigger.closest('.benefit-accordion-item');
-                const isOpen = item.classList.contains('is-open');
-
-                // Close all items first (single-open accordion behavior)
-                document.querySelectorAll('.benefit-accordion-item.is-open').forEach(openItem => {
-                    openItem.classList.remove('is-open');
-                });
-
-                // Toggle clicked item
-                if (!isOpen) {
-                    item.classList.add('is-open');
-                }
-            });
-        });
-    }
+    // benefits accordion removed in favor of responsive bento grid
 
     // ===================================
     // INITIALIZE ALL SYSTEMS
@@ -914,7 +909,6 @@ if (window.innerWidth > 768) {
         initSectionReveals();
         initSmoothScroll();
         initCameraCapture();
-        initBenefitsAccordion();
         ScrollTrigger.refresh();
     }
 

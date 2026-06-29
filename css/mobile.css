@@ -89,7 +89,7 @@
     .problem-content,
     .process-timeline,
     .timeline-container,
-    .benefits-grid,
+    .bento-grid,
     .results-grid,
     .stakeholders-network,
     .timeline-track,
@@ -183,7 +183,7 @@
         margin: 0.25rem 0 !important;
     }
 
-    .benefits-grid,
+    .bento-grid,
     .results-grid,
     .stakeholders-network {
         grid-template-columns: 1fr !important;
@@ -480,91 +480,20 @@
 }
 
 /* ==========================================================================
-   BENEFITS ACCORDION (Mobile Only)
+   BENTO GRID (Mobile Overrides)
    ========================================================================== */
-
-.benefits-accordion {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    background: var(--white, #FFFFFF);
-    border: 1px solid rgba(47, 79, 58, 0.12);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 8px 30px rgba(47, 79, 58, 0.04);
+.benefits-section {
+    background-color: #F4F4F0 !important;
+    padding: 4rem 1.25rem !important;
 }
 
-.benefit-accordion-item {
-    border-bottom: 1px solid rgba(47, 79, 58, 0.08);
-    transition: background-color 0.3s ease, border-left-color 0.3s ease;
-    border-left: 0px solid transparent;
+.bento-grid {
+    gap: 1.25rem !important;
 }
 
-.benefit-accordion-item:last-child {
-    border-bottom: none;
-}
-
-.benefit-accordion-item.is-open {
-    background-color: rgba(107, 143, 113, 0.04);
-    border-left: 4px solid var(--dark-green, #2F4F3A);
-}
-
-.benefit-accordion-trigger {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1.15rem 1.25rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    font-family: inherit;
-    transition: background-color 0.2s ease;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.benefit-accordion-trigger:active {
-    background-color: rgba(47, 79, 58, 0.05);
-}
-
-.benefit-accordion-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--dark-green, #2F4F3A);
-    letter-spacing: -0.2px;
-}
-
-.benefit-accordion-chevron {
-    flex-shrink: 0;
-    color: var(--soft-green, #6B8F71);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
-}
-
-.benefit-accordion-item.is-open .benefit-accordion-chevron {
-    transform: rotate(180deg);
-    color: var(--dark-green, #2F4F3A);
-}
-
-.benefit-accordion-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-        padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 0 1.25rem;
-}
-
-.benefit-accordion-item.is-open .benefit-accordion-body {
-    max-height: 120px;
-    padding: 0 1.25rem 1.15rem 1.25rem;
-}
-
-.benefit-accordion-body p {
-    font-size: 0.78rem;
-    line-height: 1.6;
-    color: var(--gray, #8B8B8B);
-    margin: 0;
+.bento-card {
+    padding: 2rem 1.75rem !important;
+    border-radius: 18px !important;
 }
 
 /* ==========================================================================

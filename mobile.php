@@ -591,81 +591,45 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 <h2 class="section-title">Why It Matters</h2>
             </div>
 
-            <div class="benefits-accordion">
-                <div class="benefit-accordion-item">
-                    <button class="benefit-accordion-trigger" type="button">
-                        <span class="benefit-accordion-title">Eco-Friendly &amp; Biodegradable</span>
-                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                    <div class="benefit-accordion-body">
+            <div class="bento-grid">
+                <div class="bento-card card-large">
+                    <div class="bento-card-content">
+                        <h3>Eco-Friendly &amp; Biodegradable</h3>
                         <p>Natural calcium carbonate breaks down safely without environmental harm</p>
                     </div>
                 </div>
 
-                <div class="benefit-accordion-item">
-                    <button class="benefit-accordion-trigger" type="button">
-                        <span class="benefit-accordion-title">Cost-Effective Alternative</span>
-                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                    <div class="benefit-accordion-body">
+                <div class="bento-card card-stacked-1">
+                    <div class="bento-card-content">
+                        <h3>Cost-Effective Alternative</h3>
                         <p>Utilizes waste material, reducing production costs significantly</p>
                     </div>
                 </div>
 
-                <div class="benefit-accordion-item">
-                    <button class="benefit-accordion-trigger" type="button">
-                        <span class="benefit-accordion-title">Safer for Forensic Users</span>
-                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                    <div class="benefit-accordion-body">
+                <div class="bento-card card-stacked-2">
+                    <div class="bento-card-content">
+                        <h3>Safer for Forensic Users</h3>
                         <p>Non-toxic composition eliminates health risks from heavy metals</p>
                     </div>
                 </div>
 
-                <div class="benefit-accordion-item">
-                    <button class="benefit-accordion-trigger" type="button">
-                        <span class="benefit-accordion-title">Supports Waste Reduction</span>
-                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                    <div class="benefit-accordion-body">
+                <div class="bento-card card-bottom-1">
+                    <div class="bento-card-content">
+                        <h3>Supports Waste Reduction</h3>
                         <p>Transforms food industry waste into valuable forensic resource</p>
                     </div>
                 </div>
 
-                <div class="benefit-accordion-item">
-                    <button class="benefit-accordion-trigger" type="button">
-                        <span class="benefit-accordion-title">Criminology Training Tool</span>
-                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                    <div class="benefit-accordion-body">
+                <div class="bento-card card-bottom-2">
+                    <div class="bento-card-content">
+                        <h3>Criminology Training Tool</h3>
                         <p>Ideal for educational institutions and student practice</p>
                     </div>
                 </div>
 
-                <div class="benefit-accordion-item">
-                    <button class="benefit-accordion-trigger" type="button">
-                        <span class="benefit-accordion-title">Supports SDG 12 &amp; 13</span>
-                        <svg class="benefit-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                    <div class="benefit-accordion-body">
+                <div class="bento-card card-dark-green card-bottom-3">
+                    <div class="bento-card-content">
+                        <h3>Supports SDG 12 &amp; 13</h3>
                         <p>Aligns with sustainable consumption and climate action goals</p>
                     </div>
                 </div>

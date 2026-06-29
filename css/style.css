@@ -1142,49 +1142,141 @@ section {
 }
 
 /* ===================================
-   BENEFITS SECTION
+   BENEFITS SECTION (BENTO GRID)
    =================================== */
 
 .benefits-section {
-    background: var(--main-bg);
+    background-color: #F4F4F0; /* Light warm background */
+    padding: 8rem 0;
 }
 
-.benefits-grid {
+/* Make container wider on desktop for the bento layout */
+.benefits-section .container {
+    max-width: 1400px;
+    padding: 0 2.5rem;
+}
+
+.bento-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: 1.75rem;
+    margin-top: 3.5rem;
 }
 
-.benefit-card {
-    padding: 2.5rem;
-    background: var(--white);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    text-align: center;
-    transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+/* Base Bento Card Style */
+.bento-card {
+    background-color: #FFFFFF;
+    border: 1px solid rgba(45, 58, 38, 0.12); /* Subtle border */
+    border-radius: 22px; /* 18px-24px */
+    padding: 2.2rem 2.4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+                box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+                border-color 0.4s ease;
+    box-shadow: 0 4px 20px rgba(45, 58, 38, 0.03); /* Soft shadow */
+    position: relative;
+    overflow: hidden;
 }
 
-.benefit-card:hover {
-    border-color: var(--dark-green);
-    transform: translateY(-10px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+.bento-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(45, 58, 38, 0.07);
+    border-color: rgba(49, 66, 47, 0.25);
 }
 
-.benefit-icon {
-    font-size: 3rem;
-    margin-bottom: 1.5rem;
+/* Card content wrapper */
+.bento-card-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
 }
 
-.benefit-card h3 {
-    font-size: 1.5rem;
-    color: var(--dark-green);
-    margin-bottom: 1rem;
+/* Card titles and body */
+.bento-card h3 {
+    font-family: var(--font-primary);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #31422F; /* Dark green accent */
+    margin-bottom: 0.85rem;
+    line-height: 1.3;
 }
 
-.benefit-card p {
-    color: var(--gray);
-    line-height: 1.7;
-    font-size: 1.05rem;
+.bento-card p {
+    font-family: var(--font-primary);
+    font-size: 1.02rem;
+    color: var(--gray, #5F5F5F);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Large Card layout (Card 1) */
+.bento-card.card-large {
+    grid-column: span 2;
+    grid-row: span 2;
+    padding: 3.5rem;
+}
+
+.bento-card.card-large .bento-card-content {
+    justify-content: center;
+}
+
+.bento-card.card-large h3 {
+    font-size: 2.2rem;
+    margin-bottom: 1.25rem;
+    max-width: 85%;
+}
+
+.bento-card.card-large p {
+    font-size: 1.2rem;
+    max-width: 90%;
+}
+
+/* Stacked cards on the right */
+.bento-card.card-stacked-1 {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.bento-card.card-stacked-2 {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+/* Bottom row cards */
+.bento-card.card-bottom-1 {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.bento-card.card-bottom-2 {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+/* Dark Green Card for SDG (Card 6) */
+.bento-card.card-dark-green {
+    grid-column: 3;
+    grid-row: 3;
+    background-color: #31422F; /* Dark green accent */
+    border: none;
+    box-shadow: 0 4px 20px rgba(49, 66, 47, 0.15);
+}
+
+.bento-card.card-dark-green:hover {
+    box-shadow: 0 12px 30px rgba(49, 66, 47, 0.25);
+    border-color: transparent;
+}
+
+.bento-card.card-dark-green h3 {
+    color: #FFFFFF;
+}
+
+.bento-card.card-dark-green p {
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* ===================================
@@ -1757,10 +1849,10 @@ section {
     }
 
     /* Benefits padding for floating product visual (jar on the right at 26vw) */
-    .benefits-grid {
+    .bento-grid {
         padding-right: 32% !important;
         padding-left: 0 !important;
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: repeat(3, 1fr) !important;
     }
 
     /* CTA alignment for floating product visual (jar on the right at 18vw) */
@@ -1903,7 +1995,7 @@ section {
         gap: 2rem !important;
     }
 
-    .benefits-grid,
+    .bento-grid,
     .stakeholders-network,
     .results-grid {
         grid-template-columns: 1fr;

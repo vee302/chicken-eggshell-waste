@@ -652,7 +652,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 <div class="stakeholder-card" data-role="admin">
                     <span class="card-number">01</span>
                     <div class="card-image-wrap">
-                        <img src="images/admin-placeholder.png" alt="LSPU Administration" class="card-img">
+                        <img src="images/LSPU.jpg" alt="LSPU Administration" class="card-img">
                     </div>
                     <div class="card-content">
                         <h3>LSPU Administration</h3>

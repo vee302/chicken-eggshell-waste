@@ -31,3 +31,6 @@ uploads/**
 /uploads/fingerprints/*
 debug_log.txt
 *.log
+
+# Scratch directory
+scratch/

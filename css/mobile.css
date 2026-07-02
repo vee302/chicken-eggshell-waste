@@ -558,7 +558,7 @@
 @media (max-width: 480px) {
     .bento-grid {
         display: grid !important;
-        grid-template-columns: 1.2fr 1fr !important;
+        grid-template-columns: 1.6fr 0.9fr !important;
         grid-template-rows: auto auto auto auto !important;
         gap: 0.75rem !important;
         width: 100% !important;
@@ -567,36 +567,38 @@
     }
     
     .bento-card {
-        padding: 0.9rem !important;
+        padding: 0.85rem 0.75rem !important;
         border-radius: 14px !important;
     }
     
     .bento-card h3 {
-        font-size: 0.82rem !important;
+        font-size: 0.9rem !important;
         margin-bottom: 0.35rem !important;
-        line-height: 1.25 !important;
+        line-height: 1.3 !important;
     }
     
     .bento-card p {
-        font-size: 0.68rem !important;
+        font-size: 0.72rem !important;
         line-height: 1.4 !important;
     }
     
     .bento-card.card-large {
         grid-column: 1 !important;
         grid-row: 1 / span 2 !important;
-        padding: 1.1rem !important;
+        padding: 1.25rem 1rem !important;
     }
     
     .bento-card.card-large h3 {
-        font-size: 1.15rem !important;
+        font-size: 1.35rem !important;
         margin-bottom: 0.5rem !important;
         max-width: 100% !important;
+        line-height: 1.3 !important;
     }
     
     .bento-card.card-large p {
-        font-size: 0.78rem !important;
+        font-size: 0.8rem !important;
         max-width: 100% !important;
+        line-height: 1.45 !important;
     }
     
     .bento-card.card-stacked-1 {

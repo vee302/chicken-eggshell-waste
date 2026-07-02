@@ -181,7 +181,6 @@
         margin: 0.25rem 0 !important;
     }
 
-    .bento-grid,
     .stakeholders-network {
         grid-template-columns: 1fr !important;
     }
@@ -484,13 +483,146 @@
     padding: 4rem 1.25rem !important;
 }
 
-.bento-grid {
-    gap: 1.25rem !important;
+/* Tablet / Landscape Mobile Layout (481px to 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .bento-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        grid-template-rows: auto auto auto !important;
+        gap: 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 2rem !important;
+    }
+    
+    .bento-card {
+        padding: 1.25rem 1.1rem !important;
+        border-radius: 16px !important;
+    }
+    
+    .bento-card h3 {
+        font-size: 0.95rem !important;
+        margin-bottom: 0.4rem !important;
+        line-height: 1.3 !important;
+    }
+    
+    .bento-card p {
+        font-size: 0.76rem !important;
+        line-height: 1.45 !important;
+    }
+    
+    .bento-card.card-large {
+        grid-column: span 2 !important;
+        grid-row: span 2 !important;
+        padding: 1.5rem !important;
+    }
+    
+    .bento-card.card-large h3 {
+        font-size: 1.45rem !important;
+        margin-bottom: 0.6rem !important;
+        max-width: 100% !important;
+    }
+    
+    .bento-card.card-large p {
+        font-size: 0.9rem !important;
+        max-width: 100% !important;
+    }
+    
+    .bento-card.card-stacked-1 {
+        grid-column: 3 !important;
+        grid-row: 1 !important;
+    }
+    
+    .bento-card.card-stacked-2 {
+        grid-column: 3 !important;
+        grid-row: 2 !important;
+    }
+    
+    .bento-card.card-bottom-1 {
+        grid-column: 1 !important;
+        grid-row: 3 !important;
+    }
+    
+    .bento-card.card-bottom-2 {
+        grid-column: 2 !important;
+        grid-row: 3 !important;
+    }
+    
+    .bento-card.card-dark-green {
+        grid-column: 3 !important;
+        grid-row: 3 !important;
+    }
 }
 
-.bento-card {
-    padding: 2rem 1.75rem !important;
-    border-radius: 18px !important;
+/* Portrait Mobile Layout (up to 480px) */
+@media (max-width: 480px) {
+    .bento-grid {
+        display: grid !important;
+        grid-template-columns: 1.2fr 1fr !important;
+        grid-template-rows: auto auto auto auto !important;
+        gap: 0.75rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 1.5rem !important;
+    }
+    
+    .bento-card {
+        padding: 0.9rem !important;
+        border-radius: 14px !important;
+    }
+    
+    .bento-card h3 {
+        font-size: 0.82rem !important;
+        margin-bottom: 0.35rem !important;
+        line-height: 1.25 !important;
+    }
+    
+    .bento-card p {
+        font-size: 0.68rem !important;
+        line-height: 1.4 !important;
+    }
+    
+    .bento-card.card-large {
+        grid-column: 1 !important;
+        grid-row: 1 / span 2 !important;
+        padding: 1.1rem !important;
+    }
+    
+    .bento-card.card-large h3 {
+        font-size: 1.15rem !important;
+        margin-bottom: 0.5rem !important;
+        max-width: 100% !important;
+    }
+    
+    .bento-card.card-large p {
+        font-size: 0.78rem !important;
+        max-width: 100% !important;
+    }
+    
+    .bento-card.card-stacked-1 {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+    }
+    
+    .bento-card.card-stacked-2 {
+        grid-column: 2 !important;
+        grid-row: 2 !important;
+    }
+    
+    .bento-card.card-bottom-1 {
+        grid-column: 1 !important;
+        grid-row: 3 !important;
+    }
+    
+    .bento-card.card-bottom-2 {
+        grid-column: 2 !important;
+        grid-row: 3 !important;
+    }
+    
+    .bento-card.card-dark-green {
+        grid-column: 1 / span 2 !important;
+        grid-row: 4 !important;
+    }
 }
 
 @media (max-width: 768px) {

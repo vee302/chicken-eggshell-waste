@@ -1574,65 +1574,6 @@ section {
     color: var(--gray);
 }
 
-/* ===================================
-   RESULTS SECTION
-   =================================== */
-
-.results-section {
-    background: var(--section-bg);
-}
-
-.results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
-}
-
-.result-card {
-    padding: 2.5rem;
-    background: var(--white);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    text-align: center;
-    transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.result-card:hover {
-    border-color: var(--dark-green);
-    transform: translateY(-10px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-}
-
-.result-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-.result-card h3 {
-    font-size: 1.25rem;
-    color: var(--dark-green);
-    margin-bottom: 1rem;
-}
-
-.counter {
-    font-size: 3.5rem;
-    font-weight: 800;
-    color: var(--dark-green);
-    margin: 1rem 0;
-    font-family: var(--font-display);
-}
-
-.counter::after {
-    content: '+';
-    margin-left: 0.25rem;
-}
-
-.result-card p {
-    color: var(--gray);
-    line-height: 1.7;
-    font-size: 1.05rem;
-}
-
 
 /* ===================================
    CTA SECTION
@@ -1991,8 +1932,7 @@ section {
     }
 
     .bento-grid,
-    .stakeholders-network,
-    .results-grid {
+    .stakeholders-network {
         grid-template-columns: 1fr;
     }
 

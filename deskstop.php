@@ -636,63 +636,6 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
         </div>
     </section>
 
-    <!-- Expected Results Section -->
-    <section class="results-section" id="results">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-label">Outcomes</span>
-                <h2 class="section-title">Expected Impact</h2>
-            </div>
-
-            <div class="results-grid">
-                <div class="result-card">
-                    <h3>Effective Fingerprint Powder</h3>
-                    <p>High-quality eggshell-based powder with proven forensic application</p>
-                </div>
-
-                <div class="result-card">
-                    <h3>Waste Reduction</h3>
-                    <div class="counter" data-target="500">0</div>
-                    <p>kg of eggshell waste diverted annually</p>
-                </div>
-
-                <div class="result-card">
-                    <h3>Cost Savings</h3>
-                    <div class="counter" data-target="70">0</div>
-                    <p>% lower cost vs commercial powder</p>
-                </div>
-
-                <div class="result-card">
-                    <h3>Safer Laboratory</h3>
-                    <p>Reduced exposure to toxic substances for students and faculty</p>
-                </div>
-
-                <div class="result-card">
-                    <h3>Enhanced Training</h3>
-                    <div class="counter" data-target="200">0</div>
-                    <p>students trained annually</p>
-                </div>
-
-                <div class="result-card">
-                    <h3>Community Partnership</h3>
-                    <p>Stronger collaboration with law enforcement and local agencies</p>
-                </div>
-
-                <div class="result-card">
-                    <h3>Print Visibility</h3>
-                    <div class="counter" data-target="95">0</div>
-                    <p>% success rate on various surfaces</p>
-                </div>
-
-                <div class="result-card">
-                    <h3>Environmental Impact</h3>
-                    <p>Measurable reduction in carbon footprint and chemical waste</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-
 
     <!-- Stakeholders Section -->
     <section class="stakeholders-section" id="stakeholders">

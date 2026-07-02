@@ -829,54 +829,6 @@ if (window.innerWidth <= 768) {
             }
         });
 
-        // Expected Results Cards & Counters
-        gsap.from('.results-section .section-label, .results-section .section-title', {
-            opacity: 0,
-            y: 40,
-            duration: 1,
-            stagger: 0.15,
-            scrollTrigger: {
-                trigger: '.results-section',
-                start: 'top 80%',
-                toggleActions: 'play none none none'
-            }
-        });
-
-        gsap.from('.result-card', {
-            opacity: 0,
-            y: 50,
-            duration: 1,
-            stagger: 0.08,
-            ease: "power2.out",
-            scrollTrigger: {
-                trigger: '.results-grid',
-                start: 'top 75%',
-                toggleActions: 'play none none none'
-            }
-        });
-
-        // Counter anim with ScrollTrigger
-        const counters = document.querySelectorAll('.counter');
-        counters.forEach(counter => {
-            const target = parseInt(counter.getAttribute('data-target'));
-
-            ScrollTrigger.create({
-                trigger: counter,
-                start: 'top 85%',
-                onEnter: () => {
-                    gsap.to(counter, {
-                        innerText: target,
-                        duration: 1.8,
-                        snap: { innerText: 1 },
-                        ease: "power2.out",
-                        onUpdate: function () {
-                            counter.innerText = Math.ceil(counter.innerText);
-                        }
-                    });
-                }
-            });
-        });
-
 
 
     }

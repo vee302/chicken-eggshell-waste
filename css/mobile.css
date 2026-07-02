@@ -90,7 +90,6 @@
     .process-timeline,
     .timeline-container,
     .bento-grid,
-    .results-grid,
     .stakeholders-network,
     .timeline-track,
     .timeline-item {
@@ -131,7 +130,6 @@
     }
 
     .benefit-card,
-    .result-card,
     .stakeholder-card,
     .info-card,
     .camera-capture-card {
@@ -184,7 +182,6 @@
     }
 
     .bento-grid,
-    .results-grid,
     .stakeholders-network {
         grid-template-columns: 1fr !important;
     }
@@ -494,110 +491,6 @@
 .bento-card {
     padding: 2rem 1.75rem !important;
     border-radius: 18px !important;
-}
-
-/* ==========================================================================
-   EXPECTED IMPACT CARDS & METRICS (Mobile Only)
-   ========================================================================== */
-
-.results-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 1.25rem !important;
-    margin-top: 1.5rem !important;
-}
-
-.result-card {
-    padding: 1.5rem !important;
-    background: var(--white, #FFFFFF) !important;
-    border: 1px solid rgba(47, 79, 58, 0.1) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 6px 20px rgba(47, 79, 58, 0.03) !important;
-    text-align: left !important;
-    transition: transform 0.4s ease, box-shadow 0.4s ease !important;
-    overflow: hidden !important;
-    position: relative !important;
-}
-
-.clarity-card {
-    border-left: 4px solid var(--dark-green, #2F4F3A) !important;
-}
-
-.toxicity-card {
-    border-left: 4px solid #E07A5F !important;
-}
-
-.recycled-card {
-    border-left: 4px solid var(--soft-green, #6B8F71) !important;
-}
-
-.result-header {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    margin-bottom: 0.25rem !important;
-}
-
-.metric-num-wrap {
-    font-size: 2.2rem !important;
-    font-weight: 800 !important;
-    color: var(--dark-green, #2F4F3A) !important;
-    font-family: inherit !important;
-    letter-spacing: -1px !important;
-}
-
-.percent-sign {
-    font-size: 1.3rem !important;
-    font-weight: 700 !important;
-    color: var(--soft-green, #6B8F71) !important;
-    margin-left: 1px !important;
-}
-
-.metric-unit {
-    font-size: 0.65rem !important;
-    font-weight: 800 !important;
-    color: var(--dark-green, #2F4F3A) !important;
-    background: rgba(47, 79, 58, 0.06) !important;
-    padding: 3px 8px !important;
-    border-radius: 4px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-}
-
-.metric-bar-container {
-    width: 100% !important;
-    height: 6px !important;
-    background: rgba(47, 79, 58, 0.05) !important;
-    border-radius: 10px !important;
-    margin: 0.8rem 0 1rem 0 !important;
-    overflow: hidden !important;
-    position: relative !important;
-}
-
-.metric-bar-fill {
-    height: 100% !important;
-    border-radius: 10px !important;
-    background: linear-gradient(90deg, var(--soft-green, #6B8F71) 0%, var(--dark-green, #2F4F3A) 100%) !important;
-    transition: width 1.5s cubic-bezier(0.1, 1, 0.1, 1) !important;
-}
-
-.metric-bar-container.toxicity .metric-bar-fill {
-    background: linear-gradient(90deg, #E07A5F 0%, var(--soft-green, #6B8F71) 100%) !important;
-}
-
-.result-card h3 {
-    font-size: 0.95rem !important;
-    font-weight: 700 !important;
-    color: var(--dark-green, #2F4F3A) !important;
-    margin-bottom: 0.35rem !important;
-    line-height: 1.2 !important;
-}
-
-.result-card p {
-    font-size: 0.76rem !important;
-    line-height: 1.5 !important;
-    color: var(--gray, #8B8B8B) !important;
-    margin: 0 !important;
 }
 
 @media (max-width: 768px) {

@@ -668,18 +668,6 @@ if (window.innerWidth > 768) {
             }
         });
 
-        gsap.from('.results-section .section-label, .results-section .section-title', {
-            opacity: 0,
-            y: 40,
-            duration: 1,
-            stagger: 0.15,
-            scrollTrigger: {
-                trigger: '.results-section',
-                start: 'top 80%',
-                toggleActions: 'play none none none'
-            }
-        });
-
     }
 
     // ===================================

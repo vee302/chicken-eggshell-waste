@@ -538,4 +538,13 @@
     .cookie-preference-desc {
         font-size: 0.78rem !important;
     }
+    
+    .solution-section .section-header {
+        margin-bottom: 2.25rem !important;
+    }
+    
+    .solution-section .section-subtitle {
+        font-size: 13.5px !important;
+        line-height: 1.45 !important;
+    }
 }

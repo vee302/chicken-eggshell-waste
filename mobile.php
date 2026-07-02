@@ -198,8 +198,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
             <div class="section-header">
                 <span class="section-label">Our Process</span>
                 <h2 class="section-title">From Waste to<br>Forensic Innovation</h2>
-                <p class="section-subtitle">A sustainable four-step transformation process that converts organic waste
-                    into cutting-edge forensic technology.</p>
+                <p class="section-subtitle">Synthesizing organic waste into high-performance forensic powder.</p>
             </div>
 
             <div class="process-timeline">

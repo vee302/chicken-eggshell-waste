@@ -163,7 +163,7 @@ if (isset($_GET['view'])) {
                                 <th>Status</th>
                                 <th>Date Submitted</th>
                                 <th>Faculty Remarks</th>
-                                <th style="text-align: right;">Action</th>
+                                <th style="text-align: center;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -209,7 +209,7 @@ if (isset($_GET['view'])) {
                                 </td>
                                 <td><?= date('M d, Y h:i A', strtotime($r['submitted_at'])) ?></td>
                                 <td style="font-size:.82rem;color:#6c757d;max-width:180px;"><?= $r['faculty_remarks'] ? htmlspecialchars($r['faculty_remarks']) : '<em>No remarks yet</em>' ?></td>
-                                <td style="text-align: right;">
+                                <td style="text-align: center;">
                                     <a href="student_records.php?view=<?= $r['id'] ?><?= $search ? '&search='.urlencode($search) : '' ?><?= $f_pwd ? '&powder='.urlencode($f_pwd) : '' ?><?= $f_surf ? '&surface='.urlencode($f_surf) : '' ?><?= $f_stat ? '&status='.urlencode($f_stat) : '' ?>" class="btn btn-secondary btn-sm">View Details</a>
                                 </td>
                             </tr>

@@ -253,8 +253,18 @@ try {
     };
 
     $addTestColumn('trial_id', "`trial_id` VARCHAR(50) DEFAULT NULL AFTER `id`");
+    $addTestColumn('student_id', "`student_id` INT DEFAULT NULL AFTER `trial_id`");
+    $addTestColumn('powder_type', "`powder_type` ENUM('eggshell','commercial') NOT NULL DEFAULT 'eggshell' AFTER `student_id`");
     $addTestColumn('image_path', "`image_path` VARCHAR(255) DEFAULT NULL AFTER `surface_type`");
     $addTestColumn('image_label', "`image_label` VARCHAR(255) DEFAULT NULL AFTER `image_path`");
+
+    if (in_array('created_by', $testCols, true)) {
+        $pdo->exec("UPDATE `fingerprint_tests` SET `student_id` = `created_by` WHERE `student_id` IS NULL");
+    }
+    $pdo->exec("UPDATE `fingerprint_tests` SET `student_id` = 4 WHERE `student_id` IS NULL OR `student_id` = 0");
+    try {
+        $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `student_id` INT NOT NULL");
+    } catch (Exception $e) {}
     $addTestColumn('ridge_clarity_score', "`ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL");
     $addTestColumn('visibility_score', "`visibility_score` DECIMAL(5,2) DEFAULT NULL");
     $addTestColumn('adhesion_score', "`adhesion_score` DECIMAL(5,2) DEFAULT NULL");

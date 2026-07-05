@@ -415,7 +415,7 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                             <span class="powder-eggshell">Eggshell</span>
                         </h4>
                         <div class="img-placeholder">
-                            <?php if(!empty($selected_pair['eggshell']['image_path']) && file_exists('../uploads/fingerprints/' . $selected_pair['eggshell']['image_path'])): ?>
+                            <?php if(!empty($selected_pair['eggshell']['image_path']) && file_exists(dirname(__DIR__) . '/uploads/fingerprints/' . $selected_pair['eggshell']['image_path'])): ?>
                                 <img src="../uploads/fingerprints/<?= htmlspecialchars($selected_pair['eggshell']['image_path']) ?>" alt="Eggshell Print">
                             <?php else: ?>
                                 No Image Available
@@ -441,7 +441,7 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                             <span class="powder-commercial">Commercial</span>
                         </h4>
                         <div class="img-placeholder">
-                            <?php if(!empty($selected_pair['commercial']['image_path']) && file_exists('../uploads/fingerprints/' . $selected_pair['commercial']['image_path'])): ?>
+                            <?php if(!empty($selected_pair['commercial']['image_path']) && file_exists(dirname(__DIR__) . '/uploads/fingerprints/' . $selected_pair['commercial']['image_path'])): ?>
                                 <img src="../uploads/fingerprints/<?= htmlspecialchars($selected_pair['commercial']['image_path']) ?>" alt="Commercial Print">
                             <?php else: ?>
                                 No Image Available

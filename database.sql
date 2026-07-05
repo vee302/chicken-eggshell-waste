@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS `fingerprint_tests` (
     `status` ENUM('pending_validation','approved','rejected','needs_revision') DEFAULT 'pending_validation',
     `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `validated_by` INT DEFAULT NULL,
-    `validated_at` TIMESTAMP DEFAULT NULL,
+    `validated_at` TIMESTAMP NULL DEFAULT NULL,
     `ai_evaluated_at` DATETIME DEFAULT NULL,
     `evaluation_source` VARCHAR(50) DEFAULT 'AI Preliminary',
     `faculty_final_score` DECIMAL(5,2) DEFAULT NULL,
@@ -178,12 +178,12 @@ ON DUPLICATE KEY UPDATE `id`=`id`;
 -- SEED: Sample fingerprint test submissions
 -- ============================================================
 INSERT INTO `fingerprint_tests` (`id`, `trial_id`, `student_id`, `powder_type`, `surface_type`, `image_path`, `ridge_clarity_score`, `visibility_score`, `adhesion_score`, `accuracy_score`, `status`, `submitted_at`, `validated_by`, `validated_at`) VALUES
-(1, 'TR-0001', 4, 'eggshell', 'glass', NULL, 88.50, 91.00, 85.00, 88.17, 'pending_validation', '2026-05-28 08:30:00', NULL, NULL),
-(2, 'TR-0002', 4, 'commercial', 'glass', NULL, 90.00, 92.50, 88.00, 90.17, 'approved', '2026-05-28 09:00:00', 3, '2026-05-28 10:00:00'),
-(3, 'TR-0003', 4, 'eggshell', 'paper', NULL, 82.00, 79.50, 80.00, 80.50, 'pending_validation', '2026-05-29 10:00:00', NULL, NULL),
-(4, 'TR-0004', 4, 'eggshell', 'wood', NULL, 75.00, 77.00, 73.00, 75.00, 'rejected', '2026-05-29 11:00:00', 3, '2026-05-29 12:00:00'),
-(5, 'TR-0005', 4, 'commercial', 'plastic', NULL, 93.00, 94.00, 92.00, 93.00, 'approved', '2026-05-30 09:30:00', 3, '2026-05-30 10:00:00'),
-(6, 'TR-0006', 4, 'eggshell', 'metal', NULL, 86.00, 88.00, 84.00, 86.00, 'pending_validation', '2026-05-30 10:30:00', NULL, NULL)
+(1, 'TR-0001', 4, 'eggshell', 'glass', 'TR-0001.jpg', 88.50, 91.00, 85.00, 88.17, 'pending_validation', '2026-05-28 08:30:00', NULL, NULL),
+(2, 'TR-0002', 4, 'commercial', 'glass', 'TR-0002.jpg', 90.00, 92.50, 88.00, 90.17, 'approved', '2026-05-28 09:00:00', 3, '2026-05-28 10:00:00'),
+(3, 'TR-0003', 4, 'eggshell', 'paper', 'TR-0003.jpg', 82.00, 79.50, 80.00, 80.50, 'pending_validation', '2026-05-29 10:00:00', NULL, NULL),
+(4, 'TR-0004', 4, 'eggshell', 'wood', 'TR-0004.jpg', 75.00, 77.00, 73.00, 75.00, 'rejected', '2026-05-29 11:00:00', 3, '2026-05-29 12:00:00'),
+(5, 'TR-0005', 4, 'commercial', 'plastic', 'TR-0005.jpg', 93.00, 94.00, 92.00, 93.00, 'approved', '2026-05-30 09:30:00', 3, '2026-05-30 10:00:00'),
+(6, 'TR-0006', 4, 'eggshell', 'metal', 'TR-0006.jpg', 86.00, 88.00, 84.00, 86.00, 'pending_validation', '2026-05-30 10:30:00', NULL, NULL)
 ON DUPLICATE KEY UPDATE `id`=`id`;
 
 -- ============================================================

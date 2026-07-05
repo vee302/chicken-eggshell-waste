@@ -581,7 +581,6 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                                 </td>
                                 <td style="text-align:right;">
                                     <a href="student_records.php?view=<?= $r['id'] ?>" class="icon-btn-action" title="View Details"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>
-                                    <button class="icon-btn-action" title="View Image"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
                                 </td>
                             </tr>
                             <?php endforeach; ?>

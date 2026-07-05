@@ -13,20 +13,20 @@ try {
 } catch (PDOException $e) {}
 
 // Filters
-$f_student = $_GET['student_id'] ?? '';
-$f_powder  = $_GET['powder']     ?? '';
-$f_surface = $_GET['surface']    ?? '';
-$f_from    = $_GET['from']       ?? '';
-$f_to      = $_GET['to']         ?? '';
+$f_student = trim($_GET['student_id'] ?? '');
+$f_powder  = trim($_GET['powder']     ?? '');
+$f_surface = trim($_GET['surface']    ?? '');
+$f_from    = trim($_GET['from']       ?? '');
+$f_to      = trim($_GET['to']         ?? '');
 
 $where = ["ft.status='approved'"]; // Approved records only as required
 $params = [];
 
-if ($f_student) { $where[] = "ft.student_id=?";   $params[] = $f_student; }
-if ($f_powder)  { $where[] = "ft.powder_type=?";   $params[] = $f_powder; }
-if ($f_surface) { $where[] = "ft.surface_type=?";  $params[] = $f_surface; }
-if ($f_from)    { $where[] = "DATE(ft.submitted_at)>=?"; $params[] = $f_from; }
-if ($f_to)      { $where[] = "DATE(ft.submitted_at)<=?"; $params[] = $f_to; }
+if ($f_student !== '') { $where[] = "ft.student_id=?";   $params[] = $f_student; }
+if ($f_powder !== '')  { $where[] = "ft.powder_type=?";   $params[] = $f_powder; }
+if ($f_surface !== '') { $where[] = "ft.surface_type=?";  $params[] = $f_surface; }
+if ($f_from !== '')    { $where[] = "DATE(ft.submitted_at)>=?"; $params[] = $f_from; }
+if ($f_to !== '')      { $where[] = "DATE(ft.submitted_at)<=?"; $params[] = $f_to; }
 
 $sql = "
     SELECT ft.*, u.full_name AS student_name,
@@ -79,11 +79,11 @@ $safety_stats = [
 try {
     $safety_where = ["1=1"];
     $safety_params = [];
-    if ($f_student) { $safety_where[] = "scl.student_id=?";   $safety_params[] = $f_student; }
-    if ($f_powder)  { $safety_where[] = "scl.powder_type=?";   $safety_params[] = $f_powder; }
-    if ($f_surface) { $safety_where[] = "scl.surface_type=?";  $safety_params[] = $f_surface; }
-    if ($f_from)    { $safety_where[] = "DATE(scl.created_at)>=?"; $safety_params[] = $f_from; }
-    if ($f_to)      { $safety_where[] = "DATE(scl.created_at)<=?"; $safety_params[] = $f_to; }
+    if ($f_student !== '') { $safety_where[] = "scl.student_id=?";   $safety_params[] = $f_student; }
+    if ($f_powder !== '')  { $safety_where[] = "scl.powder_type=?";   $safety_params[] = $f_powder; }
+    if ($f_surface !== '') { $safety_where[] = "scl.surface_type=?";  $safety_params[] = $f_surface; }
+    if ($f_from !== '')    { $safety_where[] = "DATE(scl.created_at)>=?"; $safety_params[] = $f_from; }
+    if ($f_to !== '')      { $safety_where[] = "DATE(scl.created_at)<=?"; $safety_params[] = $f_to; }
 
     // Check if assigned_faculty_id exists in fingerprint_tests
     $check_cols = $pdo->query("SHOW COLUMNS FROM `fingerprint_tests` LIKE 'assigned_faculty_id'")->fetch();

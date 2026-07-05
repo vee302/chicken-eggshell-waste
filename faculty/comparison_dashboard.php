@@ -188,20 +188,52 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
         .icon-btn-action:hover { background:#2d6a4f; color:#fff; }
         
         /* Charts */
-        .charts-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
-        .chart-card { background: #fff; padding: 1.5rem; border-radius: 14px; box-shadow: 0 4px 20px rgba(27,67,50,.04); }
-        .chart-card h3 { font-size: 1rem; color: #1b4332; margin-bottom: 1rem; }
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .chart-card {
+            background: #fff;
+            padding: 1.75rem;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(27,67,50,.04);
+            border: 1px solid rgba(27,67,50,.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .chart-card.large-chart {
+            grid-column: span 2;
+        }
+        .chart-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1b4332;
+            margin-top: 0;
+            margin-bottom: 1.25rem;
+            border-left: 4px solid #2d6a4f;
+            padding-left: 0.75rem;
+            text-align: left;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+        }
         
         .empty-state { text-align:center; padding: 4rem 2rem; color: #6c757d; }
         .empty-state svg { width: 48px; height: 48px; opacity: 0.2; margin-bottom: 1rem; }
         
         @media (max-width: 992px) {
-            .summary-grid { grid-template-columns: 1fr 1fr; }
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
             .viewer-panes { grid-template-columns: 1fr; }
-            .charts-section { grid-template-columns: 1fr; }
         }
         @media (max-width: 768px) {
             .summary-grid { grid-template-columns: 1fr; }
+            .charts-section { grid-template-columns: 1fr; }
+            .chart-card.large-chart { grid-column: span 1; }
         }
     </style>
 </head>
@@ -311,6 +343,45 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                     <a href="comparison_dashboard.php" class="btn btn-secondary">Reset</a>
                 </div>
             </form>
+
+            <!-- Analytics Summary Section -->
+            <div style="margin-top: 1rem; margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.5rem; color: #1b4332; margin-bottom: 0.25rem; font-weight: 700;">Analytics Summary</h2>
+                <p style="font-size: 0.95rem; color: #6c757d; margin: 0;">Visual comparison of fingerprint evaluation results based on powder type, surface material, and trial distribution.</p>
+            </div>
+
+            <div class="charts-section">
+                <div class="chart-card large-chart">
+                    <h3>Accuracy by Powder Type</h3>
+                    <?php if($total_trials > 0): ?>
+                        <div class="chart-container">
+                            <canvas id="accuracyChart"></canvas>
+                        </div>
+                    <?php else: ?>
+                        <p style="color:#adb5bd; text-align:center; padding:2rem 0; font-size:.85rem;">No chart data available yet.</p>
+                    <?php endif; ?>
+                </div>
+                <div class="chart-card">
+                    <h3>Success Rate by Surface Type</h3>
+                    <?php if($total_trials > 0): ?>
+                        <div class="chart-container">
+                            <canvas id="successChart"></canvas>
+                        </div>
+                    <?php else: ?>
+                        <p style="color:#adb5bd; text-align:center; padding:2rem 0; font-size:.85rem;">No chart data available yet.</p>
+                    <?php endif; ?>
+                </div>
+                <div class="chart-card">
+                    <h3>Trial Count by Surface</h3>
+                    <?php if($total_trials > 0): ?>
+                        <div class="chart-container">
+                            <canvas id="trialChart"></canvas>
+                        </div>
+                    <?php else: ?>
+                        <p style="color:#adb5bd; text-align:center; padding:2rem 0; font-size:.85rem;">No chart data available yet.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
 
             <!-- Side-by-Side Comparison -->
             <div class="comparison-viewer">
@@ -427,7 +498,7 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                     </div>
                     <div>
                         <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Difference in Score</span>
-                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= number_format($score_diff, 2) ?>%</strong>
+                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= number_format((float)($score_diff ?? 0), 2) ?>%</strong>
                     </div>
                     <div>
                         <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Surface Material</span>
@@ -435,11 +506,11 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                     </div>
                     <div>
                         <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Eggshell Powder Accuracy</span>
-                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= number_format($eg_acc, 2) ?>%</strong>
+                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= number_format((float)($eg_acc ?? 0), 2) ?>%</strong>
                     </div>
                     <div>
                         <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Commercial Powder Accuracy</span>
-                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= number_format($co_acc, 2) ?>%</strong>
+                        <strong style="font-size:1.1rem; color:var(--dark-green);"><?= number_format((float)($co_acc ?? 0), 2) ?>%</strong>
                     </div>
                     <div>
                         <span style="font-size:0.75rem; color:var(--gray); display:block; text-transform:uppercase; font-weight:600;">Faculty Validation Status</span>
@@ -497,11 +568,11 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                                 <td style="font-weight:600; color:#1b4332;"><?= htmlspecialchars($r['student_name']) ?></td>
                                 <td><span class="powder-<?= $r['powder_type'] ?>"><?= ucfirst($r['powder_type']) ?></span></td>
                                 <td style="text-transform:capitalize;"><?= $r['surface_type'] ?></td>
-                                <td><?= number_format($r['ridge_clarity_score'],1) ?>%</td>
-                                <td><?= number_format($r['visibility_score'],1) ?>%</td>
-                                <td><?= number_format($r['adhesion_score'],1) ?>%</td>
-                                <td><?= $r['contrast_score'] !== null ? number_format($r['contrast_score'],1) . '%' : '—' ?></td>
-                                <td><strong><?= number_format($r['accuracy_score'],1) ?>%</strong></td>
+                                <td><?= number_format((float)($r['ridge_clarity_score'] ?? 0), 1) ?>%</td>
+                                <td><?= number_format((float)($r['visibility_score'] ?? 0), 1) ?>%</td>
+                                <td><?= number_format((float)($r['adhesion_score'] ?? 0), 1) ?>%</td>
+                                <td><?= $r['contrast_score'] !== null ? number_format((float)$r['contrast_score'], 1) . '%' : '—' ?></td>
+                                <td><strong><?= number_format((float)($r['accuracy_score'] ?? 0), 1) ?>%</strong></td>
                                 <td><?= date('M d, Y', strtotime($r['submitted_at'])) ?></td>
                                 <td>
                                     <span class="badge badge-<?= $r['status'] ?>">
@@ -520,33 +591,6 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                 </div>
             </div>
 
-            <!-- Charts Section -->
-            <div class="charts-section">
-                <div class="chart-card">
-                    <h3>Accuracy by Powder Type</h3>
-                    <?php if($total_trials > 0): ?>
-                        <canvas id="accuracyChart"></canvas>
-                    <?php else: ?>
-                        <p style="color:#adb5bd; text-align:center; padding:2rem 0; font-size:.85rem;">No chart data available yet.</p>
-                    <?php endif; ?>
-                </div>
-                <div class="chart-card">
-                    <h3>Success Rate by Surface Type</h3>
-                    <?php if($total_trials > 0): ?>
-                        <canvas id="successChart"></canvas>
-                    <?php else: ?>
-                        <p style="color:#adb5bd; text-align:center; padding:2rem 0; font-size:.85rem;">No chart data available yet.</p>
-                    <?php endif; ?>
-                </div>
-                <div class="chart-card">
-                    <h3>Trial Count by Surface</h3>
-                    <?php if($total_trials > 0): ?>
-                        <canvas id="trialChart"></canvas>
-                    <?php else: ?>
-                        <p style="color:#adb5bd; text-align:center; padding:2rem 0; font-size:.85rem;">No chart data available yet.</p>
-                    <?php endif; ?>
-                </div>
-            </div>
 
         </div>
     </main>
@@ -576,6 +620,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: { y: { beginAtZero: true, max: 100 } }
         }
@@ -596,6 +642,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: { y: { beginAtZero: true, max: 100 } }
         }
@@ -612,6 +660,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { position: 'bottom' } },
             cutout: '60%'
         }

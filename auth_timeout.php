@@ -19,11 +19,13 @@ $public_pages = [
 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     if (!in_array($current_script, $public_pages)) {
-        // Exclude admin from inactivity check
+        // Exclude admin and faculty from inactivity check
         $is_admin = (strpos($_SERVER['SCRIPT_NAME'], '/admin/') !== false) || 
                     (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'super_admin');
+        $is_faculty = (strpos($_SERVER['SCRIPT_NAME'], '/faculty/') !== false) || 
+                      (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'faculty_researcher');
 
-        if (!$is_admin) {
+        if (!$is_admin && !$is_faculty) {
             $timeout_seconds = (int)env('SESSION_TIMEOUT_MINUTES', 5) * 60;
             if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > $timeout_seconds)) {
                 // Session expired! Clear session variables and destroy session

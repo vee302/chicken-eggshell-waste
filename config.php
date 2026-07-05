@@ -647,7 +647,10 @@ register_shutdown_function(function () {
         $is_admin = (strpos($_SERVER['SCRIPT_NAME'], '/admin/') !== false) ||
             (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'super_admin');
 
-        if (!$is_ajax && !$is_admin) {
+        $is_faculty = (strpos($_SERVER['SCRIPT_NAME'], '/faculty/') !== false) ||
+            (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'faculty_researcher');
+
+        if (!$is_ajax && !$is_admin && !$is_faculty) {
             $is_subdir = (strpos($_SERVER['SCRIPT_NAME'], '/faculty/') !== false ||
                 strpos($_SERVER['SCRIPT_NAME'], '/student/') !== false ||
                 strpos($_SERVER['SCRIPT_NAME'], '/police-partner/') !== false);

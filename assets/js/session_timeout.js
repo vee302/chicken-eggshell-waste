@@ -1,7 +1,7 @@
 // session_timeout.js — Centralized JavaScript for Inactivity Session Timeout
 (function() {
-    // Disable timeout for admin
-    if (window.location.pathname.includes('/admin/')) {
+    // Disable timeout for admin and faculty
+    if (window.location.pathname.includes('/admin/') || window.location.pathname.includes('/faculty/')) {
         return;
     }
 

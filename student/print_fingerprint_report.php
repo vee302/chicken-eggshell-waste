@@ -1,15 +1,102 @@
 <?php
 // student/print_fingerprint_report.php — Print Trial Report
+ob_start();
+ini_set('display_errors', '0');
 require_once '../config.php';
 require_once 'auth.php';
 check_student_auth();
+
+// Themed error display function that cleans output buffer
+function showThemedError($error_message, $http_code = 500) {
+    if (ob_get_length()) {
+        ob_clean();
+    }
+    http_response_code($http_code);
+    header('Content-Type: text/html; charset=UTF-8');
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Error - Green Forensics</title>
+        <style>
+            body {
+                background-color: #f3f4f6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                margin: 0;
+                font-family: system-ui, -apple-system, sans-serif;
+            }
+            .error-card {
+                background: white;
+                padding: 2.5rem;
+                border-radius: 16px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+                max-width: 450px;
+                width: 90%;
+                text-align: center;
+                border-top: 5px solid #1b4332;
+            }
+            .error-icon {
+                color: #ef4444;
+                margin-bottom: 1.25rem;
+                display: flex;
+                justify-content: center;
+            }
+            .error-title {
+                color: #1b4332;
+                font-size: 1.25rem;
+                font-weight: 700;
+                margin-bottom: 0.75rem;
+            }
+            .error-desc {
+                color: #4b5563;
+                font-size: 0.9rem;
+                line-height: 1.5;
+                margin-bottom: 1.5rem;
+            }
+            .btn-back {
+                display: inline-block;
+                background: #1b4332;
+                color: white;
+                padding: 10px 20px;
+                text-decoration: none;
+                font-weight: 600;
+                border-radius: 8px;
+                font-size: 0.88rem;
+                transition: background 0.2s;
+            }
+            .btn-back:hover {
+                background: #2d6a4f;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="error-card">
+            <div class="error-icon">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+            </div>
+            <div class="error-title">Evaluation Report Error</div>
+            <div class="error-desc"><?= htmlspecialchars($error_message) ?></div>
+            <a href="student_dashboard.php" class="btn-back">Go back to Dashboard</a>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
 
 $student_id = $_SESSION['user_id'] ?? 0;
 $test_id = isset($_GET['test_id']) ? (int)$_GET['test_id'] : 0;
 
 if ($test_id <= 0) {
-    http_response_code(400);
-    die("<h1>Bad Request</h1><p>Invalid trial ID.</p>");
+    error_log("print_fingerprint_report.php: Invalid test_id = " . $test_id);
+    showThemedError("Unable to generate Fingerprint Evaluation Report. Please try again later or contact the System Administrator.", 400);
 }
 
 try {
@@ -33,8 +120,8 @@ try {
     $trial = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$trial) {
-        http_response_code(403);
-        die("<h1>Unauthorized</h1><p>You do not have permission to view or print this record.</p>");
+        error_log("print_fingerprint_report.php: Unauthorized access or test not found. test_id = $test_id, student_id = $student_id");
+        showThemedError("Unable to generate Fingerprint Evaluation Report. Please try again later or contact the System Administrator.", 403);
     }
 
     // Verify image file existence
@@ -46,8 +133,11 @@ try {
         }
     }
 } catch (PDOException $e) {
-    http_response_code(500);
-    die("<h1>Database Error</h1><p>" . htmlspecialchars($e->getMessage()) . "</p>");
+    error_log("print_fingerprint_report.php Database Error: " . $e->getMessage());
+    showThemedError("Unable to load the report at this time.", 500);
+} catch (Exception $e) {
+    error_log("print_fingerprint_report.php Exception: " . $e->getMessage());
+    showThemedError("Unable to generate Fingerprint Evaluation Report. Please try again later or contact the System Administrator.", 500);
 }
 
 function safeFloat($value, $default = 0.0) {
@@ -464,12 +554,73 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                 page-break-inside: avoid !important;
             }
         }
+
+        /* Screen mobile friendly styling */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+                background-color: #f3f4f6;
+            }
+            .print-report {
+                padding: 20px;
+                box-shadow: none;
+                border-radius: 8px;
+                max-width: 100%;
+            }
+            .report-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            .image-container {
+                min-height: auto;
+                padding: 15px;
+            }
+            .image-container img {
+                max-width: 100%;
+                height: auto;
+            }
+            .scores-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .score-card.main-score {
+                grid-column: span 2;
+            }
+            .print-btn-container {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1000;
+                margin: 0;
+            }
+            .btn-print {
+                background-color: #1b4332;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                font-size: 0.95rem;
+                font-weight: 700;
+                border-radius: 50px;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="print-btn-container no-print">
-        <button class="btn-print" onclick="window.print()">Print Report</button>
+        <button class="btn-print" onclick="window.print()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;">
+                <polyline points="6 9 6 2 18 2 18 9"/>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Print / Download PDF
+        </button>
     </div>
 
     <div class="print-report">
@@ -541,7 +692,14 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                 <?php if ($image_exists): ?>
                     <img id="report-image" src="../view_fingerprint.php?test_id=<?= $trial['id'] ?>" alt="Fingerprint Image">
                 <?php else: ?>
-                    <div class="image-missing-text">Fingerprint image not available.</div>
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; color:#9ca3af; text-align:center; height:100%; width:100%;">
+                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;color:#d1d5db; display:block; margin-left:auto; margin-right:auto;">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                            <line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                        <div class="image-missing-text" style="color:#6b7280; font-size:0.8rem; font-weight:600;">Fingerprint Image Not Available</div>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -648,19 +806,30 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
 
     <script>
         window.addEventListener('DOMContentLoaded', () => {
-            const img = document.getElementById('report-image');
-            if (img && !img.complete) {
-                img.addEventListener('load', () => {
+            const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
+            
+            if (!isMobile) {
+                const img = document.getElementById('report-image');
+                if (img) {
+                    if (!img.complete) {
+                        img.addEventListener('load', () => {
+                            window.print();
+                        });
+                        img.addEventListener('error', () => {
+                            console.error("Failed to load fingerprint image.");
+                            window.print();
+                        });
+                    } else {
+                        window.print();
+                    }
+                } else {
                     window.print();
-                });
-                img.addEventListener('error', () => {
-                    console.error("Failed to load fingerprint image.");
-                    window.print();
-                });
-            } else {
-                window.print();
+                }
             }
         });
     </script>
 </body>
 </html>
+<?php
+ob_end_flush();
+?>

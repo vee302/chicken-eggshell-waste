@@ -1495,6 +1495,9 @@ document.getElementById('form-upload-fingerprint').addEventListener('submit', fu
     const btn = document.getElementById('btn-upload-image');
     const submissionTokenInput = document.getElementById('submission_token');
     
+    const formData = new FormData(this);
+    formData.append('csrf_token', csrfToken);
+
     // Disable inputs
     btn.disabled = true;
     btn.classList.add('btn-loading');
@@ -1514,9 +1517,6 @@ document.getElementById('form-upload-fingerprint').addEventListener('submit', fu
     selectSurface.disabled = true;
 
     showNotification('info', 'Please wait while your fingerprint is being analyzed.');
-
-    const formData = new FormData(this);
-    formData.append('csrf_token', csrfToken);
 
     fetch('ajax_upload_fingerprint.php', {
         method: 'POST',

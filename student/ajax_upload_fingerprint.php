@@ -1,31 +1,58 @@
 <?php
-// student/ajax_upload_fingerprint.php — Student AJAX Upload Fingerprint with Image Evaluation
+// student/ajax_upload_fingerprint.php — Student AJAX Upload Fingerprint with Anti-Spam & Duplicate Submission Protection
 @ob_start();
 require_once '../config.php';
 require_once 'auth.php';
 
 header('Content-Type: application/json');
 
+// Helper function to send standard JSON response with new token and exit
+function sendResponse($success, $message, $data = null) {
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+    $resp = [
+        'success' => $success,
+        'message' => $message
+    ];
+    if ($data !== null) {
+        $resp['data'] = $data;
+    }
+    // Always include a fresh submit token if it exists in session
+    if (isset($_SESSION['submit_token'])) {
+        $resp['new_token'] = $_SESSION['submit_token'];
+    }
+    echo json_encode($resp);
+    exit;
+}
+
 // Session Role check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'criminology_student') {
-    if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access.']);
-    exit;
+    sendResponse(false, 'Unauthorized access.');
 }
 
 // CSRF Token validation
 $headers = getallheaders();
 $csrf_token = $_POST['csrf_token'] ?? $headers['X-CSRF-Token'] ?? '';
 if (empty($csrf_token) || !hash_equals($_SESSION['csrf_token'] ?? '', $csrf_token)) {
-    if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'Invalid CSRF token.']);
-    exit;
+    sendResponse(false, 'Invalid CSRF token.');
 }
 
+// Submission (Idempotency) Token validation
+$submission_token = $_POST['submission_token'] ?? '';
+if (empty($submission_token) || empty($_SESSION['submit_token']) || !hash_equals($_SESSION['submit_token'], $submission_token)) {
+    // Generate new token on failure
+    $_SESSION['submit_token'] = bin2hex(random_bytes(32));
+    sendResponse(false, 'Invalid or expired submission token.');
+}
+
+// Invalidate token immediately
+unset($_SESSION['submit_token']);
+// Generate a fresh token ready for the next request/response
+$_SESSION['submit_token'] = bin2hex(random_bytes(32));
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['fingerprint_image'])) {
-    if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'No image file uploaded.']);
-    exit;
+    sendResponse(false, 'No image file uploaded.');
 }
 
 $file         = $_FILES['fingerprint_image'];
@@ -38,28 +65,26 @@ $allowed_exts  = ['jpg', 'jpeg', 'png', 'webp'];
 $max_bytes     = 5 * 1024 * 1024; // 5 MB
 
 if (!$powder_type || !$surface_type) {
-    if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'Powder Type and Surface Type are required.']);
-    exit;
+    sendResponse(false, 'Powder Type and Surface Type are required.');
 }
 
 if ($file['error'] !== UPLOAD_ERR_OK) {
-    if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'File upload error code: ' . $file['error']]);
-    exit;
+    sendResponse(false, 'File upload error code: ' . $file['error']);
 }
 
 $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 if (!in_array($ext, $allowed_exts)) {
-    if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'Only JPG, JPEG, PNG and WebP images are allowed.']);
-    exit;
+    sendResponse(false, 'Only JPG, JPEG, PNG and WebP images are allowed.');
 }
 
 if ($file['size'] > $max_bytes) {
-    if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'File size must not exceed 5 MB.']);
-    exit;
+    sendResponse(false, 'File size must not exceed 5 MB.');
+}
+
+// Compute the SHA-256 hash of the uploaded temporary file
+$image_hash = hash_file('sha256', $file['tmp_name']);
+if (!$image_hash) {
+    sendResponse(false, 'Failed to process fingerprint image hash.');
 }
 
 // Generate a unique trial_id early to use as the filename
@@ -70,9 +95,7 @@ try {
     $next_id = $max_id + 1;
     $trial_id = 'TR-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
 } catch (PDOException $e) {
-    if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'Database error generating ID: ' . $e->getMessage()]);
-    exit;
+    sendResponse(false, 'Database error generating ID: ' . $e->getMessage());
 }
 
 $filename = $trial_id . '.' . $ext;
@@ -88,9 +111,7 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
     @chmod($dest, 0777);
     // Confirm the file actually exists after moving
     if (!file_exists($dest)) {
-        if (ob_get_length()) ob_end_clean();
-        echo json_encode(['success' => false, 'message' => 'Failed to verify file upload. File is missing.']);
-        exit;
+        sendResponse(false, 'Failed to verify file upload. File is missing.');
     }
 
     // Determine absolute paths for Python script execution
@@ -147,44 +168,62 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
         }
     }
 
+    // Wrap the entire insert process in a transaction
+    $pdo->beginTransaction();
     try {
+        // 1. Duplicate Image Check
+        $stmt = $pdo->prepare("SELECT id FROM fingerprint_tests WHERE student_id = ? AND image_hash = ? LIMIT 1");
+        $stmt->execute([$student_id, $image_hash]);
+        if ($stmt->fetch()) {
+            $pdo->rollBack();
+            // Delete moved file to save space
+            @unlink($dest);
+            sendResponse(false, 'This fingerprint image has already been submitted.');
+        }
+
+        // 2. Cooldown Check (15 seconds)
+        $stmt = $pdo->prepare("SELECT id FROM fingerprint_tests WHERE student_id = ? AND submitted_at >= DATE_SUB(NOW(), INTERVAL 15 SECOND) LIMIT 1");
+        $stmt->execute([$student_id]);
+        if ($stmt->fetch()) {
+            $pdo->rollBack();
+            // Delete moved file
+            @unlink($dest);
+            sendResponse(false, 'Please wait 15 seconds before submitting another fingerprint evaluation.');
+        }
 
         // Insert trial record
         $stmt = $pdo->prepare("
             INSERT INTO fingerprint_tests 
-                (trial_id, student_id, image_path, image_label, powder_type, surface_type, 
+                (trial_id, student_id, image_path, image_label, image_hash, powder_type, surface_type, 
                  ridge_clarity_score, visibility_score, adhesion_score, contrast_score, accuracy_score, 
                  status, submitted_at, ai_evaluated_at, evaluation_source, ai_accuracy_score)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_validation', NOW(), ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_validation', NOW(), ?, ?, ?)
         ");
         $stmt->execute([
-            $trial_id, $student_id, $filename, $label, $powder_type, $surface_type,
+            $trial_id, $student_id, $filename, $label, $image_hash, $powder_type, $surface_type,
             $clarity, $visibility, $adhesion, $contrast, $accuracy, 
             $ai_evaluated_at, $evaluation_source, $ai_accuracy
         ]);
 
-        // Output response
-        if (ob_get_length()) ob_end_clean();
-        echo json_encode([
-            'success' => true,
-            'message' => $ai_success ? $ai_msg : $ai_msg,
-            'data' => [
-                'id' => $pdo->lastInsertId(),
-                'trial_id' => $trial_id,
-                'image_path' => $filename,
-                'image_label' => $label ? $label : 'Untitled',
-                'powder_type' => $powder_type,
-                'surface_type' => $surface_type,
-                'status' => 'pending_validation',
-                'submitted_at' => date('Y-m-d H:i:s')
-            ]
+        $inserted_id = $pdo->lastInsertId();
+        $pdo->commit();
+
+        sendResponse(true, $ai_msg, [
+            'id' => $inserted_id,
+            'trial_id' => $trial_id,
+            'image_path' => $filename,
+            'image_label' => $label ? $label : 'Untitled',
+            'powder_type' => $powder_type,
+            'surface_type' => $surface_type,
+            'status' => 'pending_validation',
+            'submitted_at' => date('Y-m-d H:i:s')
         ]);
     } catch (PDOException $e) {
-        if (ob_get_length()) ob_end_clean();
-        echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        $pdo->rollBack();
+        @unlink($dest);
+        sendResponse(false, 'Database error: ' . $e->getMessage());
     }
 } else {
-    if (ob_get_length()) ob_end_clean();
-    echo json_encode(['success' => false, 'message' => 'Failed to save image. Check uploads directory permissions.']);
+    sendResponse(false, 'Failed to save image. Check uploads directory permissions.');
 }
 exit;

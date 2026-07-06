@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS `fingerprint_tests` (
     `surface_type` ENUM('glass','paper','wood','plastic','metal','ceramic','fabric') NOT NULL,
     `image_path` VARCHAR(255) DEFAULT NULL,
     `image_label` VARCHAR(255) DEFAULT NULL,
+    `image_hash` VARCHAR(64) DEFAULT NULL,
     `ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL,
     `visibility_score` DECIMAL(5,2) DEFAULT NULL,
     `adhesion_score` DECIMAL(5,2) DEFAULT NULL,

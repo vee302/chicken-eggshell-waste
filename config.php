@@ -257,6 +257,7 @@ try {
     $addTestColumn('powder_type', "`powder_type` ENUM('eggshell','commercial') NOT NULL DEFAULT 'eggshell' AFTER `student_id`");
     $addTestColumn('image_path', "`image_path` VARCHAR(255) DEFAULT NULL AFTER `surface_type`");
     $addTestColumn('image_label', "`image_label` VARCHAR(255) DEFAULT NULL AFTER `image_path`");
+    $addTestColumn('image_hash', "`image_hash` VARCHAR(64) DEFAULT NULL AFTER `image_path`");
 
     if (in_array('created_by', $testCols, true)) {
         $pdo->exec("UPDATE `fingerprint_tests` SET `student_id` = `created_by` WHERE `student_id` IS NULL");

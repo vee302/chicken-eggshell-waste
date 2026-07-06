@@ -4,6 +4,10 @@ require_once '../config.php';
 require_once 'auth.php';
 check_student_auth();
 
+if (empty($_SESSION['submit_token'])) {
+    $_SESSION['submit_token'] = bin2hex(random_bytes(32));
+}
+
 $active_page  = 'upload_fingerprint';
 $student_name = $_SESSION['user_name'] ?? 'Student';
 $student_id   = $_SESSION['user_id']  ?? 0;
@@ -48,6 +52,30 @@ try {
     <link rel="stylesheet" href="../css/student_style.css?v=1.0">
     <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
     <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn-spinner {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, .3);
+            border-top: 2px solid white;
+            animation: spin .8s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .btn-loading {
+            opacity: .6 !important;
+            cursor: not-allowed !important;
+        }
+        .alert-info {
+            background: rgba(58, 125, 230, .12);
+            color: #0d6efd;
+            border: 1px solid rgba(58, 125, 230, .3);
+        }
         .image-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-top: 1rem; }
         .image-thumb { background: var(--cream); border-radius: 10px; overflow: hidden; border: 1px solid var(--light-gray); }
         .image-thumb img { width: 100%; height: 130px; object-fit: cover; display: block; }
@@ -370,6 +398,7 @@ try {
             <!-- Upload Form -->
             <div class="dashboard-card" style="max-width:680px;">
                 <form id="form-upload-fingerprint">
+                    <input type="hidden" id="submission_token" name="submission_token" value="<?php echo htmlspecialchars($_SESSION['submit_token']); ?>">
                     <!-- Camera-Based Evaluation Preview Panel -->
                     <div class="camera-preview-panel" style="background: #fff; text-align: center; margin-bottom: 1.5rem;">
 
@@ -453,7 +482,7 @@ try {
                         <strong>Disclaimer / Notice:</strong> This feature is for educational and research evaluation only. It is not used for biometric identification. It is only designed for Camera-Based Latent Fingerprint Capture and AI-Assisted Image Quality Evaluation using Chicken Eggshell Waste powder.
                     </div>
 
-                    <button type="submit" class="btn btn-primary" id="btn-upload-image" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: center; gap: 8px; background: #224229 !important; border-color: #224229 !important; border-radius: 8px; color: #fff;">
+                    <button type="submit" class="btn btn-primary" id="btn-upload-image" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: center; gap: 8px; background: #224229 !important; border-color: #224229 !important; border-radius: 8px; color: #fff;" disabled>
                         <span id="btnText">Evaluate Print Clarity</span>
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #fff;">
                             <line x1="7" y1="17" x2="17" y2="7"/>
@@ -599,6 +628,7 @@ try {
 
 <?php require_once '_sidebar_js.php'; ?>
 <script>
+window.isUploadingFingerprint = false;
 const inp = document.getElementById('fingerprint_image');
 const chosen = document.getElementById('file-chosen');
 
@@ -1372,6 +1402,9 @@ document.getElementById('btnCapturePhoto').addEventListener('click', () => {
             previewPlaceholder.style.display = 'none';
         };
         reader.readAsDataURL(capturedFile);
+
+        const btn = document.getElementById('btn-upload-image');
+        if (btn) btn.disabled = false;
     }, 'image/jpeg', 0.95);
 });
 
@@ -1382,6 +1415,7 @@ btnUploadTrigger.addEventListener('click', () => {
 
 // Preview selected local files
 inp.addEventListener('change', () => {
+    const btn = document.getElementById('btn-upload-image');
     if (inp.files && inp.files[0]) {
         const file = inp.files[0];
         chosen.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
@@ -1393,10 +1427,12 @@ inp.addEventListener('change', () => {
             previewPlaceholder.style.display = 'none';
         };
         reader.readAsDataURL(file);
+        if (btn) btn.disabled = false;
     } else {
         chosen.textContent = '';
         webcamCapturePreview.style.display = 'none';
         previewPlaceholder.style.display = 'flex';
+        if (btn) btn.disabled = true;
     }
 });
 
@@ -1424,11 +1460,15 @@ previewContainer.addEventListener('drop', e => {
 
 // AJAX file upload logic
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-let isUploading = false;
 
 function showNotification(type, message) {
     const container = document.getElementById('alertContainer');
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+    let alertClass = 'alert-error';
+    if (type === 'success') {
+        alertClass = 'alert-success';
+    } else if (type === 'info') {
+        alertClass = 'alert-info';
+    }
     container.innerHTML = `<div class="alert-msg ${alertClass}">${message}</div>`;
     setTimeout(() => {
         container.innerHTML = '';
@@ -1437,7 +1477,9 @@ function showNotification(type, message) {
 
 document.getElementById('form-upload-fingerprint').addEventListener('submit', function(e) {
     e.preventDefault();
-    if (isUploading) return;
+    if (window.isUploadingFingerprint) {
+        return;
+    }
     if (isCameraProcessing) {
         showNotification('error', 'Please wait until image capture is finished.');
         return;
@@ -1448,13 +1490,30 @@ document.getElementById('form-upload-fingerprint').addEventListener('submit', fu
         return;
     }
 
+    window.isUploadingFingerprint = true;
+
     const btn = document.getElementById('btn-upload-image');
-    const btnText = document.getElementById('btnText');
-    const originalText = btnText.textContent;
+    const submissionTokenInput = document.getElementById('submission_token');
     
-    btnText.textContent = 'Uploading & Evaluating...';
+    // Disable inputs
     btn.disabled = true;
-    isUploading = true;
+    btn.classList.add('btn-loading');
+    btn.innerHTML = '<span class="btn-spinner"></span>Evaluating... Please wait';
+
+    btnStartWebcam.disabled = true;
+    btnStartWebcam.style.pointerEvents = 'none';
+    btnStartWebcam.style.opacity = '0.6';
+
+    btnUploadTrigger.disabled = true;
+    btnUploadTrigger.style.pointerEvents = 'none';
+    btnUploadTrigger.style.opacity = '0.6';
+
+    const selectPowder = document.getElementById('powder_type');
+    const selectSurface = document.getElementById('surface_type');
+    selectPowder.disabled = true;
+    selectSurface.disabled = true;
+
+    showNotification('info', 'Please wait while your fingerprint is being analyzed.');
 
     const formData = new FormData(this);
     formData.append('csrf_token', csrfToken);
@@ -1468,9 +1527,12 @@ document.getElementById('form-upload-fingerprint').addEventListener('submit', fu
     })
     .then(res => res.json())
     .then(data => {
-        isUploading = false;
-        btnText.textContent = originalText;
-        btn.disabled = false;
+        window.isUploadingFingerprint = false;
+        
+        // Update submission token
+        if (data.new_token && submissionTokenInput) {
+            submissionTokenInput.value = data.new_token;
+        }
         
         if (data.success) {
             showNotification('success', data.message);
@@ -1481,15 +1543,61 @@ document.getElementById('form-upload-fingerprint').addEventListener('submit', fu
             chosen.textContent = '';
             webcamCapturePreview.style.display = 'none';
             previewPlaceholder.style.display = 'flex';
+
+            // Re-enable other controls
+            btnStartWebcam.disabled = false;
+            btnStartWebcam.style.pointerEvents = 'auto';
+            btnStartWebcam.style.opacity = '1';
+
+            btnUploadTrigger.disabled = false;
+            btnUploadTrigger.style.pointerEvents = 'auto';
+            btnUploadTrigger.style.opacity = '1';
+
+            selectPowder.disabled = false;
+            selectSurface.disabled = false;
+
+            // Keep the evaluate button disabled until a new image is selected
+            btn.innerHTML = '<span id="btnText">Evaluate Print Clarity</span>';
+            btn.classList.remove('btn-loading');
+            btn.disabled = true;
         } else {
             showNotification('error', data.message);
+            // Re-enable everything on failure
+            btn.innerHTML = '<span id="btnText">Evaluate Print Clarity</span>';
+            btn.classList.remove('btn-loading');
+            btn.disabled = false;
+
+            btnStartWebcam.disabled = false;
+            btnStartWebcam.style.pointerEvents = 'auto';
+            btnStartWebcam.style.opacity = '1';
+
+            btnUploadTrigger.disabled = false;
+            btnUploadTrigger.style.pointerEvents = 'auto';
+            btnUploadTrigger.style.opacity = '1';
+
+            selectPowder.disabled = false;
+            selectSurface.disabled = false;
         }
     })
     .catch(err => {
-        isUploading = false;
-        btnText.textContent = originalText;
-        btn.disabled = false;
+        window.isUploadingFingerprint = false;
         showNotification('error', 'An error occurred during upload. Please try again.');
+        
+        // Re-enable everything on network failure
+        btn.innerHTML = '<span id="btnText">Evaluate Print Clarity</span>';
+        btn.classList.remove('btn-loading');
+        btn.disabled = false;
+
+        btnStartWebcam.disabled = false;
+        btnStartWebcam.style.pointerEvents = 'auto';
+        btnStartWebcam.style.opacity = '1';
+
+        btnUploadTrigger.disabled = false;
+        btnUploadTrigger.style.pointerEvents = 'auto';
+        btnUploadTrigger.style.opacity = '1';
+
+        selectPowder.disabled = false;
+        selectSurface.disabled = false;
     });
 });
 

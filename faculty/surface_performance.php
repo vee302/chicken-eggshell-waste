@@ -5,7 +5,7 @@ require_once 'auth.php';
 check_faculty_auth();
 
 $faculty_name = $_SESSION['user_name'] ?? 'Faculty Researcher';
-$surfaces = ['glass','paper','wood','plastic','metal'];
+$surfaces = ['glass','plastic','metal','wood'];
 $perf = [];
 
 foreach ($surfaces as $s) {

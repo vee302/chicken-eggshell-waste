@@ -112,12 +112,9 @@ try {
                         <select id="filter-surface" class="form-control-inline" onchange="triggerFilter()">
                             <option value="">All Surfaces</option>
                             <option value="glass">Glass</option>
-                            <option value="paper">Paper</option>
-                            <option value="wood">Wood</option>
                             <option value="plastic">Plastic</option>
                             <option value="metal">Metal</option>
-                            <option value="ceramic">Ceramic</option>
-                            <option value="fabric">Fabric</option>
+                            <option value="wood">Wood</option>
                         </select>
 
                         <select id="filter-irritation" class="form-control-inline" onchange="triggerFilter()">

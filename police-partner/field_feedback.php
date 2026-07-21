@@ -240,7 +240,7 @@ try {
                             <label for="surface_type">Related Surface Type</label>
                             <select name="surface_type" id="surface_type" class="form-control">
                                 <option value="none">None / Multi-Surface</option>
-                                <?php foreach (['glass','paper','wood','plastic','metal','ceramic','fabric'] as $s): ?>
+                                <?php foreach (['glass','plastic','metal','wood'] as $s): ?>
                                     <option value="<?= $s ?>"><?= ucfirst($s) ?></option>
                                 <?php endforeach; ?>
                             </select>

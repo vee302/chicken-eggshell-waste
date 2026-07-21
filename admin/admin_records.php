@@ -202,12 +202,9 @@ if (isset($_GET['view'])) {
                             <select name="surface" id="filter-surface" class="form-control-inline">
                                 <option value="">All Surface Types</option>
                                 <option value="glass" <?php echo $filter_surface === 'glass' ? 'selected' : ''; ?>>Glass</option>
-                                <option value="paper" <?php echo $filter_surface === 'paper' ? 'selected' : ''; ?>>Paper</option>
-                                <option value="wood" <?php echo $filter_surface === 'wood' ? 'selected' : ''; ?>>Wood</option>
                                 <option value="plastic" <?php echo $filter_surface === 'plastic' ? 'selected' : ''; ?>>Plastic</option>
                                 <option value="metal" <?php echo $filter_surface === 'metal' ? 'selected' : ''; ?>>Metal</option>
-                                <option value="ceramic" <?php echo $filter_surface === 'ceramic' ? 'selected' : ''; ?>>Ceramic</option>
-                                <option value="fabric" <?php echo $filter_surface === 'fabric' ? 'selected' : ''; ?>>Fabric</option>
+                                <option value="wood" <?php echo $filter_surface === 'wood' ? 'selected' : ''; ?>>Wood</option>
                             </select>
 
                             <select name="status" id="filter-status" class="form-control-inline">

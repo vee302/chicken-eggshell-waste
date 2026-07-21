@@ -68,6 +68,11 @@ if (!$powder_type || !$surface_type) {
     sendResponse(false, 'Powder Type and Surface Type are required.');
 }
 
+$allowed_surface_types = ['glass', 'plastic', 'metal', 'wood'];
+if (!in_array(strtolower($surface_type), $allowed_surface_types)) {
+    sendResponse(false, 'Invalid surface type. Allowed surfaces are Glass, Plastic, Metal, and Wood.');
+}
+
 if ($file['error'] !== UPLOAD_ERR_OK) {
     sendResponse(false, 'File upload error code: ' . $file['error']);
 }
@@ -133,7 +138,7 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
     // Execute Python script safely checking if shell_exec is disabled
     $output = null;
     if (function_exists('shell_exec') && !in_array('shell_exec', array_map('trim', explode(',', ini_get('disable_functions'))))) {
-        $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " 2>&1";
+        $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " " . escapeshellarg($surface_type) . " 2>&1";
         $output = @shell_exec($command);
     }
     

@@ -315,7 +315,7 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                     <label>Surface Type</label>
                     <select name="surface">
                         <option value="">All Surfaces</option>
-                        <?php foreach(['glass','paper','wood','plastic','metal'] as $s): ?>
+                        <?php foreach(['glass','plastic','metal','wood'] as $s): ?>
                         <option value="<?=$s?>" <?= $f_surface===$s?'selected':'' ?>><?=ucfirst($s)?></option>
                         <?php endforeach; ?>
                     </select>

@@ -3,9 +3,13 @@ import os
 import json
 
 def main():
+    image_path = sys.argv[1]
+    surface_type = sys.argv[2] if len(sys.argv) > 2 else "unknown"
+
     # Initialize default error response
     result = {
         "success": False,
+        "surface_type": surface_type,
         "ridge_clarity_score": 0.0,
         "visibility_score": 0.0,
         "adhesion_score": 0.0,
@@ -14,14 +18,6 @@ def main():
         "quality_label": "Needs Improvement",
         "message": "Unable to evaluate fingerprint image."
     }
-
-    # Check if the image path argument was provided
-    if len(sys.argv) < 2:
-        result["message"] = "No image path argument provided."
-        print(json.dumps(result))
-        sys.exit(1)
-
-    image_path = sys.argv[1]
 
     # Check if the image file exists on disk
     if not os.path.isfile(image_path):
@@ -118,6 +114,7 @@ def main():
         # Round values for display consistency
         result = {
             "success": True,
+            "surface_type": surface_type,
             "ridge_clarity_score": round(ridge_clarity_score, 2),
             "visibility_score": round(visibility_score, 2),
             "adhesion_score": round(adhesion_score, 2),

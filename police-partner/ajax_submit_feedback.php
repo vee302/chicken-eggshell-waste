@@ -32,6 +32,14 @@ if (empty($feedback_type)) {
     exit;
 }
 
+if (!empty($surface_type) && $surface_type !== 'none') {
+    $allowed_surfaces = ['glass', 'plastic', 'metal', 'wood'];
+    if (!in_array(strtolower($surface_type), $allowed_surfaces)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid surface type selected. Allowed surfaces are Glass, Plastic, Metal, and Wood.']);
+        exit;
+    }
+}
+
 if (empty($observation)) {
     echo json_encode(['success' => false, 'message' => 'Field observation details are required.']);
     exit;

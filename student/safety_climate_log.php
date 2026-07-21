@@ -116,12 +116,9 @@ try {
                             <select name="surface_type" id="surface_type" class="form-control" required>
                                 <option value="">— Select Surface —</option>
                                 <option value="glass">Glass</option>
-                                <option value="paper">Paper</option>
-                                <option value="wood">Wood</option>
                                 <option value="plastic">Plastic</option>
                                 <option value="metal">Metal</option>
-                                <option value="ceramic">Ceramic</option>
-                                <option value="fabric">Fabric</option>
+                                <option value="wood">Wood</option>
                             </select>
                         </div>
                         <div class="form-group">

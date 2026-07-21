@@ -3,21 +3,23 @@ import os
 import json
 
 def main():
+    image_path = sys.argv[1] if len(sys.argv) > 1 else ""
+    surface_type = sys.argv[2] if len(sys.argv) > 2 else "unknown"
+
     # Initialize default error response
     result = {
         "success": False,
+        "surface_type": surface_type,
         "clarity_score": 0,
         "quality_result": "Invalid Image",
         "message": "An unknown error occurred during image processing."
     }
 
     # 1. Check if the image path argument was provided
-    if len(sys.argv) < 2:
+    if not image_path:
         result["message"] = "No image path argument provided."
         print(json.dumps(result))
         sys.exit(1)
-
-    image_path = sys.argv[1]
 
     # 2. Check if the image file exists on the disk
     if not os.path.isfile(image_path):
@@ -82,6 +84,7 @@ def main():
         # Construct success response
         result = {
             "success": True,
+            "surface_type": surface_type,
             "clarity_score": clarity_score,
             "quality_result": quality_result,
             "message": "Image processed successfully."

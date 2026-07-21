@@ -575,7 +575,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
 
                     <div class="info-card-clean">
                         <h4>Effectiveness</h4>
-                        <p>Results can be compared across glass, paper, wood, plastic, and metal surfaces.</p>
+                        <p>Results can be compared across glass, plastic, metal, and wood surfaces.</p>
                     </div>
                 </div>
             </div>

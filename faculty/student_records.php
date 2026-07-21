@@ -130,7 +130,7 @@ if (isset($_GET['view'])) {
                     </select>
                     <select name="surface" class="form-control-inline">
                         <option value="">All Surfaces</option>
-                        <?php foreach(['glass','paper','wood','plastic','metal','ceramic','fabric'] as $s): ?>
+                        <?php foreach(['glass','plastic','metal','wood'] as $s): ?>
                         <option value="<?=$s?>" <?= $f_surf===$s?'selected':'' ?>><?=ucfirst($s)?></option>
                         <?php endforeach; ?>
                     </select>

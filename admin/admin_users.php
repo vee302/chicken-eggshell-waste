@@ -164,6 +164,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                 $u_stmt->execute([':id' => $id]);
                 $u_email = $u_stmt->fetchColumn();
 
+                // Fetch all associated files for this student's fingerprint tests to prevent orphaned files
+                $f_stmt = $pdo->prepare("SELECT image_path, enhanced_image_path FROM fingerprint_tests WHERE student_id = :id");
+                $f_stmt->execute([':id' => $id]);
+                $trials = $f_stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($trials as $t) {
+                    if (!empty($t['image_path'])) {
+                        @unlink(dirname(__DIR__) . '/uploads/fingerprints/' . $t['image_path']);
+                    }
+                    if (!empty($t['enhanced_image_path'])) {
+                        @unlink(dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . $t['enhanced_image_path']);
+                    }
+                }
+
                 $stmt = $pdo->prepare("DELETE FROM users WHERE id = :id");
                 $stmt->execute([':id' => $id]);
                 

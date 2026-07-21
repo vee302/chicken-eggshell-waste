@@ -22,7 +22,7 @@ if ($test_id <= 0) {
 
 try {
     // Query fingerprint_tests
-    $stmt = $pdo->prepare("SELECT student_id, image_path, status FROM fingerprint_tests WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT student_id, image_path, enhanced_image_path, status FROM fingerprint_tests WHERE id = ?");
     $stmt->execute([$test_id]);
     $test = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -32,9 +32,10 @@ try {
         exit;
     }
 
-    $owner_id   = (int)$test['student_id'];
-    $image_path = $test['image_path'];
-    $status     = $test['status'];
+    $owner_id            = (int)$test['student_id'];
+    $image_path          = $test['image_path'];
+    $enhanced_image_path = $test['enhanced_image_path'];
+    $status              = $test['status'];
 
     // Check authorization:
     // - super_admin
@@ -60,14 +61,28 @@ try {
         exit;
     }
 
-    if (empty($image_path)) {
-        http_response_code(404);
-        echo "Not Found: No image associated with this record.";
-        exit;
+    $mode = $_GET['mode'] ?? '';
+    if (isset($_GET['enhanced']) && $_GET['enhanced'] == 1) {
+        $mode = 'enhanced';
+    }
+
+    if ($mode === 'enhanced') {
+        if (empty($enhanced_image_path)) {
+            http_response_code(404);
+            echo "Not Found: No enhanced image available for this record.";
+            exit;
+        }
+        $filepath = __DIR__ . '/uploads/fingerprint_enhanced/' . $enhanced_image_path;
+    } else {
+        if (empty($image_path)) {
+            http_response_code(404);
+            echo "Not Found: No original image associated with this record.";
+            exit;
+        }
+        $filepath = __DIR__ . '/uploads/fingerprints/' . $image_path;
     }
 
     // Check if the file exists on the server
-    $filepath = __DIR__ . '/uploads/fingerprints/' . $image_path;
     if (!file_exists($filepath)) {
         http_response_code(404);
         echo "Not Found: Image file is missing on the server.";
@@ -84,7 +99,6 @@ try {
         else $mime = 'image/jpeg';
     }
 
-    // Stream the image with correct Content-Type
     header("Content-Type: " . $mime);
     header("Content-Length: " . filesize($filepath));
     readfile($filepath);

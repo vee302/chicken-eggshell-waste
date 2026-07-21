@@ -256,6 +256,7 @@ try {
     $addTestColumn('student_id', "`student_id` INT DEFAULT NULL AFTER `trial_id`");
     $addTestColumn('powder_type', "`powder_type` ENUM('eggshell','commercial') NOT NULL DEFAULT 'eggshell' AFTER `student_id`");
     $addTestColumn('image_path', "`image_path` VARCHAR(255) DEFAULT NULL AFTER `surface_type`");
+    $addTestColumn('enhanced_image_path', "`enhanced_image_path` VARCHAR(255) DEFAULT NULL AFTER `image_path`");
     $addTestColumn('image_label', "`image_label` VARCHAR(255) DEFAULT NULL AFTER `image_path`");
     $addTestColumn('image_hash', "`image_hash` VARCHAR(64) DEFAULT NULL AFTER `image_path`");
 

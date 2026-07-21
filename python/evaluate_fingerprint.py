@@ -111,6 +111,26 @@ def main():
         else:
             quality_label = "Needs Improvement"
 
+        # Save enhanced image as evaluation artifact
+        try:
+            fingerprints_dir = os.path.dirname(image_path)
+            uploads_dir = os.path.dirname(fingerprints_dir)
+            enhanced_dir = os.path.join(uploads_dir, "fingerprint_enhanced")
+            
+            os.makedirs(enhanced_dir, exist_ok=True)
+                
+            base_name = os.path.basename(image_path)
+            name, ext = os.path.splitext(base_name)
+            if not ext.lower() in ['.jpg', '.jpeg', '.png', '.webp']:
+                ext = '.jpg'
+            enhanced_filename = f"{name}_enhanced{ext}"
+            enhanced_filepath = os.path.join(enhanced_dir, enhanced_filename)
+            
+            cv2.imwrite(enhanced_filepath, blurred)
+            enhanced_image_path = enhanced_filename
+        except Exception as save_err:
+            enhanced_image_path = None
+
         # Round values for display consistency
         result = {
             "success": True,
@@ -121,6 +141,7 @@ def main():
             "contrast_score": round(contrast_score, 2),
             "accuracy_score": round(accuracy_score, 2),
             "quality_label": quality_label,
+            "enhanced_image_path": enhanced_image_path,
             "message": "Automated image evaluation processed successfully."
         }
 

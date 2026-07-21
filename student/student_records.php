@@ -43,6 +43,13 @@ try {
                 $row['image_exists'] = true;
             }
         }
+        $row['enhanced_image_exists'] = false;
+        if (!empty($row['enhanced_image_path'])) {
+            $enhPath = dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . $row['enhanced_image_path'];
+            if (file_exists($enhPath)) {
+                $row['enhanced_image_exists'] = true;
+            }
+        }
     }
     unset($row);
 } catch (PDOException $e) {}
@@ -334,16 +341,146 @@ try {
             text-align: right;
         }
 
-        /* Student chip */
-        .student-chip {
-            background: rgba(47, 191, 113, 0.12);
-            color: #2FBF71;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.78rem;
+        /* Dark theme Comparison modal scoped under #comparisonOverlay */
+        #comparisonOverlay .detail-modal {
+            background: #10261D !important;
+            color: #F4F4F0 !important;
+            border: 1px solid rgba(167, 201, 177, 0.18) !important;
+            max-width: 950px !important;
+            width: 95% !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            border-radius: 16px !important;
+        }
+        #comparisonOverlay .detail-modal-header {
+            background: #123524 !important;
+            border-bottom: 1px solid rgba(167, 201, 177, 0.18) !important;
+            color: #F4F4F0 !important;
+            padding: 1.1rem 1.5rem !important;
+            border-top-left-radius: 15px !important;
+            border-top-right-radius: 15px !important;
+        }
+        #comparisonOverlay .detail-modal-header h3 {
+            color: #F4F4F0 !important;
+            font-size: 1.2rem !important;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-weight: 700;
-            border: 1px solid rgba(47, 191, 113, 0.25);
-            text-transform: lowercase;
+            margin: 0;
+        }
+        #comparisonOverlay .modal-close-btn {
+            color: rgba(244, 244, 240, 0.70) !important;
+            background: none !important;
+            border: none !important;
+            font-size: 1.6rem !important;
+            cursor: pointer !important;
+            opacity: 0.8 !important;
+        }
+        #comparisonOverlay .modal-close-btn:hover {
+            color: #F4F4F0 !important;
+            opacity: 1 !important;
+        }
+        #comparisonOverlay .detail-modal-body {
+            padding: 1.5rem !important;
+        }
+
+        .compare-img-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 768px) {
+            .compare-img-grid {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+        }
+        .comp-img-card {
+            background: #0d1e17;
+            border: 1px solid rgba(167, 201, 177, 0.18);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .comp-img-header {
+            width: 100%;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(167, 201, 177, 0.15);
+        }
+        .comp-img-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #2FBF71;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .comp-img-subtitle {
+            font-size: 0.73rem;
+            color: rgba(244, 244, 240, 0.6);
+            margin-top: 2px;
+        }
+        .comp-img-box {
+            width: 100%;
+            min-height: 240px;
+            background: #06110c;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+            border: 1px dashed rgba(167, 201, 177, 0.2);
+        }
+        .comp-img-box img {
+            max-height: 250px;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        .comp-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: rgba(244, 244, 240, 0.45);
+            text-align: center;
+            padding: 2rem 1rem;
+            gap: 8px;
+        }
+        .comp-placeholder svg {
+            opacity: 0.5;
+        }
+        .comp-placeholder span {
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .comp-explanation-box {
+            background: #163B2A;
+            border: 1px solid rgba(167, 201, 177, 0.2);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.8rem;
+            color: rgba(244, 244, 240, 0.85);
+            line-height: 1.5;
+        }
+        .comp-explanation-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #2FBF71;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
         @media print {
@@ -474,12 +611,13 @@ try {
                                 <th>Status</th>
                                 <th>Date Submitted</th>
                                 <th>Faculty Remarks</th>
+                                <th style="text-align: center;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="recordsTableBody">
                         <?php if (empty($records)): ?>
                             <tr class="no-data-row">
-                                <td colspan="10" style="text-align:center;color:#6c757d;padding:2.5rem;">
+                                <td colspan="11" style="text-align:center;color:#6c757d;padding:2.5rem;">
                                     No submissions or records found matching the active filters.
                                     <?php if (!$filter_status && !$filter_powder && !$filter_surface): ?>
                                         <a href="upload_fingerprint.php" style="color:var(--medium-green);font-weight:600;">Upload your first fingerprint image to begin evaluation →</a>
@@ -545,6 +683,13 @@ try {
                                 </td>
                                 <td><?= date('M d, Y h:i A', strtotime($r['submitted_at'])) ?></td>
                                 <td style="font-size:.82rem; color:#5f5f5f; max-width:180px;"><?= $r['faculty_remarks'] ? htmlspecialchars($r['faculty_remarks']) : '<em>No remarks yet</em>' ?></td>
+                                <td style="white-space: nowrap; text-align: center;" onclick="event.stopPropagation();">
+                                    <div style="display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:nowrap;">
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick='event.stopPropagation(); openDetailModal(<?= htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8") ?>)' style="font-size:0.75rem; padding:4px 8px;">View Details</button>
+                                        <button type="button" class="btn btn-primary btn-sm" onclick='event.stopPropagation(); openComparisonModal(<?= htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8") ?>)' style="background:#2FBF71; border-color:#2FBF71; color:#10261D; font-weight:700; font-size:0.75rem; padding:4px 8px;">View Comparison</button>
+                                        <a href="print_fingerprint_report.php?test_id=<?= $r['id'] ?>" target="_blank" onclick="event.stopPropagation();" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; text-decoration:none; display:inline-flex; align-items:center;">Print Report</a>
+                                    </div>
+                                </td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -736,6 +881,142 @@ try {
     </div>
 </div>
 
+<!-- SIDE-BY-SIDE COMPARISON MODAL -->
+<div class="detail-overlay" id="comparisonOverlay">
+    <div class="detail-modal">
+        <div class="detail-modal-header">
+            <h3>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#2FBF71; margin-right:4px;">
+                    <rect x="2" y="3" width="20" height="18" rx="2" ry="2"/>
+                    <line x1="12" y1="3" x2="12" y2="21"/>
+                </svg>
+                Side-by-Side Fingerprint Image Comparison
+            </h3>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span class="student-chip" id="comp-student-chip">student123</span>
+                <button class="modal-close-btn" onclick="closeComparisonModal()">&times;</button>
+            </div>
+        </div>
+        <div class="detail-modal-body">
+            <!-- Side by Side Images Grid -->
+            <div class="compare-img-grid">
+                <!-- Left: Original -->
+                <div class="comp-img-card">
+                    <div class="comp-img-header">
+                        <div class="comp-img-title">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            Original Uploaded Fingerprint
+                        </div>
+                        <div class="comp-img-subtitle">Raw student submission • Used as evaluation input</div>
+                    </div>
+                    <div class="comp-img-box" id="comp-orig-box">
+                        <img src="" alt="Original Fingerprint" id="comp-orig-img" onerror="showCompPlaceholder('orig')">
+                        <div class="comp-placeholder" id="comp-orig-missing" style="display:none;">
+                            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <span>No Original Image Available</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.72rem; color: rgba(244, 244, 240, 0.6); text-align: center; word-break: break-all;" id="comp-orig-filename">TR-0001.jpg</div>
+                </div>
+
+                <!-- Right: Enhanced -->
+                <div class="comp-img-card">
+                    <div class="comp-img-header">
+                        <div class="comp-img-title">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            Enhanced AI Processed Fingerprint
+                        </div>
+                        <div class="comp-img-subtitle">Grayscale Conversion • CLAHE Contrast • Gaussian Blur</div>
+                    </div>
+                    <div class="comp-img-box" id="comp-enh-box">
+                        <img src="" alt="Enhanced Fingerprint" id="comp-enh-img" onerror="showCompPlaceholder('enh')">
+                        <div class="comp-placeholder" id="comp-enh-missing" style="display:none;">
+                            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+                            <span>No Enhanced Image Available</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.72rem; color: rgba(244, 244, 240, 0.6); text-align: center; word-break: break-all;" id="comp-enh-filename">TR-0001_enhanced.jpg</div>
+                </div>
+            </div>
+
+            <!-- Comparison Information / Explanation Box -->
+            <div class="comp-explanation-box">
+                <div class="comp-explanation-title">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    Comparison Information &amp; Preprocessing Purpose
+                </div>
+                <div style="font-size: 0.78rem; line-height: 1.5; color: rgba(244, 244, 240, 0.85);">
+                    This visualization illustrates the automated image preprocessing (grayscale intensity normalization, CLAHE contrast enhancement, and Gaussian noise filtering) performed prior to AI quality scoring. It is provided for educational reference only and does not alter the faculty-approved evaluation results.
+                </div>
+            </div>
+
+            <!-- Summary Scores & Metrics Container -->
+            <div class="inspect-grid">
+                <div>
+                    <div class="column-title">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#2FBF71;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        QUALITY SCORECARD &amp; METRICS
+                    </div>
+                    <div class="coefficient-header">
+                        <div class="overall-score-huge" id="comp-val-accuracy-huge">—</div>
+                        <div class="overall-score-badge-wrap">
+                            <span class="quality-badge" id="comp-val-quality-badge">GOOD</span>
+                            <span class="quality-badge-desc" id="comp-quality-badge-desc">Faculty Final Score</span>
+                        </div>
+                    </div>
+                    <!-- Metric Bars -->
+                    <div id="comp-metrics-container">
+                        <div class="metric-item">
+                            <div class="metric-info"><span>Ridge Clarity</span><span id="comp-val-clarity">—</span></div>
+                            <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-clarity"></div></div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-info"><span>Contrast Quality</span><span id="comp-val-contrast">—</span></div>
+                            <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-contrast"></div></div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-info"><span>Minutiae Visibility</span><span id="comp-val-visibility">—</span></div>
+                            <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-visibility"></div></div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-info"><span>Fingerprint Sharpness</span><span id="comp-val-sharpness">—</span></div>
+                            <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-sharpness"></div></div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-info"><span>Adhesion Quality</span><span id="comp-val-adhesion">—</span></div>
+                            <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-adhesion"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="column-title">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#10b981;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        TRIAL RECORD DETAILS
+                    </div>
+                    <div class="info-details-grid" style="grid-template-columns:1fr;">
+                        <div class="info-detail-row"><span class="info-detail-label">Trial ID:</span><span class="info-detail-value" id="comp-trial-id"></span></div>
+                        <div class="info-detail-row"><span class="info-detail-label">Powder Type:</span><span class="info-detail-value" id="comp-powder" style="text-transform:capitalize;"></span></div>
+                        <div class="info-detail-row"><span class="info-detail-label">Surface Type:</span><span class="info-detail-value" id="comp-surface" style="text-transform:capitalize;"></span></div>
+                        <div class="info-detail-row"><span class="info-detail-label">Image Label:</span><span class="info-detail-value" id="comp-label"></span></div>
+                        <div class="info-detail-row"><span class="info-detail-label">Status:</span><span class="info-detail-value" id="comp-status"></span></div>
+                        <div class="info-detail-row"><span class="info-detail-label">AI Score:</span><span class="info-detail-value" id="comp-ai-score"></span></div>
+                        <div class="info-detail-row" id="comp-faculty-row"><span class="info-detail-label">Faculty Final Score:</span><span class="info-detail-value" id="comp-faculty-score"></span></div>
+                        <div class="info-detail-row"><span class="info-detail-label">Faculty Reviewer:</span><span class="info-detail-value" id="comp-reviewer"></span></div>
+                        <div class="info-detail-row"><span class="info-detail-label">Evaluation Date:</span><span class="info-detail-value" id="comp-evaluation-date"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div style="display:flex; gap:10px; margin-top:1.25rem;" class="no-print">
+                <button type="button" class="btn btn-secondary" onclick="closeComparisonModal()" style="flex:1; background:#163B2A; border-color:rgba(167, 201, 177, 0.25); color:#F4F4F0;">Close</button>
+                <a id="compPrintReportBtn" href="#" target="_blank" class="btn btn-primary" style="flex:1; background:#2FBF71; border-color:#2FBF71; color:#10261D; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Print Evaluation Report</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php require_once '_sidebar_js.php'; ?>
 <script>
 let isFetching = false;
@@ -804,6 +1085,7 @@ function fetchFilteredRecords() {
 }
 
 function renderRecordsTable(records) {
+    window.currentStudentRecords = records;
     const tbody = document.getElementById('recordsTableBody');
     const countSpan = document.getElementById('recordCount');
     
@@ -821,7 +1103,7 @@ function renderRecordsTable(records) {
         
         tbody.innerHTML = `
             <tr class="no-data-row">
-                <td colspan="10" style="text-align:center;color:#6c757d;padding:2.5rem;">
+                <td colspan="11" style="text-align:center;color:#6c757d;padding:2.5rem;">
                     No submissions or records found matching the active filters.${linkHtml}
                 </td>
             </tr>`;
@@ -866,6 +1148,12 @@ function renderRecordsTable(records) {
             </div>` : (r.status === 'rejected' ? '<div style="font-size: 0.75rem; color: var(--danger); font-style:italic;">No final score</div>' : (r.status === 'needs_revision' ? '<div style="font-size: 0.75rem; color: var(--warning); font-style:italic;">Needs Revision</div>' : '<div style="font-size: 0.75rem; color: var(--gray); font-style:italic;">Awaiting Faculty Validation</div>'));
 
         const remarksHtml = r.faculty_remarks ? escapeHtml(r.faculty_remarks) : '<em>No remarks yet</em>';
+        const actionsHtml = `
+            <div style="display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:nowrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openDetailModalByData(${r.id});" style="font-size:0.75rem; padding:4px 8px;">View Details</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openComparisonModalByData(${r.id});" style="background:#2FBF71; border-color:#2FBF71; color:#10261D; font-weight:700; font-size:0.75rem; padding:4px 8px;">View Comparison</button>
+                <a href="print_fingerprint_report.php?test_id=${r.id}" target="_blank" onclick="event.stopPropagation();" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; text-decoration:none; display:inline-flex; align-items:center;">Print Report</a>
+            </div>`;
 
         if (row) {
             // Update row fields
@@ -877,6 +1165,9 @@ function renderRecordsTable(records) {
             row.children[6].innerHTML = scoreBarHtml;
             row.children[7].innerHTML = `<span class="badge ${getBadgeClass(r.status)}">${getStatusLabel(r.status)}</span>`;
             row.children[9].innerHTML = remarksHtml;
+            if (row.children[10]) {
+                row.children[10].innerHTML = actionsHtml;
+            }
         } else {
             // Prepend new row
             const tr = document.createElement('tr');
@@ -893,6 +1184,7 @@ function renderRecordsTable(records) {
                 <td><span class="badge ${getBadgeClass(r.status)}">${getStatusLabel(r.status)}</span></td>
                 <td>${new Date(r.submitted_at.replace(/-/g, "/")).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(r.submitted_at.replace(/-/g, "/")).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
                 <td style="font-size:.82rem; color:#5f5f5f; max-width:180px;">${remarksHtml}</td>
+                <td style="white-space: nowrap; text-align: center;" onclick="event.stopPropagation();">${actionsHtml}</td>
             `;
             const noData = tbody.querySelector('.no-data-row');
             if (noData) noData.remove();
@@ -906,6 +1198,178 @@ function renderRecordsTable(records) {
         }
     });
 }
+
+function openDetailModalByData(id) {
+    const records = window.currentStudentRecords || <?php echo json_encode($records); ?>;
+    const row = records.find(item => parseInt(item.id) === parseInt(id));
+    if (row) openDetailModal(row);
+}
+
+function openComparisonModalByData(id) {
+    const records = window.currentStudentRecords || <?php echo json_encode($records); ?>;
+    const row = records.find(item => parseInt(item.id) === parseInt(id));
+    if (row) openComparisonModal(row);
+}
+
+function showCompPlaceholder(type) {
+    if (type === 'orig') {
+        const origImg = document.getElementById('comp-orig-img');
+        const origMissing = document.getElementById('comp-orig-missing');
+        if (origImg) origImg.style.display = 'none';
+        if (origMissing) origMissing.style.display = 'flex';
+    } else if (type === 'enh') {
+        const enhImg = document.getElementById('comp-enh-img');
+        const enhMissing = document.getElementById('comp-enh-missing');
+        if (enhImg) enhImg.style.display = 'none';
+        if (enhMissing) enhMissing.style.display = 'flex';
+    }
+}
+
+function openComparisonModal(row) {
+    const username = row.student_email ? row.student_email.split('@')[0] : (row.student_name ? row.student_name.toLowerCase().replace(/\s+/g, '') : 'student');
+    document.getElementById('comp-student-chip').textContent = username;
+
+    document.getElementById('comp-trial-id').textContent = row.trial_id || 'TR-' + String(row.id).padStart(4, '0');
+    document.getElementById('comp-powder').textContent = row.powder_type || '';
+    document.getElementById('comp-surface').textContent = row.surface_type || '';
+    document.getElementById('comp-label').textContent = row.image_label || 'Untitled';
+
+    const origImg = document.getElementById('comp-orig-img');
+    const origMissing = document.getElementById('comp-orig-missing');
+    const origFilename = document.getElementById('comp-orig-filename');
+
+    if (row.image_path && row.image_exists) {
+        origImg.style.display = 'block';
+        origMissing.style.display = 'none';
+        origImg.src = '../view_fingerprint.php?test_id=' + row.id + '&mode=original';
+        origFilename.textContent = row.image_path.split('/').pop();
+    } else {
+        origImg.style.display = 'none';
+        origMissing.style.display = 'flex';
+        origFilename.textContent = 'No original image file';
+    }
+
+    const enhImg = document.getElementById('comp-enh-img');
+    const enhMissing = document.getElementById('comp-enh-missing');
+    const enhFilename = document.getElementById('comp-enh-filename');
+
+    if (row.enhanced_image_path && row.enhanced_image_exists) {
+        enhImg.style.display = 'block';
+        enhMissing.style.display = 'none';
+        enhImg.src = '../view_fingerprint.php?test_id=' + row.id + '&mode=enhanced';
+        enhFilename.textContent = row.enhanced_image_path.split('/').pop();
+    } else {
+        enhImg.style.display = 'none';
+        enhMissing.style.display = 'flex';
+        enhFilename.textContent = 'No enhanced image file available';
+    }
+
+    // Set print report link
+    const printBtn = document.getElementById('compPrintReportBtn');
+    if (printBtn) {
+        printBtn.href = 'print_fingerprint_report.php?test_id=' + row.id;
+    }
+
+    // Scores & Metrics
+    const aiAccuracy = row.ai_accuracy_score !== null ? parseFloat(row.ai_accuracy_score) : (row.accuracy_score !== null ? parseFloat(row.accuracy_score) : 0);
+    const aiClarity = row.ridge_clarity_score !== null ? parseFloat(row.ridge_clarity_score) : 0;
+    const aiVisibility = row.visibility_score !== null ? parseFloat(row.visibility_score) : 0;
+    const aiAdhesion = row.adhesion_score !== null ? parseFloat(row.adhesion_score) : 0;
+    const aiContrast = row.contrast_score !== null ? parseFloat(row.contrast_score) : 0;
+
+    const hasFacultyScores = row.faculty_final_score !== null;
+    const fAccuracy = hasFacultyScores ? parseFloat(row.faculty_final_score) : aiAccuracy;
+    const fClarity = hasFacultyScores && row.faculty_ridge_clarity_score !== null ? parseFloat(row.faculty_ridge_clarity_score) : aiClarity;
+    const fVisibility = hasFacultyScores && row.faculty_visibility_score !== null ? parseFloat(row.faculty_visibility_score) : aiVisibility;
+    const fAdhesion = hasFacultyScores && row.faculty_adhesion_score !== null ? parseFloat(row.faculty_adhesion_score) : aiAdhesion;
+    const fContrast = hasFacultyScores && row.faculty_contrast_score !== null ? parseFloat(row.faculty_contrast_score) : aiContrast;
+
+    const overallScoreHuge = document.getElementById('comp-val-accuracy-huge');
+    const badgeEl = document.getElementById('comp-val-quality-badge');
+    const badgeDesc = document.getElementById('comp-quality-badge-desc');
+
+    if (row.status === 'approved') {
+        overallScoreHuge.style.display = 'block';
+        document.getElementById('comp-metrics-container').style.display = 'block';
+
+        overallScoreHuge.textContent = Math.round(fAccuracy) + '%';
+        badgeEl.textContent = 'APPROVED';
+        badgeEl.style.color = '#2FBF71';
+        badgeEl.style.borderColor = 'rgba(47, 191, 113, 0.25)';
+        badgeEl.style.background = 'rgba(47, 191, 113, 0.12)';
+        if (badgeDesc) badgeDesc.textContent = 'Faculty Final Score';
+
+        document.getElementById('comp-val-clarity').textContent = fClarity > 0 ? fClarity.toFixed(1) + '%' : '—';
+        document.getElementById('comp-val-contrast').textContent = fContrast > 0 ? fContrast.toFixed(1) + '%' : '—';
+        document.getElementById('comp-val-visibility').textContent = fVisibility > 0 ? fVisibility.toFixed(1) + '%' : '—';
+        document.getElementById('comp-val-sharpness').textContent = fClarity > 0 ? fClarity.toFixed(1) + '%' : '—';
+        document.getElementById('comp-val-adhesion').textContent = fAdhesion > 0 ? fAdhesion.toFixed(1) + '%' : '—';
+
+        document.getElementById('comp-fill-clarity').style.width = fClarity + '%';
+        document.getElementById('comp-fill-contrast').style.width = fContrast + '%';
+        document.getElementById('comp-fill-visibility').style.width = fVisibility + '%';
+        document.getElementById('comp-fill-sharpness').style.width = fClarity + '%';
+        document.getElementById('comp-fill-adhesion').style.width = fAdhesion + '%';
+    } else {
+        overallScoreHuge.style.display = 'none';
+        document.getElementById('comp-metrics-container').style.display = 'none';
+        overallScoreHuge.textContent = '—';
+
+        if (row.status === 'pending_validation') {
+            badgeEl.textContent = 'AWAITING REVIEW';
+            badgeEl.style.color = '#f59e0b';
+            badgeEl.style.borderColor = 'rgba(245, 158, 11, 0.25)';
+            badgeEl.style.background = 'rgba(245, 158, 11, 0.12)';
+            if (badgeDesc) badgeDesc.textContent = 'Awaiting Faculty Validation';
+        } else if (row.status === 'rejected') {
+            badgeEl.textContent = 'REJECTED';
+            badgeEl.style.color = '#ef4444';
+            badgeEl.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+            badgeEl.style.background = 'rgba(239, 68, 68, 0.12)';
+            if (badgeDesc) badgeDesc.textContent = 'Rejected';
+        } else if (row.status === 'needs_revision') {
+            badgeEl.textContent = 'REVISION NEEDED';
+            badgeEl.style.color = '#3b82f6';
+            badgeEl.style.borderColor = 'rgba(59, 130, 246, 0.25)';
+            badgeEl.style.background = 'rgba(59, 130, 246, 0.12)';
+            if (badgeDesc) badgeDesc.textContent = 'Needs Revision';
+        }
+
+        document.getElementById('comp-val-clarity').textContent = '—';
+        document.getElementById('comp-val-contrast').textContent = '—';
+        document.getElementById('comp-val-visibility').textContent = '—';
+        document.getElementById('comp-val-sharpness').textContent = '—';
+        document.getElementById('comp-val-adhesion').textContent = '—';
+
+        document.getElementById('comp-fill-clarity').style.width = '0%';
+        document.getElementById('comp-fill-contrast').style.width = '0%';
+        document.getElementById('comp-fill-visibility').style.width = '0%';
+        document.getElementById('comp-fill-sharpness').style.width = '0%';
+        document.getElementById('comp-fill-adhesion').style.width = '0%';
+    }
+
+    document.getElementById('comp-ai-score').textContent = aiAccuracy > 0 ? aiAccuracy.toFixed(1) + '%' : 'Awaiting AI Evaluation';
+    document.getElementById('comp-status').innerHTML = `<span class="badge ${getBadgeClass(row.status)}">${getStatusLabel(row.status)}</span>`;
+    document.getElementById('comp-reviewer').textContent = row.faculty_validator || 'Faculty Reviewer';
+    const evalDate = row.ai_evaluated_at ? new Date(row.ai_evaluated_at.replace(/-/g, "/")).toLocaleString() : (row.submitted_at ? new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString() : '—');
+    document.getElementById('comp-evaluation-date').textContent = evalDate;
+
+    if (row.status === 'approved') {
+        document.getElementById('comp-faculty-score').textContent = fAccuracy.toFixed(1) + '%';
+    } else {
+        document.getElementById('comp-faculty-score').textContent = 'Awaiting Faculty Validation';
+    }
+
+    document.getElementById('comparisonOverlay').classList.add('open');
+}
+
+function closeComparisonModal() {
+    document.getElementById('comparisonOverlay').classList.remove('open');
+}
+
+document.getElementById('comparisonOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('comparisonOverlay')) closeComparisonModal();
+});
 
 function openDetailModal(row) {
     // Fill student chip (username/nickname from email or name)
@@ -1132,13 +1596,14 @@ document.getElementById('detailOverlay').addEventListener('click', e => {
 });
 
 function isAutoRefreshPaused() {
-    const isModalOpen = document.getElementById('detailOverlay').classList.contains('open');
+    const isDetailOpen = document.getElementById('detailOverlay') && document.getElementById('detailOverlay').classList.contains('open');
+    const isCompOpen = document.getElementById('comparisonOverlay') && document.getElementById('comparisonOverlay').classList.contains('open');
     const isUserTyping = document.activeElement && (
         document.activeElement.tagName === 'INPUT' || 
         document.activeElement.tagName === 'TEXTAREA' || 
         document.activeElement.tagName === 'SELECT'
     );
-    return isModalOpen || isUserTyping || isFetching;
+    return isDetailOpen || isCompOpen || isUserTyping || isFetching;
 }
 
 function autoRefreshStudentRecords() {

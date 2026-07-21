@@ -58,6 +58,13 @@ try {
                 $r['image_exists'] = true;
             }
         }
+        $r['enhanced_image_exists'] = false;
+        if (!empty($r['enhanced_image_path'])) {
+            $enhPath = dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . $r['enhanced_image_path'];
+            if (file_exists($enhPath)) {
+                $r['enhanced_image_exists'] = true;
+            }
+        }
     }
     unset($r);
 

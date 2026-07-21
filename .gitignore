@@ -34,3 +34,12 @@ debug_log.txt
 
 # Scratch directory
 scratch/
+
+# Python cache
+__pycache__/
+*.pyc
+python/__pycache__/
+
+# Uploads enhanced
+/uploads/fingerprint_enhanced/*
+

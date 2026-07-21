@@ -131,6 +131,7 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
     $ai_accuracy = null;
     $ai_evaluated_at = null;
     $evaluation_source = 'AI Preliminary';
+    $enhanced_image_path = null;
     
     $ai_msg = "";
     $ai_success = false;
@@ -160,6 +161,7 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
                 $accuracy = $ai_res['accuracy_score'];
                 $ai_accuracy = $ai_res['accuracy_score'];
                 $ai_evaluated_at = date('Y-m-d H:i:s');
+                $enhanced_image_path = $ai_res['enhanced_image_path'] ?? null;
                 $ai_success = true;
                 $ai_msg = "Fingerprint image uploaded successfully and evaluated using automated image evaluation.";
             } else {
@@ -183,6 +185,9 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
             $pdo->rollBack();
             // Delete moved file to save space
             @unlink($dest);
+            if ($enhanced_image_path) {
+                @unlink(dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . $enhanced_image_path);
+            }
             sendResponse(false, 'This fingerprint image has already been submitted.');
         }
 
@@ -193,19 +198,22 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
             $pdo->rollBack();
             // Delete moved file
             @unlink($dest);
+            if ($enhanced_image_path) {
+                @unlink(dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . $enhanced_image_path);
+            }
             sendResponse(false, 'Please wait 15 seconds before submitting another fingerprint evaluation.');
         }
 
         // Insert trial record
         $stmt = $pdo->prepare("
             INSERT INTO fingerprint_tests 
-                (trial_id, student_id, image_path, image_label, image_hash, powder_type, surface_type, 
+                (trial_id, student_id, image_path, enhanced_image_path, image_label, image_hash, powder_type, surface_type, 
                  ridge_clarity_score, visibility_score, adhesion_score, contrast_score, accuracy_score, 
                  status, submitted_at, ai_evaluated_at, evaluation_source, ai_accuracy_score)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_validation', NOW(), ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_validation', NOW(), ?, ?, ?)
         ");
         $stmt->execute([
-            $trial_id, $student_id, $filename, $label, $image_hash, $powder_type, $surface_type,
+            $trial_id, $student_id, $filename, $enhanced_image_path, $label, $image_hash, $powder_type, $surface_type,
             $clarity, $visibility, $adhesion, $contrast, $accuracy, 
             $ai_evaluated_at, $evaluation_source, $ai_accuracy
         ]);
@@ -217,6 +225,7 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
             'id' => $inserted_id,
             'trial_id' => $trial_id,
             'image_path' => $filename,
+            'enhanced_image_path' => $enhanced_image_path,
             'image_label' => $label ? $label : 'Untitled',
             'powder_type' => $powder_type,
             'surface_type' => $surface_type,
@@ -226,6 +235,9 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
     } catch (PDOException $e) {
         $pdo->rollBack();
         @unlink($dest);
+        if ($enhanced_image_path) {
+            @unlink(dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . $enhanced_image_path);
+        }
         sendResponse(false, 'Database error: ' . $e->getMessage());
     }
 } else {

@@ -719,7 +719,7 @@ try {
                             </tr>
                         <?php else: ?>
                             <?php foreach ($records as $i => $r): ?>
-                            <tr data-trial-db-id="<?= $r['id'] ?>" onclick='openDetailModal(<?= htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8") ?>)'>
+                            <tr data-trial-db-id="<?= $r['id'] ?>" onclick="openDetailModalByData(<?= (int)$r['id'] ?>)">
                                 <td style="font-weight: 700; color: var(--dark-green);"><?= htmlspecialchars($r['trial_id'] ?: 'TR-'.str_pad($r['id'], 4, '0', STR_PAD_LEFT)) ?></td>
                                 <td>
                                     <?php if ($r['image_path']): ?>
@@ -778,8 +778,8 @@ try {
                                 <td style="font-size:.82rem; color:#5f5f5f; max-width:180px;"><?= $r['faculty_remarks'] ? htmlspecialchars($r['faculty_remarks']) : '<em>No remarks yet</em>' ?></td>
                                 <td style="white-space: nowrap; text-align: center;" onclick="event.stopPropagation();">
                                     <div style="display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:nowrap;">
-                                        <button type="button" class="btn btn-secondary btn-sm" onclick='event.stopPropagation(); openDetailModal(<?= htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8") ?>)' style="font-size:0.75rem; padding:4px 8px;">View Details</button>
-                                        <button type="button" class="btn btn-primary btn-sm" onclick='event.stopPropagation(); openComparisonModal(<?= htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8") ?>)' style="background:#2FBF71; border-color:#2FBF71; color:#10261D; font-weight:700; font-size:0.75rem; padding:4px 8px;">View Comparison</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openDetailModalByData(<?= (int)$r['id'] ?>);" style="font-size:0.75rem; padding:4px 8px;">View Details</button>
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openComparisonModalByData(<?= (int)$r['id'] ?>);" style="background:#2FBF71; border-color:#2FBF71; color:#10261D; font-weight:700; font-size:0.75rem; padding:4px 8px;">View Comparison</button>
                                         <a href="print_fingerprint_report.php?test_id=<?= $r['id'] ?>" target="_blank" onclick="event.stopPropagation();" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; text-decoration:none; display:inline-flex; align-items:center;">Print Report</a>
                                     </div>
                                 </td>
@@ -1120,6 +1120,7 @@ try {
 
 <?php require_once '_sidebar_js.php'; ?>
 <script>
+window.currentStudentRecords = <?php echo json_encode($records, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 let isFetching = false;
 
 function escapeHtml(text) {
@@ -1301,13 +1302,13 @@ function renderRecordsTable(records) {
 }
 
 function openDetailModalByData(id) {
-    const records = window.currentStudentRecords || <?php echo json_encode($records); ?>;
+    const records = window.currentStudentRecords || <?php echo json_encode($records, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     const row = records.find(item => parseInt(item.id) === parseInt(id));
     if (row) openDetailModal(row);
 }
 
 function openComparisonModalByData(id) {
-    const records = window.currentStudentRecords || <?php echo json_encode($records); ?>;
+    const records = window.currentStudentRecords || <?php echo json_encode($records, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     const row = records.find(item => parseInt(item.id) === parseInt(id));
     if (row) openComparisonModal(row);
 }

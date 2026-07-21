@@ -31,6 +31,8 @@ $lockout_minutes = (int)env('LOGIN_LOCKOUT_MINUTES', 15);
 $email = $password = "";
 $error_message = "";
 $info_message = "";
+$is_lockout_active = false;
+$remaining_seconds = 0;
 
 if (isset($_GET['idle']) && $_GET['idle'] === '1') {
     $info_message = "You have been automatically logged out due to inactivity.";
@@ -94,7 +96,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 $now = time();
                                 if ($now < $lockTime) {
                                     $is_locked = true;
-                                    $error_message = "Too many failed login attempts. Please try again after " . $lockout_minutes . " minutes or contact the Super Administrator.";
+                                    $is_lockout_active = true;
+                                    $remaining_seconds = max(0, $lockTime - $now);
+                                    $_SESSION['lockout_until'] = $lockTime;
+                                    $error_message = "Too many failed login attempts. Account temporarily locked.";
                                 } else {
                                     // Lockout expired! Automatically reset lockout details.
                                     try {
@@ -102,6 +107,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         $reset_stmt->execute([':id' => $id]);
                                         $failed_attempts = 0;
                                         $locked_until = null;
+                                        unset($_SESSION['lockout_until']);
                                     } catch (PDOException $e) {
                                         // Ignore
                                     }
@@ -117,6 +123,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         try {
                                             $reset_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_failed_login = NULL WHERE id = :id");
                                             $reset_stmt->execute([':id' => $id]);
+                                            unset($_SESSION['lockout_until']);
                                         } catch (PDOException $e) {
                                             // Ignore
                                         }
@@ -154,7 +161,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     // Password is wrong - increment attempts
                                     $new_attempts = $failed_attempts + 1;
                                     if ($new_attempts >= $max_attempts) {
-                                        $locked_until_val = date('Y-m-d H:i:s', time() + $lockout_minutes * 60);
+                                        $lockTime = time() + ($lockout_minutes * 60);
+                                        $locked_until_val = date('Y-m-d H:i:s', $lockTime);
                                         try {
                                             $update_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = :attempts, locked_until = :locked_until, last_failed_login = NOW() WHERE id = :id");
                                             $update_stmt->execute([
@@ -166,7 +174,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         } catch (PDOException $e) {
                                             // Ignore
                                         }
-                                        $error_message = "Too many failed login attempts. Your account has been temporarily locked for " . $lockout_minutes . " minutes.";
+                                        $is_lockout_active = true;
+                                        $remaining_seconds = max(0, $lockTime - time());
+                                        $_SESSION['lockout_until'] = $lockTime;
+                                        $error_message = "Too many failed login attempts. Account temporarily locked.";
                                     } else {
                                         try {
                                             $update_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = :attempts, last_failed_login = NOW() WHERE id = :id");
@@ -201,6 +212,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Close connection
     unset($pdo);
+}
+
+// Session backup check for remaining lockout on page refresh (GET request)
+if (!$is_lockout_active && isset($_SESSION['lockout_until'])) {
+    $session_lock_time = (int)$_SESSION['lockout_until'];
+    $now = time();
+    if ($now < $session_lock_time) {
+        $is_lockout_active = true;
+        $remaining_seconds = max(0, $session_lock_time - $now);
+    } else {
+        unset($_SESSION['lockout_until']);
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -271,8 +294,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
             <?php endif; ?>
 
-            <!-- Error Alert -->
-            <?php if (!empty($error_message)): ?>
+            <!-- Lockout Active Alert -->
+            <?php if ($is_lockout_active && $remaining_seconds > 0): ?>
+                <div class="alert alert-danger" id="lockoutAlert" role="alert" aria-live="polite" style="flex-direction: column; text-align: center; gap: 6px; padding: 1.25rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 1rem; color: #ef4444;">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span>Too many failed login attempts</span>
+                    </div>
+                    <div style="font-size: 0.82rem; color: #D1D5DB; margin-top: 2px;">You may try again in:</div>
+                    <div id="lockoutTimerDisplay" style="font-size: 2.2rem; font-weight: 800; color: #2FBF71; font-family: 'Courier New', Courier, monospace; letter-spacing: 2px; margin: 4px 0;" aria-live="polite">
+                        <?php echo sprintf('%02d:%02d', floor($remaining_seconds / 60), $remaining_seconds % 60); ?>
+                    </div>
+                    <div id="lockoutSubtext" style="font-size: 0.8rem; color: rgba(244, 244, 240, 0.7); line-height: 1.4;">
+                        Please wait until the countdown finishes or contact the Super Administrator.
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Lockout Expired Success Alert (Initially Hidden) -->
+            <div class="alert alert-success" id="lockoutExpiredAlert" style="display: none; align-items: center; justify-content: center; gap: 8px; padding: 1rem; text-align: center; margin-bottom: 1.25rem;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span><strong>Lockout period has expired.</strong> You may now log in again.</span>
+            </div>
+
+            <!-- Standard Error Alert (for non-lockout errors) -->
+            <?php if (!empty($error_message) && !$is_lockout_active): ?>
                 <div class="alert alert-danger">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -282,7 +335,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </svg>
                     <span><?php echo htmlspecialchars($error_message); ?></span>
                 </div>
-                <?php if (strpos($error_message, 'Invalid email or password') !== false || strpos($error_message, 'Too many failed login attempts') !== false): ?>
+                <?php if (strpos($error_message, 'Invalid email or password') !== false): ?>
                     <div style="font-size: 0.8rem; color: var(--error-red); margin-bottom: 1.25rem; font-weight: 500; text-align: center;">
                         Forgot your password or locked out? Contact the Super Administrator for account recovery.
                     </div>
@@ -302,7 +355,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </svg>
                         </span>
                         <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email"
-                            value="<?php echo htmlspecialchars($email); ?>" required>
+                            value="<?php echo htmlspecialchars($email); ?>" required <?php echo ($is_lockout_active && $remaining_seconds > 0) ? 'disabled' : ''; ?>>
                     </div>
                 </div>
 
@@ -317,7 +370,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </svg>
                         </span>
                         <input type="password" name="password" id="password" class="form-control"
-                            placeholder="Enter your password" required>
+                            placeholder="Enter your password" required <?php echo ($is_lockout_active && $remaining_seconds > 0) ? 'disabled' : ''; ?>>
                         <button type="button" class="password-toggle" data-password-toggle="password"
                             aria-label="Show password" aria-pressed="false">
                             <span class="icon-eye">
@@ -340,8 +393,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </div>
                 </div>
 
-                <button type="submit" class="btn-primary">
-                    <span>Login Securely</span>
+                <button type="submit" class="btn-primary" <?php echo ($is_lockout_active && $remaining_seconds > 0) ? 'disabled style="opacity: 0.65; cursor: not-allowed;"' : ''; ?>>
+                    <span><?php echo ($is_lockout_active && $remaining_seconds > 0) ? 'Account Temporarily Locked' : 'Login Securely'; ?></span>
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -360,11 +413,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <span>Don't have an account?</span>
                     <a href="register.php" class="register-link">Register here</a>
                 </div>
-                <!--
-                <div>
-                    <a href="request_unlock.php" class="register-link" style="color: var(--soft-green); border-bottom-color: rgba(107, 143, 113, 0.4);">Need help accessing your account? Request unlock</a>
-                </div>
-                -->
             </div>
 
             <div class="back-link-wrapper">
@@ -389,7 +437,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </footer>
 
     <script>
-        // Skeleton → Real Form reveal transition
+        window.lockoutRemaining = <?= (int)$remaining_seconds ?>;
+
+        // Skeleton → Real Form reveal transition & Lockout Timer
         document.addEventListener("DOMContentLoaded", () => {
             const skeleton = document.getElementById("skeletonCard");
             const realCard = document.getElementById("realLoginCard");
@@ -423,6 +473,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     button.setAttribute("aria-label", shouldShow ? "Hide password" : "Show password");
                 });
             });
+
+            // Live Lockout Countdown Timer
+            if (window.lockoutRemaining > 0) {
+                let remaining = window.lockoutRemaining;
+                const timerDisplay = document.getElementById('lockoutTimerDisplay');
+                const lockoutAlert = document.getElementById('lockoutAlert');
+                const lockoutExpiredAlert = document.getElementById('lockoutExpiredAlert');
+                const emailInput = document.getElementById('email');
+                const passwordInput = document.getElementById('password');
+                const submitBtn = document.querySelector('.btn-primary');
+                const submitBtnSpan = submitBtn ? submitBtn.querySelector('span') : null;
+
+                function formatTime(secs) {
+                    const m = Math.floor(secs / 60);
+                    const s = secs % 60;
+                    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+                }
+
+                function updateTimer() {
+                    if (remaining > 0) {
+                        if (timerDisplay) timerDisplay.textContent = formatTime(remaining);
+                        remaining--;
+                    } else {
+                        clearInterval(countdownInterval);
+                        if (timerDisplay) timerDisplay.textContent = "00:00";
+                        
+                        // Auto unlock UI when timer reaches 00:00
+                        if (lockoutAlert) lockoutAlert.style.display = 'none';
+                        if (lockoutExpiredAlert) lockoutExpiredAlert.style.display = 'flex';
+
+                        // Enable fields & button
+                        if (emailInput) emailInput.disabled = false;
+                        if (passwordInput) passwordInput.disabled = false;
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.style.opacity = '1';
+                            submitBtn.style.cursor = 'pointer';
+                            if (submitBtnSpan) submitBtnSpan.textContent = 'Login Securely';
+                        }
+                    }
+                }
+
+                updateTimer();
+                const countdownInterval = setInterval(updateTimer, 1000);
+            }
         });
     </script>
 

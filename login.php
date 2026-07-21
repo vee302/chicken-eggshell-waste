@@ -57,6 +57,17 @@ function log_login_activity($pdo, $action, $details, $user_id = null, $user_emai
     }
 }
 
+// Helper to format remaining lockout time for initial display
+function getLockoutDisplayText($secs) {
+    if ($secs > 20) {
+        $mins = ceil($secs / 60);
+        return $mins . ' min' . ($mins > 1 ? 's' : '');
+    } else {
+        return $secs . ' sec' . ($secs != 1 ? 's' : '');
+    }
+}
+
+
 // Process form data when post request is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Trim input values
@@ -296,21 +307,20 @@ if (!$is_lockout_active && isset($_SESSION['lockout_until'])) {
 
             <!-- Lockout Active Alert -->
             <?php if ($is_lockout_active && $remaining_seconds > 0): ?>
-                <div class="alert alert-danger" id="lockoutAlert" role="alert" aria-live="polite" style="flex-direction: column; text-align: center; gap: 6px; padding: 1.25rem; margin-bottom: 1.25rem;">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 1rem; color: #ef4444;">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <div class="alert alert-danger" id="lockoutAlert" role="alert" aria-live="polite" style="flex-direction: column; text-align: center; gap: 4px; padding: 1rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #ef4444;">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="8" x2="12" y2="12"></line>
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
                         <span>Too many failed login attempts</span>
                     </div>
-                    <div style="font-size: 0.82rem; color: #D1D5DB; margin-top: 2px;">You may try again in:</div>
-                    <div id="lockoutTimerDisplay" style="font-size: 2.2rem; font-weight: 800; color: #2FBF71; font-family: 'Courier New', Courier, monospace; letter-spacing: 2px; margin: 4px 0;" aria-live="polite">
-                        <?php echo sprintf('%02d:%02d', floor($remaining_seconds / 60), $remaining_seconds % 60); ?>
+                    <div style="font-size: 0.8rem; color: #D1D5DB; margin-top: 2px;">
+                        You may try again in: <strong id="lockoutTimerDisplay" style="color: #2FBF71; font-family: inherit; font-size: 0.95rem; font-weight: 700;"><?php echo getLockoutDisplayText($remaining_seconds); ?></strong>
                     </div>
-                    <div id="lockoutSubtext" style="font-size: 0.8rem; color: rgba(244, 244, 240, 0.7); line-height: 1.4;">
-                        Please wait until the countdown finishes or contact the Super Administrator.
+                    <div id="lockoutSubtext" style="font-size: 0.75rem; color: rgba(244, 244, 240, 0.7); line-height: 1.4; margin-top: 2px;">
+                        Please wait or contact the Super Administrator.
                     </div>
                 </div>
             <?php endif; ?>
@@ -486,9 +496,12 @@ if (!$is_lockout_active && isset($_SESSION['lockout_until'])) {
                 const submitBtnSpan = submitBtn ? submitBtn.querySelector('span') : null;
 
                 function formatTime(secs) {
-                    const m = Math.floor(secs / 60);
-                    const s = secs % 60;
-                    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+                    if (secs > 20) {
+                        const mins = Math.ceil(secs / 60);
+                        return mins + ' min' + (mins > 1 ? 's' : '');
+                    } else {
+                        return secs + ' sec' + (secs !== 1 ? 's' : '');
+                    }
                 }
 
                 function updateTimer() {
@@ -497,7 +510,7 @@ if (!$is_lockout_active && isset($_SESSION['lockout_until'])) {
                         remaining--;
                     } else {
                         clearInterval(countdownInterval);
-                        if (timerDisplay) timerDisplay.textContent = "00:00";
+                        if (timerDisplay) timerDisplay.textContent = "0 secs";
                         
                         // Auto unlock UI when timer reaches 00:00
                         if (lockoutAlert) lockoutAlert.style.display = 'none';

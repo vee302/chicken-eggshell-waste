@@ -344,143 +344,232 @@ try {
         /* Dark theme Comparison modal scoped under #comparisonOverlay */
         #comparisonOverlay .detail-modal {
             background: #10261D !important;
-            color: #F4F4F0 !important;
-            border: 1px solid rgba(167, 201, 177, 0.18) !important;
-            max-width: 950px !important;
+            color: #FFFFFF !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            max-width: 1180px !important;
             width: 95% !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7) !important;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             border-radius: 16px !important;
+            overflow: hidden;
         }
         #comparisonOverlay .detail-modal-header {
-            background: #123524 !important;
-            border-bottom: 1px solid rgba(167, 201, 177, 0.18) !important;
-            color: #F4F4F0 !important;
-            padding: 1.1rem 1.5rem !important;
+            background: #163526 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #FFFFFF !important;
+            padding: 1.25rem 1.75rem !important;
             border-top-left-radius: 15px !important;
             border-top-right-radius: 15px !important;
         }
         #comparisonOverlay .detail-modal-header h3 {
-            color: #F4F4F0 !important;
-            font-size: 1.2rem !important;
+            color: #FFFFFF !important;
+            font-size: 1.25rem !important;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             font-weight: 700;
             margin: 0;
         }
         #comparisonOverlay .modal-close-btn {
-            color: rgba(244, 244, 240, 0.70) !important;
+            color: #D1D5DB !important;
             background: none !important;
             border: none !important;
             font-size: 1.6rem !important;
             cursor: pointer !important;
             opacity: 0.8 !important;
+            transition: color 0.2s ease, opacity 0.2s ease;
         }
         #comparisonOverlay .modal-close-btn:hover {
-            color: #F4F4F0 !important;
+            color: #FFFFFF !important;
             opacity: 1 !important;
         }
         #comparisonOverlay .detail-modal-body {
-            padding: 1.5rem !important;
+            padding: 1.75rem 2rem !important;
         }
 
         .compare-img-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 1.25rem;
+            gap: 1.75rem;
+            margin-bottom: 1.75rem;
         }
         @media (max-width: 768px) {
             .compare-img-grid {
                 grid-template-columns: 1fr;
                 gap: 1.25rem;
             }
+            #comparisonOverlay .detail-modal-body {
+                padding: 1.25rem !important;
+            }
         }
         .comp-img-card {
-            background: #0d1e17;
-            border: 1px solid rgba(167, 201, 177, 0.18);
-            border-radius: 12px;
-            padding: 1.25rem;
+            background: #163526;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+        .comp-img-card:hover {
+            border-color: rgba(47, 191, 113, 0.3);
         }
         .comp-img-header {
             width: 100%;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid rgba(167, 201, 177, 0.15);
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         .comp-img-title {
-            font-size: 0.85rem;
+            font-size: 0.92rem;
             font-weight: 700;
-            color: #2FBF71;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            color: #FFFFFF;
+            letter-spacing: 0.02em;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+        }
+        .comp-img-title svg {
+            color: #2FBF71;
         }
         .comp-img-subtitle {
-            font-size: 0.73rem;
-            color: rgba(244, 244, 240, 0.6);
-            margin-top: 2px;
+            font-size: 0.75rem;
+            color: #D1D5DB;
+            margin-top: 4px;
         }
         .comp-img-box {
             width: 100%;
-            min-height: 240px;
-            background: #06110c;
-            border-radius: 8px;
+            min-height: 280px;
+            max-height: 320px;
+            background: #091811;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            margin-bottom: 0.75rem;
-            border: 1px dashed rgba(167, 201, 177, 0.2);
+            margin-bottom: 0.85rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .comp-img-box img {
-            max-height: 250px;
+            max-height: 300px;
             max-width: 100%;
             object-fit: contain;
+            border-radius: 6px;
         }
         .comp-placeholder {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: rgba(244, 244, 240, 0.45);
+            color: #D1D5DB;
             text-align: center;
-            padding: 2rem 1rem;
-            gap: 8px;
+            padding: 2.5rem 1.5rem;
+            gap: 10px;
         }
         .comp-placeholder svg {
-            opacity: 0.5;
+            color: #9CA3AF;
+            opacity: 0.8;
         }
-        .comp-placeholder span {
+        .comp-placeholder .placeholder-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+        .comp-placeholder .placeholder-sub {
             font-size: 0.78rem;
-            font-weight: 600;
+            color: #9CA3AF;
+            line-height: 1.4;
+            max-width: 280px;
         }
         .comp-explanation-box {
-            background: #163B2A;
-            border: 1px solid rgba(167, 201, 177, 0.2);
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.25rem;
-            font-size: 0.8rem;
-            color: rgba(244, 244, 240, 0.85);
-            line-height: 1.5;
+            background: #163526;
+            border: 1px solid rgba(47, 191, 113, 0.25);
+            border-left: 4px solid #2FBF71;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.75rem;
         }
         .comp-explanation-title {
-            font-size: 0.75rem;
+            font-size: 0.88rem;
             font-weight: 700;
-            color: #2FBF71;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 4px;
+            color: #FFFFFF;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+        }
+        .comp-explanation-title svg {
+            color: #2FBF71;
+        }
+        .comp-explanation-text {
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: #D1D5DB;
+        }
+        .info-details-card {
+            background: #1B4332;
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .info-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .info-detail-row:last-child {
+            border-bottom: none;
+        }
+        .info-detail-label {
+            color: #D1D5DB;
+            font-weight: 500;
+            font-size: 0.84rem;
+        }
+        .info-detail-value {
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 0.84rem;
+            text-align: right;
+        }
+        .comp-btn-outline {
+            flex: 1;
+            min-height: 46px;
+            background: transparent !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+            border-radius: 10px !important;
+            font-size: 0.9rem !important;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .comp-btn-outline:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.4) !important;
+        }
+        .comp-btn-primary {
+            flex: 1;
+            min-height: 46px;
+            background: #2FBF71 !important;
+            border: 1px solid #2FBF71 !important;
+            color: #091811 !important;
+            font-weight: 700 !important;
+            border-radius: 10px !important;
+            font-size: 0.9rem !important;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .comp-btn-primary:hover {
+            background: #27a863 !important;
+            border-color: #27a863 !important;
+            transform: translateY(-1px);
         }
         
         @media print {
@@ -886,7 +975,7 @@ try {
     <div class="detail-modal">
         <div class="detail-modal-header">
             <h3>
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#2FBF71; margin-right:4px;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#2FBF71;">
                     <rect x="2" y="3" width="20" height="18" rx="2" ry="2"/>
                     <line x1="12" y1="3" x2="12" y2="21"/>
                 </svg>
@@ -904,104 +993,106 @@ try {
                 <div class="comp-img-card">
                     <div class="comp-img-header">
                         <div class="comp-img-title">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                             Original Uploaded Fingerprint
                         </div>
-                        <div class="comp-img-subtitle">Raw student submission • Used as evaluation input</div>
+                        <div class="comp-img-subtitle">Raw laboratory submission • Primary evaluation input</div>
                     </div>
                     <div class="comp-img-box" id="comp-orig-box">
                         <img src="" alt="Original Fingerprint" id="comp-orig-img" onerror="showCompPlaceholder('orig')">
                         <div class="comp-placeholder" id="comp-orig-missing" style="display:none;">
-                            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            <span>No Original Image Available</span>
+                            <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <span class="placeholder-title">No Original Image Available</span>
+                            <span class="placeholder-sub">The raw fingerprint file is not accessible for this record.</span>
                         </div>
                     </div>
-                    <div style="font-size: 0.72rem; color: rgba(244, 244, 240, 0.6); text-align: center; word-break: break-all;" id="comp-orig-filename">TR-0001.jpg</div>
+                    <div style="font-size: 0.76rem; color: #2FBF71; text-align: center; word-break: break-all; font-weight: 600;" id="comp-orig-filename">TR-0001.jpg</div>
                 </div>
 
                 <!-- Right: Enhanced -->
                 <div class="comp-img-card">
                     <div class="comp-img-header">
                         <div class="comp-img-title">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                            Enhanced AI Processed Fingerprint
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            Enhanced Fingerprint
                         </div>
-                        <div class="comp-img-subtitle">Grayscale Conversion • CLAHE Contrast • Gaussian Blur</div>
+                        <div class="comp-img-subtitle">Grayscale conversion • CLAHE contrast • Gaussian blur</div>
                     </div>
                     <div class="comp-img-box" id="comp-enh-box">
                         <img src="" alt="Enhanced Fingerprint" id="comp-enh-img" onerror="showCompPlaceholder('enh')">
                         <div class="comp-placeholder" id="comp-enh-missing" style="display:none;">
-                            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
-                            <span>No Enhanced Image Available</span>
+                            <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+                            <span class="placeholder-title">No Enhanced Image Available</span>
+                            <span class="placeholder-sub">Preprocessed visualization artifacts have not been generated for this trial.</span>
                         </div>
                     </div>
-                    <div style="font-size: 0.72rem; color: rgba(244, 244, 240, 0.6); text-align: center; word-break: break-all;" id="comp-enh-filename">TR-0001_enhanced.jpg</div>
+                    <div style="font-size: 0.76rem; color: #2FBF71; text-align: center; word-break: break-all; font-weight: 600;" id="comp-enh-filename">TR-0001_enhanced.jpg</div>
                 </div>
             </div>
 
-            <!-- Comparison Information / Explanation Box -->
+            <!-- Comparison Information Callout -->
             <div class="comp-explanation-box">
                 <div class="comp-explanation-title">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    Comparison Information &amp; Preprocessing Purpose
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    Comparison Information &amp; Forensic Preprocessing Purpose
                 </div>
-                <div style="font-size: 0.78rem; line-height: 1.5; color: rgba(244, 244, 240, 0.85);">
-                    This visualization illustrates the automated image preprocessing (grayscale intensity normalization, CLAHE contrast enhancement, and Gaussian noise filtering) performed prior to AI quality scoring. It is provided for educational reference only and does not alter the faculty-approved evaluation results.
+                <div class="comp-explanation-text">
+                    Original Uploaded Fingerprint represents the raw laboratory submission. Enhanced Fingerprint displays the preprocessing applied before AI evaluation, including grayscale conversion, CLAHE contrast enhancement, and Gaussian blur noise reduction. This visualization is intended for educational purposes only and does not modify the faculty-approved evaluation results.
                 </div>
             </div>
 
             <!-- Summary Scores & Metrics Container -->
             <div class="inspect-grid">
                 <div>
-                    <div class="column-title">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#2FBF71;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <div class="column-title" style="color:#FFFFFF;">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#2FBF71;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                         QUALITY SCORECARD &amp; METRICS
                     </div>
                     <div class="coefficient-header">
                         <div class="overall-score-huge" id="comp-val-accuracy-huge">—</div>
                         <div class="overall-score-badge-wrap">
                             <span class="quality-badge" id="comp-val-quality-badge">GOOD</span>
-                            <span class="quality-badge-desc" id="comp-quality-badge-desc">Faculty Final Score</span>
+                            <span class="quality-badge-desc" id="comp-quality-badge-desc" style="color:#D1D5DB;">Faculty Final Score</span>
                         </div>
                     </div>
                     <!-- Metric Bars -->
                     <div id="comp-metrics-container">
                         <div class="metric-item">
-                            <div class="metric-info"><span>Ridge Clarity</span><span id="comp-val-clarity">—</span></div>
+                            <div class="metric-info"><span style="color:#D1D5DB;">Ridge Clarity</span><span id="comp-val-clarity">—</span></div>
                             <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-clarity"></div></div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-info"><span>Contrast Quality</span><span id="comp-val-contrast">—</span></div>
+                            <div class="metric-info"><span style="color:#D1D5DB;">Contrast Quality</span><span id="comp-val-contrast">—</span></div>
                             <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-contrast"></div></div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-info"><span>Minutiae Visibility</span><span id="comp-val-visibility">—</span></div>
+                            <div class="metric-info"><span style="color:#D1D5DB;">Minutiae Visibility</span><span id="comp-val-visibility">—</span></div>
                             <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-visibility"></div></div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-info"><span>Fingerprint Sharpness</span><span id="comp-val-sharpness">—</span></div>
+                            <div class="metric-info"><span style="color:#D1D5DB;">Fingerprint Sharpness</span><span id="comp-val-sharpness">—</span></div>
                             <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-sharpness"></div></div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-info"><span>Adhesion Quality</span><span id="comp-val-adhesion">—</span></div>
+                            <div class="metric-info"><span style="color:#D1D5DB;">Adhesion Quality</span><span id="comp-val-adhesion">—</span></div>
                             <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-adhesion"></div></div>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <div class="column-title">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#10b981;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <div class="column-title" style="color:#FFFFFF;">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#2FBF71;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         TRIAL RECORD DETAILS
                     </div>
-                    <div class="info-details-grid" style="grid-template-columns:1fr;">
-                        <div class="info-detail-row"><span class="info-detail-label">Trial ID:</span><span class="info-detail-value" id="comp-trial-id"></span></div>
+                    <div class="info-details-card">
+                        <div class="info-detail-row"><span class="info-detail-label">Trial ID:</span><span class="info-detail-value" id="comp-trial-id" style="color:#2FBF71;"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Powder Type:</span><span class="info-detail-value" id="comp-powder" style="text-transform:capitalize;"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Surface Type:</span><span class="info-detail-value" id="comp-surface" style="text-transform:capitalize;"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Image Label:</span><span class="info-detail-value" id="comp-label"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Status:</span><span class="info-detail-value" id="comp-status"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">AI Score:</span><span class="info-detail-value" id="comp-ai-score"></span></div>
-                        <div class="info-detail-row" id="comp-faculty-row"><span class="info-detail-label">Faculty Final Score:</span><span class="info-detail-value" id="comp-faculty-score"></span></div>
+                        <div class="info-detail-row" id="comp-faculty-row"><span class="info-detail-label">Faculty Final Score:</span><span class="info-detail-value" id="comp-faculty-score" style="color:#2FBF71;"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Faculty Reviewer:</span><span class="info-detail-value" id="comp-reviewer"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Evaluation Date:</span><span class="info-detail-value" id="comp-evaluation-date"></span></div>
                     </div>
@@ -1009,9 +1100,15 @@ try {
             </div>
 
             <!-- Footer Buttons -->
-            <div style="display:flex; gap:10px; margin-top:1.25rem;" class="no-print">
-                <button type="button" class="btn btn-secondary" onclick="closeComparisonModal()" style="flex:1; background:#163B2A; border-color:rgba(167, 201, 177, 0.25); color:#F4F4F0;">Close</button>
-                <a id="compPrintReportBtn" href="#" target="_blank" class="btn btn-primary" style="flex:1; background:#2FBF71; border-color:#2FBF71; color:#10261D; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Print Evaluation Report</a>
+            <div style="display:flex; gap:14px; margin-top:1.75rem;" class="no-print">
+                <button type="button" class="btn comp-btn-outline" onclick="closeComparisonModal()">Close</button>
+                <a id="compPrintReportBtn" href="#" target="_blank" class="btn comp-btn-primary">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                        <rect x="6" y="14" width="12" height="8"/>
+                    </svg>
+                    Print Evaluation Report
+                </a>
             </div>
         </div>
     </div>

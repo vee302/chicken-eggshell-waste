@@ -83,6 +83,87 @@ try {
         .image-thumb-label { font-weight: 600; color: var(--dark-green); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .image-thumb-date  { color: var(--gray); }
 
+        /* Camera-Based Evaluation Preview Centered & Fully Responsive Layout */
+        .evaluation-preview-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin: 0 auto 2rem auto;
+            box-sizing: border-box;
+        }
+        .evaluation-preview-card {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        .camera-button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1200px) {
+            .evaluation-preview-card {
+                max-width: 780px;
+            }
+        }
+        @media (max-width: 992px) {
+            .evaluation-preview-card {
+                max-width: 720px;
+            }
+        }
+        @media (max-width: 768px) {
+            .evaluation-preview-wrapper {
+                padding: 0;
+            }
+            .evaluation-preview-card {
+                max-width: 100%;
+                padding: 1.25rem;
+            }
+            #previewContainer {
+                padding: 1.75rem 1rem !important;
+                min-height: 190px !important;
+            }
+        }
+        @media (max-width: 576px) {
+            .camera-button-grid {
+                grid-template-columns: 1fr !important;
+                gap: 0.75rem !important;
+            }
+            .form-grid-2 {
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+            }
+            .evaluation-preview-card {
+                padding: 1rem !important;
+                border-radius: 12px;
+            }
+            #previewContainer {
+                padding: 1.25rem 0.75rem !important;
+                min-height: 160px !important;
+            }
+            #btnStartWebcam, #btnUploadTrigger {
+                width: 100% !important;
+                padding: 0.85rem 1rem !important;
+            }
+            #btn-upload-image {
+                padding: 0.9rem 1rem !important;
+                font-size: 0.85rem !important;
+            }
+        }
+        @media (max-width: 375px) {
+            .evaluation-preview-card {
+                padding: 0.85rem !important;
+            }
+            #previewContainer {
+                padding: 1rem 0.5rem !important;
+                min-height: 140px !important;
+            }
+        }
+
         /* Detail Modal styling matching super admin */
         .detail-overlay { display:none; position:fixed; inset:0; background:rgba(27, 67, 50, 0.45); backdrop-filter: blur(4px); z-index:9999; align-items:center; justify-content:center; }
         .detail-overlay.open { display:flex; }
@@ -395,100 +476,102 @@ try {
 
             <div id="alertContainer"></div>
 
-            <!-- Upload Form -->
-            <div class="dashboard-card" style="max-width:680px;">
-                <form id="form-upload-fingerprint">
-                    <input type="hidden" id="submission_token" name="submission_token" value="<?php echo htmlspecialchars($_SESSION['submit_token']); ?>">
-                    <!-- Camera-Based Evaluation Preview Panel -->
-                    <div class="camera-preview-panel" style="background: #fff; text-align: center; margin-bottom: 1.5rem;">
+            <!-- Upload Form (Centered & Fully Responsive) -->
+            <div class="evaluation-preview-wrapper">
+                <div class="dashboard-card evaluation-preview-card">
+                    <form id="form-upload-fingerprint">
+                        <input type="hidden" id="submission_token" name="submission_token" value="<?php echo htmlspecialchars($_SESSION['submit_token']); ?>">
+                        <!-- Camera-Based Evaluation Preview Panel -->
+                        <div class="camera-preview-panel" style="background: #fff; text-align: center; margin-bottom: 1.5rem;">
 
-                        
-                        <!-- Title & Subtitle -->
-                        <h2 style="font-size: 1.5rem; font-weight: 800; color: #1e392a; margin: 0 0 8px 0; font-family: 'Inter', system-ui, sans-serif;">Camera-Based Evaluation Preview</h2>
-                        <p style="font-size: 0.88rem; color: #5f6368; margin: 0 0 1.5rem 0;">Visual preview of the secured student dashboard feature.</p>
-
-                        <!-- Dashed Box Container (Visual Area) -->
-                        <div id="previewContainer" style="border: 2px dashed #c3d9c3; border-radius: 12px; padding: 2.5rem 2rem; background: #fafdfa; min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; margin-bottom: 1.5rem; transition: all 0.3s ease;">
                             
-                            <!-- Captured or Uploaded Image Preview (Hidden initially) -->
-                            <img id="webcamCapturePreview" style="display: none; width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px;" alt="Preview Image">
+                            <!-- Title & Subtitle -->
+                            <h2 style="font-size: 1.5rem; font-weight: 800; color: #1e392a; margin: 0 0 8px 0; font-family: 'Inter', system-ui, sans-serif;">Camera-Based Evaluation Preview</h2>
+                            <p style="font-size: 0.88rem; color: #5f6368; margin: 0 0 1.5rem 0;">Visual preview of the secured student dashboard feature.</p>
 
-                            <!-- Idle Placeholder (Shown initially) -->
-                            <div id="previewPlaceholder" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #6e8c78;">
-                                <div style="margin-bottom: 0.85rem; color: #b4d2b4;">
-                                    <!-- Camera SVG Icon -->
-                                    <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <!-- Dashed Box Container (Visual Area) -->
+                            <div id="previewContainer" style="border: 2px dashed #c3d9c3; border-radius: 12px; padding: 2.5rem 2rem; background: #fafdfa; min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; margin-bottom: 1.5rem; transition: all 0.3s ease;">
+                                
+                                <!-- Captured or Uploaded Image Preview (Hidden initially) -->
+                                <img id="webcamCapturePreview" style="display: none; width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px;" alt="Preview Image">
+
+                                <!-- Idle Placeholder (Shown initially) -->
+                                <div id="previewPlaceholder" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #6e8c78;">
+                                    <div style="margin-bottom: 0.85rem; color: #b4d2b4;">
+                                        <!-- Camera SVG Icon -->
+                                        <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                            <circle cx="12" cy="13" r="4"/>
+                                        </svg>
+                                    </div>
+                                    <h4 style="font-size: 1.1rem; font-weight: 700; color: #2d4c38; margin: 0 0 6px 0;">Camera Preview / Uploaded Image</h4>
+                                    <p style="font-size: 0.82rem; color: #88a68f; margin: 0; font-weight: 600;">Preview Mode Only</p>
+                                </div>
+                            </div>
+
+                            <!-- Buttons Row -->
+                            <div class="camera-button-grid no-print">
+                                <!-- Start/Capture Camera Button -->
+                                <button type="button" class="btn" id="btnStartWebcam" style="background: #e2ebe4; border: 1px solid #ccdcd0; color: #1b4332; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.03em;">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #1b4332;">
                                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                                         <circle cx="12" cy="13" r="4"/>
                                     </svg>
-                                </div>
-                                <h4 style="font-size: 1.1rem; font-weight: 700; color: #2d4c38; margin: 0 0 6px 0;">Camera Preview / Uploaded Image</h4>
-                                <p style="font-size: 0.82rem; color: #88a68f; margin: 0; font-weight: 600;">Preview Mode Only</p>
+                                    <span id="btnCameraText">START CAMERA</span>
+                                </button>
+
+                                <!-- Upload File Button -->
+                                <button type="button" class="btn" id="btnUploadTrigger" style="background: #fff; border: 1px solid #ccdcd0; color: #2d4c38; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.03em;">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #2d4c38;">
+                                        <polyline points="16 16 12 12 8 16"/>
+                                        <line x1="12" y1="12" x2="12" y2="21"/>
+                                        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                                    </svg>
+                                    <span id="btnUploadText">UPLOAD FILE</span>
+                                </button>
+                            </div>
+                            <!-- Filename display underneath -->
+                            <div id="file-chosen" style="font-size: 0.82rem; font-weight: 700; color: #2d6a4f; margin-top: 1rem; text-align: center; min-height: 1.2rem;"></div>
+                        </div>
+                        <input type="file" name="fingerprint_image" id="fingerprint_image"
+                               accept="image/jpeg,image/png,image/webp" style="display:none;" required>
+                        <input type="file" id="fingerprint_camera" accept="image/*" capture="environment" style="display:none;">
+
+                        <div class="form-grid-2" style="margin-top: 1.25rem;">
+                            <div class="form-group">
+                                <label for="powder_type">Powder Type <span style="color:var(--danger)">*</span></label>
+                                <select name="powder_type" id="powder_type" class="form-control" required>
+                                    <option value="">— Select Powder —</option>
+                                    <option value="eggshell">Eggshell-Based Powder</option>
+                                    <option value="commercial">Commercial Powder</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="surface_type">Surface Type <span style="color:var(--danger)">*</span></label>
+                                <select name="surface_type" id="surface_type" class="form-control" required>
+                                    <option value="">— Select Surface —</option>
+                                    <option value="glass">Glass</option>
+                                    <option value="plastic">Plastic</option>
+                                    <option value="metal">Metal</option>
+                                    <option value="wood">Wood</option>
+                                </select>
                             </div>
                         </div>
 
-                        <!-- Buttons Row -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="no-print">
-                            <!-- Start/Capture Camera Button -->
-                            <button type="button" class="btn" id="btnStartWebcam" style="background: #e2ebe4; border: 1px solid #ccdcd0; color: #1b4332; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.03em;">
-                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #1b4332;">
-                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                    <circle cx="12" cy="13" r="4"/>
-                                </svg>
-                                <span id="btnCameraText">START CAMERA</span>
-                            </button>
-
-                            <!-- Upload File Button -->
-                            <button type="button" class="btn" id="btnUploadTrigger" style="background: #fff; border: 1px solid #ccdcd0; color: #2d4c38; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.03em;">
-                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #2d4c38;">
-                                    <polyline points="16 16 12 12 8 16"/>
-                                    <line x1="12" y1="12" x2="12" y2="21"/>
-                                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-                                </svg>
-                                <span id="btnUploadText">UPLOAD FILE</span>
-                            </button>
+                        <!-- Non-biometric identification notice / disclaimer -->
+                        <div style="margin: 1.5rem 0; padding: 0.95rem 1.1rem; background: #f4f6f0; border-left: 4px solid var(--medium-green); border-radius: 4px; font-size: 0.78rem; color: #5f6368; line-height: 1.45;">
+                            <strong>Disclaimer / Notice:</strong> This feature is for educational and research evaluation only. It is not used for biometric identification. It is only designed for Camera-Based Latent Fingerprint Capture and AI-Assisted Image Quality Evaluation using Chicken Eggshell Waste powder.
                         </div>
-                        <!-- Filename display underneath -->
-                        <div id="file-chosen" style="font-size: 0.82rem; font-weight: 700; color: #2d6a4f; margin-top: 1rem; text-align: center; min-height: 1.2rem;"></div>
-                    </div>
-                    <input type="file" name="fingerprint_image" id="fingerprint_image"
-                           accept="image/jpeg,image/png,image/webp" style="display:none;" required>
-                    <input type="file" id="fingerprint_camera" accept="image/*" capture="environment" style="display:none;">
 
-                    <div class="form-grid-2" style="margin-top: 1.25rem;">
-                        <div class="form-group">
-                            <label for="powder_type">Powder Type <span style="color:var(--danger)">*</span></label>
-                            <select name="powder_type" id="powder_type" class="form-control" required>
-                                <option value="">— Select Powder —</option>
-                                <option value="eggshell">Eggshell-Based Powder</option>
-                                <option value="commercial">Commercial Powder</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="surface_type">Surface Type <span style="color:var(--danger)">*</span></label>
-                            <select name="surface_type" id="surface_type" class="form-control" required>
-                                <option value="">— Select Surface —</option>
-                                <option value="glass">Glass</option>
-                                <option value="plastic">Plastic</option>
-                                <option value="metal">Metal</option>
-                                <option value="wood">Wood</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Non-biometric identification notice / disclaimer -->
-                    <div style="margin: 1.5rem 0; padding: 0.95rem 1.1rem; background: #f4f6f0; border-left: 4px solid var(--medium-green); border-radius: 4px; font-size: 0.78rem; color: #5f6368; line-height: 1.45;">
-                        <strong>Disclaimer / Notice:</strong> This feature is for educational and research evaluation only. It is not used for biometric identification. It is only designed for Camera-Based Latent Fingerprint Capture and AI-Assisted Image Quality Evaluation using Chicken Eggshell Waste powder.
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" id="btn-upload-image" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: center; gap: 8px; background: #224229 !important; border-color: #224229 !important; border-radius: 8px; color: #fff;" disabled>
-                        <span id="btnText">Evaluate Print Clarity</span>
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #fff;">
-                            <line x1="7" y1="17" x2="17" y2="7"/>
-                            <polyline points="7 7 17 7 17 17"/>
-                        </svg>
-                    </button>
-                </form>
+                        <button type="submit" class="btn btn-primary" id="btn-upload-image" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: center; gap: 8px; background: #224229 !important; border-color: #224229 !important; border-radius: 8px; color: #fff;" disabled>
+                            <span id="btnText">Evaluate Print Clarity</span>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #fff;">
+                                <line x1="7" y1="17" x2="17" y2="7"/>
+                                <polyline points="7 7 17 7 17 17"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <!-- Image Gallery -->

@@ -95,27 +95,27 @@ try {
         .score-val { font-size:1.15rem; font-weight:800; color:var(--dark-green); }
         .score-lbl { font-size:0.65rem; color:var(--gray); font-weight:600; text-transform:uppercase; }
 
-        /* Dark theme Detailed Quality Inspection modal scoped under #detailOverlay */
+        /* Light theme Detailed Quality Inspection modal scoped under #detailOverlay */
         #detailOverlay .detail-modal {
-            background: #10261D !important; /* Charcoal forest green background */
-            color: #F4F4F0 !important; /* Off-white text */
-            border: 1px solid rgba(167, 201, 177, 0.18) !important; /* Sage border */
+            background: #ffffff !important; /* White background */
+            color: #212529 !important; /* Dark text */
+            border: 1px solid rgba(27, 67, 50, 0.1) !important;
             max-width: 800px !important;
             width: 95% !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             border-radius: 16px !important;
         }
         #detailOverlay .detail-modal-header {
-            background: #123524 !important; /* Dark header panel */
-            border-bottom: 1px solid rgba(167, 201, 177, 0.18) !important;
-            color: #F4F4F0 !important;
+            background: var(--dark-green) !important; /* Dark green header panel */
+            border-bottom: 1px solid rgba(27, 67, 50, 0.1) !important;
+            color: #ffffff !important;
             padding: 1.1rem 1.5rem !important;
             border-top-left-radius: 15px !important;
             border-top-right-radius: 15px !important;
         }
         #detailOverlay .detail-modal-header h3 {
-            color: #F4F4F0 !important;
+            color: #ffffff !important;
             font-size: 1.2rem !important;
             display: flex;
             align-items: center;
@@ -124,7 +124,7 @@ try {
             margin: 0;
         }
         #detailOverlay .modal-close-btn {
-            color: rgba(244, 244, 240, 0.70) !important;
+            color: rgba(255, 255, 255, 0.8) !important;
             background: none !important;
             border: none !important;
             font-size: 1.6rem !important;
@@ -132,7 +132,7 @@ try {
             opacity: 0.8 !important;
         }
         #detailOverlay .modal-close-btn:hover {
-            color: #F4F4F0 !important;
+            color: #ffffff !important;
             opacity: 1 !important;
         }
         #detailOverlay .detail-modal-body {
@@ -157,21 +157,21 @@ try {
         .column-title {
             font-size: 0.78rem;
             font-weight: 700;
-            color: rgba(244, 244, 240, 0.70);
+            color: var(--dark-green);
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
             gap: 8px;
-            border-bottom: 1px solid rgba(167, 201, 177, 0.18);
+            border-bottom: 1px solid #D2E2D5;
             padding-bottom: 0.5rem;
         }
 
         /* Image Preview Box */
         .inspect-img-box {
-            background: #0d1e17; /* Slate green */
-            border: 1px solid rgba(167, 201, 177, 0.18);
+            background: #fafafa; /* Light grey/white */
+            border: 1px solid #e9ecef;
             border-radius: 12px;
             padding: 1.25rem;
             text-align: center;
@@ -189,7 +189,7 @@ try {
         }
         .inspect-img-caption {
             font-size: 0.75rem;
-            color: rgba(244, 244, 240, 0.50);
+            color: var(--gray);
             text-align: center;
             line-height: 1.5;
             margin-top: 0.5rem;
@@ -201,15 +201,15 @@ try {
             align-items: center;
             gap: 1.5rem;
             margin-bottom: 1.5rem;
-            background: #163B2A; /* Card background */
+            background: var(--cream); /* Light cream background */
             padding: 14px 20px;
             border-radius: 12px;
-            border: 1px solid rgba(167, 201, 177, 0.18);
+            border: 1px solid rgba(45,106,79,0.08);
         }
         .overall-score-huge {
             font-size: 3.5rem;
             font-weight: 800;
-            color: #2FBF71; /* Accent green */
+            color: var(--dark-green); /* Dark green */
             line-height: 1;
             font-feature-settings: "tnum";
         }
@@ -219,14 +219,14 @@ try {
             gap: 6px;
         }
         .quality-badge {
-            background: rgba(47, 191, 113, 0.15);
-            color: #2FBF71;
+            background: rgba(82, 183, 136, 0.15);
+            color: var(--medium-green);
             padding: 5px 12px;
             border-radius: 20px;
             font-weight: 700;
             font-size: 0.72rem;
             text-transform: uppercase;
-            border: 1px solid rgba(47, 191, 113, 0.30);
+            border: 1px solid rgba(82, 183, 136, 0.25);
             display: inline-block;
             text-align: center;
             width: fit-content;
@@ -234,10 +234,10 @@ try {
         }
         .quality-badge-desc {
             font-size: 0.75rem;
-            color: rgba(244, 244, 240, 0.70);
+            color: var(--gray);
         }
 
-        /* Dark Progress Bars */
+        /* Light Progress Bars */
         .metric-item {
             margin-bottom: 1.25rem;
         }
@@ -246,22 +246,22 @@ try {
             justify-content: space-between;
             font-size: 0.85rem;
             font-weight: 700;
-            color: #F4F4F0;
+            color: var(--dark-green);
             margin-bottom: 6px;
         }
         .metric-info span:last-child {
-            color: #2FBF71;
+            color: var(--medium-green);
         }
         .metric-bar-track {
             height: 6px;
-            background: #0d1e17;
+            background: var(--light-gray);
             border-radius: 3px;
             overflow: hidden;
             width: 100%;
         }
         .metric-bar-fill {
             height: 100%;
-            background: #2FBF71;
+            background: var(--medium-green);
             border-radius: 3px;
             transition: width 0.8s ease-out;
             width: 0%;
@@ -269,8 +269,8 @@ try {
 
         /* Lab Analysis Notes Box */
         .analysis-notes-box {
-            background: #163B2A;
-            border: 1px solid rgba(167, 201, 177, 0.18);
+            background: #ffffff;
+            border: 1px solid #d2e2d5;
             border-radius: 12px;
             padding: 1.5rem;
             margin-top: 1.5rem;
@@ -278,12 +278,12 @@ try {
         .analysis-notes-title {
             font-size: 0.9rem;
             font-weight: 700;
-            color: #F4F4F0;
+            color: var(--dark-green);
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
             gap: 8px;
-            border-bottom: 1px solid rgba(167, 201, 177, 0.18);
+            border-bottom: 1px solid #d2e2d5;
             padding-bottom: 0.6rem;
         }
         .notes-content-wrap {
@@ -292,7 +292,7 @@ try {
         .notes-label {
             font-size: 0.8rem;
             font-weight: 700;
-            color: rgba(244, 244, 240, 0.70);
+            color: var(--dark-green);
             margin-bottom: 6px;
             display: flex;
             align-items: center;
@@ -300,13 +300,13 @@ try {
         }
         .notes-text {
             font-size: 0.88rem;
-            color: #F4F4F0;
+            color: var(--dark-green);
             line-height: 1.55;
-            background: #0d1e17;
+            background: var(--cream);
             padding: 1rem 1.25rem;
             border-radius: 8px;
             min-height: 45px;
-            border-left: 4px solid #2FBF71;
+            border-left: 4px solid var(--medium-green);
             border-top: none;
             border-right: none;
             border-bottom: none;
@@ -328,41 +328,44 @@ try {
             display: flex;
             justify-content: space-between;
             padding: 6px 0;
-            border-bottom: 1px solid rgba(167, 201, 177, 0.10);
+            border-bottom: 1px solid #e9ecef;
             align-items: center;
         }
+        .info-detail-row:last-child {
+            border-bottom: none;
+        }
         .info-detail-label {
-            color: rgba(244, 244, 240, 0.70);
+            color: var(--dark-green);
             font-weight: 600;
         }
         .info-detail-value {
-            color: #F4F4F0;
+            color: #5f5f5f;
             font-weight: 700;
             text-align: right;
         }
 
-        /* Dark theme Comparison modal scoped under #comparisonOverlay */
+        /* Light theme Comparison modal scoped under #comparisonOverlay */
         #comparisonOverlay .detail-modal {
-            background: #10261D !important;
-            color: #FFFFFF !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background: #ffffff !important;
+            color: #212529 !important;
+            border: 1px solid rgba(27, 67, 50, 0.1) !important;
             max-width: 1180px !important;
             width: 95% !important;
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7) !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             border-radius: 16px !important;
             overflow: hidden;
         }
         #comparisonOverlay .detail-modal-header {
-            background: #163526 !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-            color: #FFFFFF !important;
+            background: var(--dark-green) !important;
+            border-bottom: 1px solid rgba(27, 67, 50, 0.1) !important;
+            color: #ffffff !important;
             padding: 1.25rem 1.75rem !important;
             border-top-left-radius: 15px !important;
             border-top-right-radius: 15px !important;
         }
         #comparisonOverlay .detail-modal-header h3 {
-            color: #FFFFFF !important;
+            color: #ffffff !important;
             font-size: 1.25rem !important;
             display: flex;
             align-items: center;
@@ -371,7 +374,7 @@ try {
             margin: 0;
         }
         #comparisonOverlay .modal-close-btn {
-            color: #D1D5DB !important;
+            color: rgba(255, 255, 255, 0.8) !important;
             background: none !important;
             border: none !important;
             font-size: 1.6rem !important;
@@ -380,7 +383,7 @@ try {
             transition: color 0.2s ease, opacity 0.2s ease;
         }
         #comparisonOverlay .modal-close-btn:hover {
-            color: #FFFFFF !important;
+            color: #ffffff !important;
             opacity: 1 !important;
         }
         #comparisonOverlay .detail-modal-body {
@@ -403,8 +406,8 @@ try {
             }
         }
         .comp-img-card {
-            background: #163526;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #ffffff;
+            border: 1px solid #d2e2d5;
             border-radius: 14px;
             padding: 1.5rem;
             display: flex;
@@ -413,43 +416,43 @@ try {
             transition: border-color 0.2s ease, transform 0.2s ease;
         }
         .comp-img-card:hover {
-            border-color: rgba(47, 191, 113, 0.3);
+            border-color: var(--medium-green);
         }
         .comp-img-header {
             width: 100%;
             margin-bottom: 1rem;
             padding-bottom: 0.75rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid #e9ecef;
         }
         .comp-img-title {
             font-size: 0.92rem;
             font-weight: 700;
-            color: #FFFFFF;
+            color: var(--dark-green);
             letter-spacing: 0.02em;
             display: flex;
             align-items: center;
             gap: 8px;
         }
         .comp-img-title svg {
-            color: #2FBF71;
+            color: var(--medium-green);
         }
         .comp-img-subtitle {
             font-size: 0.75rem;
-            color: #D1D5DB;
+            color: var(--gray);
             margin-top: 4px;
         }
         .comp-img-box {
             width: 100%;
             min-height: 280px;
             max-height: 320px;
-            background: #091811;
+            background: #fafafa;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
             margin-bottom: 0.85rem;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid #e9ecef;
         }
         .comp-img-box img {
             max-height: 300px;
@@ -462,30 +465,30 @@ try {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #D1D5DB;
+            color: var(--gray);
             text-align: center;
             padding: 2.5rem 1.5rem;
             gap: 10px;
         }
         .comp-placeholder svg {
-            color: #9CA3AF;
+            color: var(--gray);
             opacity: 0.8;
         }
         .comp-placeholder .placeholder-title {
             font-size: 0.9rem;
             font-weight: 700;
-            color: #FFFFFF;
+            color: var(--dark-green);
         }
         .comp-placeholder .placeholder-sub {
             font-size: 0.78rem;
-            color: #9CA3AF;
+            color: var(--gray);
             line-height: 1.4;
             max-width: 280px;
         }
         .comp-explanation-box {
-            background: #163526;
-            border: 1px solid rgba(47, 191, 113, 0.25);
-            border-left: 4px solid #2FBF71;
+            background: var(--cream);
+            border: 1px solid rgba(45,106,79,0.08);
+            border-left: 4px solid var(--medium-green);
             border-radius: 12px;
             padding: 1.25rem 1.5rem;
             margin-bottom: 1.75rem;
@@ -493,43 +496,43 @@ try {
         .comp-explanation-title {
             font-size: 0.88rem;
             font-weight: 700;
-            color: #FFFFFF;
+            color: var(--dark-green);
             margin-bottom: 6px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
         .comp-explanation-title svg {
-            color: #2FBF71;
+            color: var(--medium-green);
         }
         .comp-explanation-text {
             font-size: 0.82rem;
             line-height: 1.6;
-            color: #D1D5DB;
+            color: #5f5f5f;
         }
         .info-details-card {
-            background: #1B4332;
+            background: #ffffff;
             padding: 1.25rem 1.5rem;
             border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid #d2e2d5;
         }
         .info-detail-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid #e9ecef;
         }
         .info-detail-row:last-child {
             border-bottom: none;
         }
         .info-detail-label {
-            color: #D1D5DB;
+            color: var(--dark-green);
             font-weight: 500;
             font-size: 0.84rem;
         }
         .info-detail-value {
-            color: #FFFFFF;
+            color: #5f5f5f;
             font-weight: 700;
             font-size: 0.84rem;
             text-align: right;
@@ -538,8 +541,8 @@ try {
             flex: 1;
             min-height: 46px;
             background: transparent !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            color: #FFFFFF !important;
+            border: 1px solid var(--medium-green) !important;
+            color: var(--medium-green) !important;
             font-weight: 600 !important;
             border-radius: 10px !important;
             font-size: 0.9rem !important;
@@ -547,15 +550,16 @@ try {
             transition: all 0.2s ease;
         }
         .comp-btn-outline:hover {
-            background: rgba(255, 255, 255, 0.08) !important;
-            border-color: rgba(255, 255, 255, 0.4) !important;
+            background: rgba(45, 106, 79, 0.06) !important;
+            border-color: var(--dark-green) !important;
+            color: var(--dark-green) !important;
         }
         .comp-btn-primary {
             flex: 1;
             min-height: 46px;
-            background: #2FBF71 !important;
-            border: 1px solid #2FBF71 !important;
-            color: #091811 !important;
+            background: var(--dark-green) !important;
+            border: 1px solid var(--dark-green) !important;
+            color: #ffffff !important;
             font-weight: 700 !important;
             border-radius: 10px !important;
             font-size: 0.9rem !important;
@@ -567,8 +571,8 @@ try {
             transition: all 0.2s ease;
         }
         .comp-btn-primary:hover {
-            background: #27a863 !important;
-            border-color: #27a863 !important;
+            background: var(--medium-green) !important;
+            border-color: var(--medium-green) !important;
             transform: translateY(-1px);
         }
         
@@ -595,8 +599,8 @@ try {
                 width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                background: #10261D !important;
-                color: #F4F4F0 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
             }
         }
     </style>
@@ -956,14 +960,12 @@ try {
                             <span class="info-detail-value" id="det-validated-at"></span>
                         </div>
                     </div>
-                </div>
-
-                <div style="text-align: center; margin-top: 1.25rem; font-size: 0.78rem; color: rgba(244, 244, 240, 0.5); font-style: italic;" class="no-print">
+                <div style="text-align: center; margin-top: 1.25rem; font-size: 0.78rem; color: var(--gray); font-style: italic;" class="no-print">
                     This result is read-only and based on faculty-approved evaluation.
                 </div>
 
                 <div style="display:flex; gap:10px; margin-top:1rem;" class="no-print">
-                    <button type="button" class="btn btn-secondary" onclick="closeDetailModal()" style="flex:1; background:#163B2A; border-color:rgba(167, 201, 177, 0.25); color:#F4F4F0;">Close</button>
+                    <button type="button" class="btn comp-btn-outline" onclick="closeDetailModal()">Close</button>
                 </div>
             </div>
         </div>
@@ -975,7 +977,7 @@ try {
     <div class="detail-modal">
         <div class="detail-modal-header">
             <h3>
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#2FBF71;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="2" y="3" width="20" height="18" rx="2" ry="2"/>
                     <line x1="12" y1="3" x2="12" y2="21"/>
                 </svg>
@@ -1006,7 +1008,7 @@ try {
                             <span class="placeholder-sub">The raw fingerprint file is not accessible for this record.</span>
                         </div>
                     </div>
-                    <div style="font-size: 0.76rem; color: #2FBF71; text-align: center; word-break: break-all; font-weight: 600;" id="comp-orig-filename">TR-0001.jpg</div>
+                    <div style="font-size: 0.76rem; color: var(--dark-green); text-align: center; word-break: break-all; font-weight: 600;" id="comp-orig-filename">TR-0001.jpg</div>
                 </div>
 
                 <!-- Right: Enhanced -->
@@ -1026,7 +1028,7 @@ try {
                             <span class="placeholder-sub">Preprocessed visualization artifacts have not been generated for this trial.</span>
                         </div>
                     </div>
-                    <div style="font-size: 0.76rem; color: #2FBF71; text-align: center; word-break: break-all; font-weight: 600;" id="comp-enh-filename">TR-0001_enhanced.jpg</div>
+                    <div style="font-size: 0.76rem; color: var(--dark-green); text-align: center; word-break: break-all; font-weight: 600;" id="comp-enh-filename">TR-0001_enhanced.jpg</div>
                 </div>
             </div>
 
@@ -1044,58 +1046,60 @@ try {
             <!-- Summary Scores & Metrics Container -->
             <div class="inspect-grid">
                 <div>
-                    <div class="column-title" style="color:#FFFFFF;">
-                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#2FBF71;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <div class="column-title">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--medium-green);"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                         QUALITY SCORECARD &amp; METRICS
                     </div>
                     <div class="coefficient-header">
                         <div class="overall-score-huge" id="comp-val-accuracy-huge">—</div>
                         <div class="overall-score-badge-wrap">
                             <span class="quality-badge" id="comp-val-quality-badge">GOOD</span>
-                            <span class="quality-badge-desc" id="comp-quality-badge-desc" style="color:#D1D5DB;">Faculty Final Score</span>
+                            <span class="quality-badge-desc" id="comp-quality-badge-desc">Faculty Final Score</span>
                         </div>
                     </div>
                     <!-- Metric Bars -->
                     <div id="comp-metrics-container">
                         <div class="metric-item">
-                            <div class="metric-info"><span style="color:#D1D5DB;">Ridge Clarity</span><span id="comp-val-clarity">—</span></div>
+                            <div class="metric-info"><span>Ridge Clarity</span><span id="comp-val-clarity">—</span></div>
                             <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-clarity"></div></div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-info"><span style="color:#D1D5DB;">Contrast Quality</span><span id="comp-val-contrast">—</span></div>
+                            <div class="metric-info"><span>Contrast Quality</span><span id="comp-val-contrast">—</span></div>
                             <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-contrast"></div></div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-info"><span style="color:#D1D5DB;">Minutiae Visibility</span><span id="comp-val-visibility">—</span></div>
+                            <div class="metric-info"><span>Minutiae Visibility</span><span id="comp-val-visibility">—</span></div>
                             <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-visibility"></div></div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-info"><span style="color:#D1D5DB;">Fingerprint Sharpness</span><span id="comp-val-sharpness">—</span></div>
+                            <div class="metric-info"><span>Fingerprint Sharpness</span><span id="comp-val-sharpness">—</span></div>
                             <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-sharpness"></div></div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-info"><span style="color:#D1D5DB;">Adhesion Quality</span><span id="comp-val-adhesion">—</span></div>
+                            <div class="metric-info"><span>Adhesion Quality</span><span id="comp-val-adhesion">—</span></div>
                             <div class="metric-bar-track"><div class="metric-bar-fill" id="comp-fill-adhesion"></div></div>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <div class="column-title" style="color:#FFFFFF;">
-                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#2FBF71;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <div class="column-title">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--medium-green);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         TRIAL RECORD DETAILS
                     </div>
                     <div class="info-details-card">
-                        <div class="info-detail-row"><span class="info-detail-label">Trial ID:</span><span class="info-detail-value" id="comp-trial-id" style="color:#2FBF71;"></span></div>
+                        <div class="info-detail-row"><span class="info-detail-label">Trial ID:</span><span class="info-detail-value" id="comp-trial-id" style="color:var(--dark-green);"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Powder Type:</span><span class="info-detail-value" id="comp-powder" style="text-transform:capitalize;"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Surface Type:</span><span class="info-detail-value" id="comp-surface" style="text-transform:capitalize;"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Image Label:</span><span class="info-detail-value" id="comp-label"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Status:</span><span class="info-detail-value" id="comp-status"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">AI Score:</span><span class="info-detail-value" id="comp-ai-score"></span></div>
-                        <div class="info-detail-row" id="comp-faculty-row"><span class="info-detail-label">Faculty Final Score:</span><span class="info-detail-value" id="comp-faculty-score" style="color:#2FBF71;"></span></div>
+                        <div class="info-detail-row" id="comp-faculty-row"><span class="info-detail-label">Faculty Final Score:</span><span class="info-detail-value" id="comp-faculty-score" style="color:var(--dark-green);"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Faculty Reviewer:</span><span class="info-detail-value" id="comp-reviewer"></span></div>
                         <div class="info-detail-row"><span class="info-detail-label">Evaluation Date:</span><span class="info-detail-value" id="comp-evaluation-date"></span></div>
                     </div>
+                </div>
+            </div>
                 </div>
             </div>
 
@@ -1391,9 +1395,9 @@ function openComparisonModal(row) {
 
         overallScoreHuge.textContent = Math.round(fAccuracy) + '%';
         badgeEl.textContent = 'APPROVED';
-        badgeEl.style.color = '#2FBF71';
-        badgeEl.style.borderColor = 'rgba(47, 191, 113, 0.25)';
-        badgeEl.style.background = 'rgba(47, 191, 113, 0.12)';
+        badgeEl.style.color = '#2d6a4f';
+        badgeEl.style.borderColor = 'rgba(82, 183, 136, 0.25)';
+        badgeEl.style.background = 'rgba(82, 183, 136, 0.15)';
         if (badgeDesc) badgeDesc.textContent = 'Faculty Final Score';
 
         document.getElementById('comp-val-clarity').textContent = fClarity > 0 ? fClarity.toFixed(1) + '%' : '—';
@@ -1524,9 +1528,9 @@ function openDetailModal(row) {
 
     // Render comparison list or details
     const aiDetailsHtml = `
-        <div style="margin-top: 1rem; border-top: 1px solid rgba(167, 201, 177, 0.18); padding-top: 0.85rem;">
-            <div style="font-size: 0.72rem; font-weight: 700; color: rgba(244, 244, 240, 0.70); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">AI Preliminary Results (Read-Only)</div>
-            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #F4F4F0;">
+        <div style="margin-top: 1rem; border-top: 1px solid #D2E2D5; padding-top: 0.85rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--dark-green); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">AI Preliminary Results (Read-Only)</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #5f5f5f;">
                 <div style="display: flex; justify-content: space-between;"><span>AI Accuracy:</span> <strong>${aiAccuracy > 0 ? aiAccuracy.toFixed(1) + '%' : '—'}</strong></div>
                 <div style="display: flex; justify-content: space-between;"><span>AI Ridge Clarity:</span> <span>${aiClarity > 0 ? aiClarity.toFixed(1) + '%' : '—'}</span></div>
                 <div style="display: flex; justify-content: space-between;"><span>AI Visibility:</span> <span>${aiVisibility > 0 ? aiVisibility.toFixed(1) + '%' : '—'}</span></div>
@@ -1552,9 +1556,9 @@ function openDetailModal(row) {
 
         overallScoreHuge.textContent = Math.round(fAccuracy) + '%';
         badgeEl.textContent = 'APPROVED';
-        badgeEl.style.color = '#2FBF71';
-        badgeEl.style.borderColor = 'rgba(47, 191, 113, 0.25)';
-        badgeEl.style.background = 'rgba(47, 191, 113, 0.12)';
+        badgeEl.style.color = '#2d6a4f';
+        badgeEl.style.borderColor = 'rgba(82, 183, 136, 0.25)';
+        badgeEl.style.background = 'rgba(82, 183, 136, 0.15)';
         if (badgeDesc) badgeDesc.textContent = 'Faculty Final Score';
 
         // Set text labels

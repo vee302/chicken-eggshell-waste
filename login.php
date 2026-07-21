@@ -316,10 +316,10 @@ if (!$is_lockout_active && isset($_SESSION['lockout_until'])) {
                         </svg>
                         <span>Too many failed login attempts</span>
                     </div>
-                    <div style="font-size: 0.8rem; color: #D1D5DB; margin-top: 2px;">
+                    <div style="font-size: 0.8rem; color: #000000; margin-top: 2px;">
                         You may try again in: <strong id="lockoutTimerDisplay" style="color: #2FBF71; font-family: inherit; font-size: 0.95rem; font-weight: 700;"><?php echo getLockoutDisplayText($remaining_seconds); ?></strong>
                     </div>
-                    <div id="lockoutSubtext" style="font-size: 0.75rem; color: rgba(244, 244, 240, 0.7); line-height: 1.4; margin-top: 2px;">
+                    <div id="lockoutSubtext" style="font-size: 0.75rem; color: #000000; line-height: 1.4; margin-top: 2px;">
                         Please wait or contact the Super Administrator.
                     </div>
                 </div>

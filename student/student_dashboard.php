@@ -1024,7 +1024,7 @@ function openDetailModal(row) {
     const imgFilename = row.image_path ? row.image_path.split('/').pop() : '—';
     const imgPathEl = document.getElementById('det-image-path');
     if (imgPathEl) {
-        if (row.image_path && row.image_exists) {
+        if (row.image_path) {
             imgPathEl.innerHTML = `${imgFilename} <a href="../view_fingerprint.php?test_id=${row.id}" target="_blank" style="color: #2FBF71; text-decoration: underline; margin-left: 8px; font-size: 0.75rem; font-weight: 600;">[View Image]</a>`;
         } else {
             imgPathEl.textContent = imgFilename;
@@ -1035,13 +1035,23 @@ function openDetailModal(row) {
     const img = document.getElementById('det-img');
     const imgWrapper = document.getElementById('det-img-wrapper');
     const imgMissing = document.getElementById('det-img-missing');
-    
-    if (row.image_path && row.image_exists) {
-        img.src = '../view_fingerprint.php?test_id=' + row.id;
-        imgWrapper.style.display = 'flex';
+
+    if (row.image_path) {
+        if (img) {
+            img.onload = () => {
+                if (imgWrapper) imgWrapper.style.display = 'flex';
+                if (imgMissing) imgMissing.style.display = 'none';
+            };
+            img.onerror = () => {
+                if (imgWrapper) imgWrapper.style.display = 'none';
+                if (imgMissing) imgMissing.style.display = 'block';
+            };
+            img.src = '../view_fingerprint.php?test_id=' + row.id;
+        }
+        if (imgWrapper) imgWrapper.style.display = 'flex';
         if (imgMissing) imgMissing.style.display = 'none';
     } else {
-        imgWrapper.style.display = 'none';
+        if (imgWrapper) imgWrapper.style.display = 'none';
         if (imgMissing) imgMissing.style.display = 'block';
     }
 

@@ -72,14 +72,14 @@ try {
             echo "Not Found: No enhanced image available for this record.";
             exit;
         }
-        $filepath = __DIR__ . '/uploads/fingerprint_enhanced/' . $enhanced_image_path;
+        $filepath = __DIR__ . '/uploads/fingerprint_enhanced/' . basename($enhanced_image_path);
     } else {
         if (empty($image_path)) {
             http_response_code(404);
             echo "Not Found: No original image associated with this record.";
             exit;
         }
-        $filepath = __DIR__ . '/uploads/fingerprints/' . $image_path;
+        $filepath = __DIR__ . '/uploads/fingerprints/' . basename($image_path);
     }
 
     // Check if the file exists on the server

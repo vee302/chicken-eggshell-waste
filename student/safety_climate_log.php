@@ -80,7 +80,7 @@ try {
             <div id="alertContainer"></div>
 
             <!-- Log Form -->
-            <div class="dashboard-card" style="max-width:720px;">
+            <div class="dashboard-card" style="max-width:720px; margin: 0 auto 1.5rem auto;">
                 <div class="card-title-wrap">
                     <h3>
                         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

@@ -70,154 +70,191 @@ function getLockoutDisplayText($secs) {
 
 // Process form data when post request is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Trim input values
-    $email = trim($_POST["email"]);
-    $password = trim($_POST["password"]);
+    // Check if session lockout is active first
+    if (!$is_lockout_active && isset($_SESSION['lockout_until'])) {
+        $session_lock_time = (int)$_SESSION['lockout_until'];
+        $now = time();
+        if ($now < $session_lock_time) {
+            $is_lockout_active = true;
+            $remaining_seconds = max(0, $session_lock_time - $now);
+        } else {
+            unset($_SESSION['lockout_until']);
+            $_SESSION['failed_login_attempts'] = 0;
+        }
+    }
 
-    // Validate credentials
-    if (empty($email) || empty($password)) {
-        $error_message = "Please enter both email and password.";
+    if ($is_lockout_active && $remaining_seconds > 0) {
+        $error_message = "Too many failed login attempts. Account temporarily locked.";
     } else {
-        // Prepare a select statement
-        $sql = "SELECT id, full_name, email, password, role, status, failed_login_attempts, locked_until, last_failed_login FROM users WHERE email = :email";
+        // Trim input values
+        $email = trim($_POST["email"]);
+        $password = trim($_POST["password"]);
 
-        try {
-            if ($stmt = $pdo->prepare($sql)) {
-                // Bind variables to the prepared statement as parameters
-                $stmt->bindParam(":email", $param_email, PDO::PARAM_STR);
-                $param_email = $email;
+        // Validate credentials
+        if (empty($email) || empty($password)) {
+            $error_message = "Please enter both email and password.";
+        } else {
+            // Prepare a select statement (case-insensitive email lookup)
+            $sql = "SELECT id, full_name, email, password, role, status, failed_login_attempts, locked_until, last_failed_login FROM users WHERE LOWER(email) = LOWER(:email)";
 
-                // Attempt to execute the prepared statement
-                if ($stmt->execute()) {
-                    // Check if email exists
-                    if ($stmt->rowCount() == 1) {
-                        if ($row = $stmt->fetch()) {
-                            $id = $row["id"];
-                            $full_name = $row["full_name"];
-                            $hashed_password = $row["password"];
-                            $user_role = $row["role"];
-                            $status = $row["status"];
-                            $failed_attempts = (int)$row["failed_login_attempts"];
-                            $locked_until = $row["locked_until"];
+            try {
+                if ($stmt = $pdo->prepare($sql)) {
+                    // Bind variables to the prepared statement as parameters
+                    $stmt->bindParam(":email", $param_email, PDO::PARAM_STR);
+                    $param_email = $email;
 
-                            // Check if lockout active
-                            $is_locked = false;
-                            if ($locked_until !== null) {
-                                $lockTime = strtotime($locked_until);
-                                $now = time();
-                                if ($now < $lockTime) {
-                                    $is_locked = true;
-                                    $is_lockout_active = true;
-                                    $remaining_seconds = max(0, $lockTime - $now);
-                                    $_SESSION['lockout_until'] = $lockTime;
-                                    $error_message = "Too many failed login attempts. Account temporarily locked.";
-                                } else {
-                                    // Lockout expired! Automatically reset lockout details.
-                                    try {
-                                        $reset_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_failed_login = NULL WHERE id = :id");
-                                        $reset_stmt->execute([':id' => $id]);
-                                        $failed_attempts = 0;
-                                        $locked_until = null;
-                                        unset($_SESSION['lockout_until']);
-                                    } catch (PDOException $e) {
-                                        // Ignore
-                                    }
-                                }
-                            }
+                    // Attempt to execute the prepared statement
+                    if ($stmt->execute()) {
+                        // Check if email exists
+                        if ($stmt->rowCount() == 1) {
+                            if ($row = $stmt->fetch()) {
+                                $id = $row["id"];
+                                $full_name = $row["full_name"];
+                                $hashed_password = $row["password"];
+                                $user_role = $row["role"];
+                                $status = $row["status"];
+                                $db_failed = (int)$row["failed_login_attempts"];
+                                $sess_failed = (int)($_SESSION['failed_login_attempts'] ?? 0);
+                                $failed_attempts = max($db_failed, $sess_failed);
+                                $locked_until = $row["locked_until"];
 
-                            if (!$is_locked) {
-                                // Verify password
-                                if (password_verify($password, $hashed_password)) {
-                                    // Check status first
-                                    if ($status === 'active') {
-                                        // Reset failed attempts upon successful login
-                                        try {
-                                            $reset_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_failed_login = NULL WHERE id = :id");
-                                            $reset_stmt->execute([':id' => $id]);
-                                            unset($_SESSION['lockout_until']);
-                                        } catch (PDOException $e) {
-                                            // Ignore
-                                        }
-
-                                        // Set session variables
-                                        $_SESSION["logged_in"] = true;
-                                        $_SESSION["user_id"] = $id;
-                                        $_SESSION["user_name"] = $full_name;
-                                        $_SESSION["user_email"] = $email;
-                                        $_SESSION["user_role"] = $user_role;
-
-                                        // Redirect based on role
-                                        if ($user_role === 'super_admin') {
-                                            header("Location: admin/dashboard.php");
-                                        } elseif ($user_role === 'faculty_researcher') {
-                                            header("Location: faculty/faculty_dashboard.php");
-                                        } elseif ($user_role === 'criminology_student') {
-                                            header("Location: student/student_dashboard.php");
-                                        } elseif ($user_role === 'alumni_police_partner') {
-                                            header("Location: police-partner/partner_dashboard.php");
-                                        } else {
-                                            header("Location: dashboard.php");
-                                        }
-                                        exit;
-                                    } elseif ($status === 'pending') {
-                                        $error_message = "Your account is still pending approval.";
-                                    } elseif ($status === 'rejected') {
-                                        $error_message = "Your registration was not approved.";
-                                    } elseif ($status === 'suspended') {
-                                        $error_message = "Your account has been suspended. Please contact the Super Administrator.";
-                                    } else {
-                                        $error_message = "Your account is currently inactive. Please contact the administrator.";
-                                    }
-                                } else {
-                                    // Password is wrong - increment attempts
-                                    $new_attempts = $failed_attempts + 1;
-                                    if ($new_attempts >= $max_attempts) {
-                                        $lockTime = time() + ($lockout_minutes * 60);
-                                        $locked_until_val = date('Y-m-d H:i:s', $lockTime);
-                                        try {
-                                            $update_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = :attempts, locked_until = :locked_until, last_failed_login = NOW() WHERE id = :id");
-                                            $update_stmt->execute([
-                                                ':attempts' => $new_attempts,
-                                                ':locked_until' => $locked_until_val,
-                                                ':id' => $id
-                                            ]);
-                                            log_login_activity($pdo, "Account Locked", "Account temporarily locked for " . $lockout_minutes . " minutes due to " . $max_attempts . " failed login attempts", $id, $email);
-                                        } catch (PDOException $e) {
-                                            // Ignore
-                                        }
+                                // Check if lockout active
+                                $is_locked = false;
+                                if ($locked_until !== null) {
+                                    $lockTime = strtotime($locked_until);
+                                    $now = time();
+                                    if ($now < $lockTime) {
+                                        $is_locked = true;
                                         $is_lockout_active = true;
-                                        $remaining_seconds = max(0, $lockTime - time());
+                                        $remaining_seconds = max(0, $lockTime - $now);
                                         $_SESSION['lockout_until'] = $lockTime;
                                         $error_message = "Too many failed login attempts. Account temporarily locked.";
                                     } else {
+                                        // Lockout expired! Automatically reset lockout details.
                                         try {
-                                            $update_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = :attempts, last_failed_login = NOW() WHERE id = :id");
-                                            $update_stmt->execute([
-                                                ':attempts' => $new_attempts,
-                                                ':id' => $id
-                                            ]);
-                                            log_login_activity($pdo, "Failed Login Attempt", "Failed login attempt (attempts remaining: " . ($max_attempts - $new_attempts) . ")", $id, $email);
+                                            $reset_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_failed_login = NULL WHERE id = :id");
+                                            $reset_stmt->execute([':id' => $id]);
+                                            $failed_attempts = 0;
+                                            $locked_until = null;
+                                            unset($_SESSION['lockout_until']);
+                                            $_SESSION['failed_login_attempts'] = 0;
                                         } catch (PDOException $e) {
                                             // Ignore
                                         }
-                                        $error_message = "Invalid email or password. Attempts remaining: " . ($max_attempts - $new_attempts);
+                                    }
+                                }
+
+                                if (!$is_locked) {
+                                    // Verify password
+                                    if (password_verify($password, $hashed_password)) {
+                                        // Check status first
+                                        if ($status === 'active') {
+                                            // Reset failed attempts upon successful login
+                                            try {
+                                                $reset_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_failed_login = NULL WHERE id = :id");
+                                                $reset_stmt->execute([':id' => $id]);
+                                                unset($_SESSION['lockout_until']);
+                                                $_SESSION['failed_login_attempts'] = 0;
+                                            } catch (PDOException $e) {
+                                                // Ignore
+                                            }
+
+                                            // Set session variables
+                                            $_SESSION["logged_in"] = true;
+                                            $_SESSION["user_id"] = $id;
+                                            $_SESSION["user_name"] = $full_name;
+                                            $_SESSION["user_email"] = $email;
+                                            $_SESSION["user_role"] = $user_role;
+
+                                            // Redirect based on role
+                                            if ($user_role === 'super_admin') {
+                                                header("Location: admin/dashboard.php");
+                                            } elseif ($user_role === 'faculty_researcher') {
+                                                header("Location: faculty/faculty_dashboard.php");
+                                            } elseif ($user_role === 'criminology_student') {
+                                                header("Location: student/student_dashboard.php");
+                                            } elseif ($user_role === 'alumni_police_partner') {
+                                                header("Location: police-partner/partner_dashboard.php");
+                                            } else {
+                                                header("Location: dashboard.php");
+                                            }
+                                            exit;
+                                        } elseif ($status === 'pending') {
+                                            $error_message = "Your account is still pending approval.";
+                                        } elseif ($status === 'rejected') {
+                                            $error_message = "Your registration was not approved.";
+                                        } elseif ($status === 'suspended') {
+                                            $error_message = "Your account has been suspended. Please contact the Super Administrator.";
+                                        } else {
+                                            $error_message = "Your account is currently inactive. Please contact the administrator.";
+                                        }
+                                    } else {
+                                        // Password is wrong - increment attempts
+                                        $new_attempts = $failed_attempts + 1;
+                                        $_SESSION['failed_login_attempts'] = $new_attempts;
+
+                                        if ($new_attempts >= $max_attempts) {
+                                            $lockTime = time() + ($lockout_minutes * 60);
+                                            $locked_until_val = date('Y-m-d H:i:s', $lockTime);
+                                            try {
+                                                $update_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = :attempts, locked_until = :locked_until, last_failed_login = NOW() WHERE id = :id");
+                                                $update_stmt->execute([
+                                                    ':attempts' => $new_attempts,
+                                                    ':locked_until' => $locked_until_val,
+                                                    ':id' => $id
+                                                ]);
+                                                log_login_activity($pdo, "Account Locked", "Account temporarily locked for " . $lockout_minutes . " minutes due to " . $max_attempts . " failed login attempts", $id, $email);
+                                            } catch (PDOException $e) {
+                                                // Ignore
+                                            }
+                                            $is_lockout_active = true;
+                                            $remaining_seconds = max(0, $lockTime - time());
+                                            $_SESSION['lockout_until'] = $lockTime;
+                                            $error_message = "Too many failed login attempts. Account temporarily locked.";
+                                        } else {
+                                            try {
+                                                $update_stmt = $pdo->prepare("UPDATE users SET failed_login_attempts = :attempts, last_failed_login = NOW() WHERE id = :id");
+                                                $update_stmt->execute([
+                                                    ':attempts' => $new_attempts,
+                                                    ':id' => $id
+                                                ]);
+                                                log_login_activity($pdo, "Failed Login Attempt", "Failed login attempt (attempts remaining: " . ($max_attempts - $new_attempts) . ")", $id, $email);
+                                            } catch (PDOException $e) {
+                                                // Ignore
+                                            }
+                                            $error_message = "Invalid email or password. Attempts remaining: " . ($max_attempts - $new_attempts);
+                                        }
                                     }
                                 }
                             }
+                        } else {
+                            // Email not found in DB - increment session failed attempts
+                            $session_attempts = (int)($_SESSION['failed_login_attempts'] ?? 0) + 1;
+                            $_SESSION['failed_login_attempts'] = $session_attempts;
+
+                            if ($session_attempts >= $max_attempts) {
+                                $lockTime = time() + ($lockout_minutes * 60);
+                                $is_lockout_active = true;
+                                $remaining_seconds = max(0, $lockTime - time());
+                                $_SESSION['lockout_until'] = $lockTime;
+                                log_login_activity($pdo, "Failed Login Attempt", "Multiple failed login attempts from unregistered email: " . $email);
+                                $error_message = "Too many failed login attempts. Account temporarily locked.";
+                            } else {
+                                $attempts_left = max(0, $max_attempts - $session_attempts);
+                                log_login_activity($pdo, "Failed Login Attempt", "Failed login attempt for unregistered email: " . $email . " (attempts remaining: " . $attempts_left . ")");
+                                $error_message = "Invalid email or password. Attempts remaining: " . $attempts_left;
+                            }
                         }
                     } else {
-                        // Display generic error for security
-                        $error_message = "Invalid email or password.";
+                        $error_message = "Oops! Something went wrong. Please try again later.";
                     }
-                } else {
-                    $error_message = "Oops! Something went wrong. Please try again later.";
-                }
 
-                // Close statement
-                unset($stmt);
+                    // Close statement
+                    unset($stmt);
+                }
+            } catch (PDOException $e) {
+                $error_message = "Connection error: " . $e->getMessage();
             }
-        } catch (PDOException $e) {
-            $error_message = "Connection error: " . $e->getMessage();
         }
     }
 
@@ -234,6 +271,7 @@ if (!$is_lockout_active && isset($_SESSION['lockout_until'])) {
         $remaining_seconds = max(0, $session_lock_time - $now);
     } else {
         unset($_SESSION['lockout_until']);
+        $_SESSION['failed_login_attempts'] = 0;
     }
 }
 ?>

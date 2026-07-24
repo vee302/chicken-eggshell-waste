@@ -9,22 +9,43 @@ function get_gdrive_access_token() {
         return $cached_token;
     }
 
+    $client_email = null;
+    $private_key = null;
+
     $cred_file = dirname(__DIR__) . '/config/gdrive_credentials.json';
-    if (!file_exists($cred_file)) {
-        error_log("Google Drive Credentials file missing: " . $cred_file);
-        return false;
+    if (file_exists($cred_file)) {
+        $creds = json_decode(file_get_contents($cred_file), true);
+        if ($creds) {
+            $client_email = $creds['client_email'] ?? null;
+            $private_key  = $creds['private_key'] ?? null;
+        }
     }
 
-    $creds = json_decode(file_get_contents($cred_file), true);
-    if (!$creds || empty($creds['client_email']) || empty($creds['private_key'])) {
-        error_log("Google Drive Credentials file invalid.");
+    if (!$client_email || !$private_key) {
+        $gdrive_json_env = env('GDRIVE_CREDENTIALS_JSON');
+        if (!empty($gdrive_json_env)) {
+            $creds = json_decode($gdrive_json_env, true);
+            if ($creds) {
+                $client_email = $creds['client_email'] ?? null;
+                $private_key  = $creds['private_key'] ?? null;
+            }
+        }
+    }
+
+    if (!$client_email || !$private_key) {
+        $client_email = env('GDRIVE_CLIENT_EMAIL');
+        $private_key  = env('GDRIVE_PRIVATE_KEY');
+    }
+
+    if (!$client_email || !$private_key) {
+        error_log("Google Drive Credentials missing from file and environment variables.");
         return false;
     }
 
     $now = time();
     $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
     $claim = json_encode([
-        'iss' => $creds['client_email'],
+        'iss' => $client_email,
         'scope' => 'https://www.googleapis.com/auth/drive',
         'aud' => 'https://oauth2.googleapis.com/token',
         'exp' => $now + 3600,
@@ -35,8 +56,8 @@ function get_gdrive_access_token() {
     $base64UrlClaim = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($claim));
 
     $signatureInput = $base64UrlHeader . "." . $base64UrlClaim;
-    $privateKey = str_replace('\n', "\n", $creds['private_key']);
-    $pkey = openssl_pkey_get_private($privateKey);
+    $privateKeyFormatted = str_replace('\n', "\n", $private_key);
+    $pkey = openssl_pkey_get_private($privateKeyFormatted);
     if (!$pkey) {
         error_log("Google Drive Private Key parsing failed.");
         return false;

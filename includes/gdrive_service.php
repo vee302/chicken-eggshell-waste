@@ -1,7 +1,8 @@
 <?php
 // includes/gdrive_service.php — Google Drive API v3 Native Service Account Module
 
-function get_gdrive_access_token() {
+function get_gdrive_access_token()
+{
     static $cached_token = null;
     static $token_expires_at = 0;
 
@@ -56,8 +57,8 @@ function get_gdrive_access_token() {
     $base64UrlClaim = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($claim));
 
     $signatureInput = $base64UrlHeader . "." . $base64UrlClaim;
-    $privateKeyFormatted = str_replace('\n', "\n", $private_key);
-    $pkey = openssl_pkey_get_private($privateKeyFormatted);
+    $privateKey = str_replace('\n', "\n", $private_key);
+    $pkey = openssl_pkey_get_private($privateKey);
     if (!$pkey) {
         error_log("Google Drive Private Key parsing failed.");
         return false;
@@ -78,7 +79,7 @@ function get_gdrive_access_token() {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
         'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        'assertion'  => $jwt
+        'assertion' => $jwt
     ]));
 
     $response = curl_exec($ch);
@@ -108,7 +109,8 @@ function get_gdrive_access_token() {
  * @param string|null $folderId Optional parent Google Drive folder ID
  * @return string|false Google Drive File ID on success, false on failure
  */
-function gdrive_upload_file($localFilePath, $fileName, $folderId = null) {
+function gdrive_upload_file($localFilePath, $fileName, $folderId = null)
+{
     if (!file_exists($localFilePath)) {
         return false;
     }
@@ -119,7 +121,7 @@ function gdrive_upload_file($localFilePath, $fileName, $folderId = null) {
     }
 
     if (!$folderId) {
-        $folderId = env('GDRIVE_FOLDER_ID', '');
+        $folderId = env('GDRIVE_FOLDER_ID', '1ng2iHXR2KzHSBQTr-F60TwkxiVloRmym');
     }
 
     $mimeType = mime_content_type($localFilePath) ?: 'image/jpeg';
@@ -145,7 +147,7 @@ function gdrive_upload_file($localFilePath, $fileName, $folderId = null) {
         $fileData .
         $closeDelimiter;
 
-    $ch = curl_init('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
+    $ch = curl_init('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
@@ -174,7 +176,8 @@ function gdrive_upload_file($localFilePath, $fileName, $folderId = null) {
  * @param string $fileId Google Drive File ID
  * @return bool True if streamed successfully
  */
-function gdrive_stream_file($fileId) {
+function gdrive_stream_file($fileId)
+{
     $token = get_gdrive_access_token();
     if (!$token) {
         return false;
@@ -211,11 +214,14 @@ function gdrive_stream_file($fileId) {
  * @param string $fileId Google Drive File ID
  * @return bool True if deleted successfully
  */
-function gdrive_delete_file($fileId) {
-    if (empty($fileId)) return false;
+function gdrive_delete_file($fileId)
+{
+    if (empty($fileId))
+        return false;
 
     $token = get_gdrive_access_token();
-    if (!$token) return false;
+    if (!$token)
+        return false;
 
     $url = "https://www.googleapis.com/drive/v3/files/" . urlencode($fileId);
 

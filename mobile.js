@@ -643,6 +643,70 @@ if (window.innerWidth > 768) {
             }
         );
 
+        // Bento Card Accordion Interaction & Responsive State Handling (Mobile <= 768px)
+        (function initBentoAccordion() {
+            const bentoCards = document.querySelectorAll('.bento-grid .bento-card');
+            if (!bentoCards.length) return;
+
+            bentoCards.forEach((card) => {
+                const descParagraph = card.querySelector('p');
+                if (descParagraph && descParagraph.id) {
+                    card.setAttribute('aria-controls', descParagraph.id);
+                }
+
+                function handleToggle(e) {
+                    if (window.innerWidth > 768) return;
+
+                    const isExpanded = card.classList.contains('is-expanded');
+
+                    // Accordion mode: collapse all cards
+                    bentoCards.forEach((otherCard) => {
+                        otherCard.classList.remove('is-expanded');
+                        otherCard.setAttribute('aria-expanded', 'false');
+                    });
+
+                    // Expand clicked card if it wasn't already expanded
+                    if (!isExpanded) {
+                        card.classList.add('is-expanded');
+                        card.setAttribute('aria-expanded', 'true');
+                    }
+                }
+
+                card.addEventListener('click', handleToggle);
+                card.addEventListener('keydown', (e) => {
+                    if (window.innerWidth <= 768 && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        handleToggle(e);
+                    }
+                });
+            });
+
+            function syncResponsiveState() {
+                const isMobile = window.innerWidth <= 768;
+                bentoCards.forEach((card) => {
+                    if (isMobile) {
+                        card.setAttribute('role', 'button');
+                        card.setAttribute('tabindex', '0');
+                        if (!card.classList.contains('is-expanded')) {
+                            card.setAttribute('aria-expanded', 'false');
+                        }
+                    } else {
+                        card.classList.remove('is-expanded');
+                        card.removeAttribute('role');
+                        card.removeAttribute('tabindex');
+                        card.removeAttribute('aria-expanded');
+                    }
+                });
+            }
+
+            syncResponsiveState();
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(syncResponsiveState, 100);
+            });
+        })();
+
         gsap.from('.stakeholders-section .section-label, .stakeholders-section .section-title', {
             opacity: 0,
             y: 40,

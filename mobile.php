@@ -593,43 +593,85 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
             <div class="bento-grid">
                 <div class="bento-card card-large">
                     <div class="bento-card-content">
-                        <h3>Eco-Friendly &amp; Biodegradable</h3>
-                        <p>Natural calcium carbonate breaks down safely without environmental harm</p>
+                        <div class="bento-card-header">
+                            <h3>Eco-Friendly &amp; Biodegradable</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="mb-bento-desc-1">Natural calcium carbonate breaks down safely without environmental harm</p>
                     </div>
                 </div>
 
                 <div class="bento-card card-stacked-1">
                     <div class="bento-card-content">
-                        <h3>Cost-Effective Alternative</h3>
-                        <p>Utilizes waste material, reducing production costs significantly</p>
+                        <div class="bento-card-header">
+                            <h3>Cost-Effective Alternative</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="mb-bento-desc-2">Utilizes waste material, reducing production costs significantly</p>
                     </div>
                 </div>
 
                 <div class="bento-card card-stacked-2">
                     <div class="bento-card-content">
-                        <h3>Safer for Forensic Users</h3>
-                        <p>Non-toxic composition eliminates health risks from heavy metals</p>
+                        <div class="bento-card-header">
+                            <h3>Safer for Forensic Users</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="mb-bento-desc-3">Non-toxic composition eliminates health risks from heavy metals</p>
                     </div>
                 </div>
 
                 <div class="bento-card card-bottom-1">
                     <div class="bento-card-content">
-                        <h3>Supports Waste Reduction</h3>
-                        <p>Transforms food industry waste into valuable forensic resource</p>
+                        <div class="bento-card-header">
+                            <h3>Supports Waste Reduction</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="mb-bento-desc-4">Transforms food industry waste into valuable forensic resource</p>
                     </div>
                 </div>
 
                 <div class="bento-card card-bottom-2">
                     <div class="bento-card-content">
-                        <h3>Criminology Training Tool</h3>
-                        <p>Ideal for educational institutions and student practice</p>
+                        <div class="bento-card-header">
+                            <h3>Criminology Training Tool</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="mb-bento-desc-5">Ideal for educational institutions and student practice</p>
                     </div>
                 </div>
 
                 <div class="bento-card card-dark-green card-bottom-3">
                     <div class="bento-card-content">
-                        <h3>Supports SDG 12 &amp; 13</h3>
-                        <p>Aligns with sustainable consumption and climate action goals</p>
+                        <div class="bento-card-header">
+                            <h3>Supports SDG 12 &amp; 13</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="mb-bento-desc-6">Aligns with sustainable consumption and climate action goals</p>
                     </div>
                 </div>
             </div>

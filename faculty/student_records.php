@@ -36,6 +36,20 @@ try {
     ");
     $stmt->execute($params);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rows as &$r) {
+        $r['image_exists'] = false;
+        if (!empty($r['image_path'])) {
+            $filename = basename($r['image_path']);
+            $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
+            if (!file_exists($filePath)) {
+                $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
+            }
+            if (file_exists($filePath)) {
+                $r['image_exists'] = true;
+            }
+        }
+    }
+    unset($r);
 } catch (PDOException $e) {}
 
 // View detail of a single record
@@ -177,7 +191,7 @@ if (isset($_GET['view'])) {
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($r['powder_type']) ?></td>
                                 <td style="text-transform:capitalize;"><?= htmlspecialchars($r['surface_type']) ?></td>
                                 <td>
-                                    <?php if ($r['image_path'] && file_exists(dirname(__DIR__) . '/uploads/fingerprints/'.$r['image_path'])): ?>
+                                     <?php if (!empty($r['image_exists'])): ?>
                                         <a href="../view_fingerprint.php?test_id=<?= $r['id'] ?>" target="_blank">
                                             <img src="../view_fingerprint.php?test_id=<?= $r['id'] ?>" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e9ecef;" alt="FP">
                                         </a>
@@ -242,7 +256,7 @@ if (isset($_GET['view'])) {
 
             <p class="section-divider">Fingerprint Image Asset</p>
             <div style="text-align:center; margin-bottom:1rem; border:1px solid #e9ecef; padding:10px; border-radius:8px; background:#fafafa;">
-                <?php if (!empty($view_record['image_path']) && file_exists(dirname(__DIR__) . '/uploads/fingerprints/'.$view_record['image_path'])): ?>
+                <?php if (!empty($view_record['image_exists'])): ?>
                     <a href="../view_fingerprint.php?test_id=<?= $view_record['id'] ?>" target="_blank">
                         <img src="../view_fingerprint.php?test_id=<?= $view_record['id'] ?>" style="max-height:220px; max-width:100%; object-fit:contain; border-radius:6px; border:1px solid #ddd;" alt="Fingerprint Image Asset">
                     </a>

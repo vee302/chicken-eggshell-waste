@@ -33,7 +33,11 @@ try {
     foreach ($images as &$img) {
         $img['image_exists'] = false;
         if (!empty($img['image_path'])) {
-            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $img['image_path'];
+            $filename = basename($img['image_path']);
+            $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
+            if (!file_exists($filePath)) {
+                $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
+            }
             if (file_exists($filePath)) {
                 $img['image_exists'] = true;
             }

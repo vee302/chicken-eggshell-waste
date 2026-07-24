@@ -79,7 +79,10 @@ try {
             echo "Not Found: No original image associated with this record.";
             exit;
         }
-        $filepath = __DIR__ . '/uploads/fingerprints/' . basename($image_path);
+        $filepath = __DIR__ . '/uploads/trial_records/' . basename($image_path);
+        if (!file_exists($filepath)) {
+            $filepath = __DIR__ . '/uploads/fingerprints/' . basename($image_path);
+        }
     }
 
     // Check if the file exists on the server

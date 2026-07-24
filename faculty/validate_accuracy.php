@@ -44,7 +44,11 @@ try {
     foreach ($submissions as &$row) {
         $row['image_exists'] = false;
         if (!empty($row['image_path'])) {
-            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $row['image_path'];
+            $filename = basename($row['image_path']);
+            $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
+            if (!file_exists($filePath)) {
+                $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
+            }
             if (file_exists($filePath)) {
                 $row['image_exists'] = true;
             }
@@ -72,7 +76,11 @@ if (isset($_GET['id'])) {
         if ($selected_trial) {
             $selected_trial['image_exists'] = false;
             if (!empty($selected_trial['image_path'])) {
-                $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $selected_trial['image_path'];
+                $filename = basename($selected_trial['image_path']);
+                $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
+                if (!file_exists($filePath)) {
+                    $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
+                }
                 if (file_exists($filePath)) {
                     $selected_trial['image_exists'] = true;
                 }

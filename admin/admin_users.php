@@ -170,10 +170,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                 $trials = $f_stmt->fetchAll(PDO::FETCH_ASSOC);
                 foreach ($trials as $t) {
                     if (!empty($t['image_path'])) {
-                        @unlink(dirname(__DIR__) . '/uploads/fingerprints/' . $t['image_path']);
+                        $fn = basename($t['image_path']);
+                        @unlink(dirname(__DIR__) . '/uploads/trial_records/' . $fn);
+                        @unlink(dirname(__DIR__) . '/uploads/fingerprints/' . $fn);
                     }
                     if (!empty($t['enhanced_image_path'])) {
-                        @unlink(dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . $t['enhanced_image_path']);
+                        $efn = basename($t['enhanced_image_path']);
+                        @unlink(dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . $efn);
                     }
                 }
 

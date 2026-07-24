@@ -223,7 +223,11 @@ try {
     foreach ($all_approved_trials as &$row) {
         $row['image_exists'] = false;
         if (!empty($row['image_path'])) {
-            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $row['image_path'];
+            $filename = basename($row['image_path']);
+            $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
+            if (!file_exists($filePath)) {
+                $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
+            }
             if (file_exists($filePath)) {
                 $row['image_exists'] = true;
             }

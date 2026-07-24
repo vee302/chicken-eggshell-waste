@@ -127,7 +127,11 @@ try {
     // Verify image file existence
     $image_exists = false;
     if (!empty($trial['image_path'])) {
-        $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $trial['image_path'];
+        $filename = basename($trial['image_path']);
+        $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
+        if (!file_exists($filePath)) {
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
+        }
         if (file_exists($filePath)) {
             $image_exists = true;
         }

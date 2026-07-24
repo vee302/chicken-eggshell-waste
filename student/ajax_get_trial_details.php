@@ -47,7 +47,11 @@ try {
     // Add image exists check
     $trial['image_exists'] = false;
     if (!empty($trial['image_path'])) {
-        $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $trial['image_path'];
+        $filename = basename($trial['image_path']);
+        $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
+        if (!file_exists($filePath)) {
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
+        }
         if (file_exists($filePath)) {
             $trial['image_exists'] = true;
         }

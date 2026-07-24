@@ -83,8 +83,8 @@ if (window.innerWidth > 768) {
         if (height <= 550) {
             return {
                 x: width / 2 - 50,
-                y: height * -0.02,
-                scale: 0.38,
+                y: height * -0.20,
+                scale: 0.20,
                 rotation: 8
             };
         }
@@ -92,16 +92,16 @@ if (window.innerWidth > 768) {
         if (width <= 480) {
             return {
                 x: 0,
-                y: height * -0.05,
-                scale: 0.58,
+                y: height * -0.30,
+                scale: 0.70,
                 rotation: 0
             };
         }
 
-        if (width <= 768) {
+        if (width <= 550) {
             return {
                 x: 0,
-                y: height * -0.05,
+                y: height * -0.50,
                 scale: 0.62,
                 rotation: 0
             };
@@ -143,12 +143,12 @@ if (window.innerWidth > 768) {
             };
         }
 
-        function getIntroJarScale(defaultScale = 0.92) {
+        function getIntroJarScale(defaultScale = 0.90) {
             if (window.innerHeight > 550) return defaultScale;
 
             const target = document.querySelector(".intro-product-wrap");
             const jar = document.querySelector(".product-jar");
-            if (!target || !jar) return Math.min(defaultScale, 0.58);
+            if (!target || !jar) return Math.min(defaultScale, 0.80);
 
             const targetRect = target.getBoundingClientRect();
             const jarSize = Math.max(jar.offsetWidth, jar.offsetHeight);
@@ -156,8 +156,8 @@ if (window.innerWidth > 768) {
 
             if (!targetSize || !jarSize) return Math.min(defaultScale, 0.58);
 
-            const fittedScale = (targetSize / jarSize) * 0.86;
-            return Math.min(defaultScale, Math.max(0.44, fittedScale));
+            const fittedScale = (targetSize / jarSize) * 0.90;
+            return Math.min(defaultScale, Math.max(0.55, fittedScale));
         }
 
         // Get exact viewport coordinates for loader placeholder
@@ -181,7 +181,7 @@ if (window.innerWidth > 768) {
             yPercent: -50,
             transformOrigin: "center center",
             x: loaderPos.x,
-            y: loaderPos.y + 40,
+            y: loaderPos.y + 90,
             scale: initialLoaderScale,
             rotation: 0,
             opacity: 0,

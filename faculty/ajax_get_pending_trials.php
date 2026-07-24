@@ -37,7 +37,11 @@ try {
     foreach ($submissions as &$s) {
         $s['image_exists'] = false;
         if (!empty($s['image_path'])) {
-            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $s['image_path'];
+            $filename = basename($s['image_path']);
+            $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
+            if (!file_exists($filePath)) {
+                $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
+            }
             if (file_exists($filePath)) {
                 $s['image_exists'] = true;
             }

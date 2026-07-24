@@ -104,7 +104,7 @@ try {
 }
 
 $filename = $trial_id . '.' . $ext;
-$dest_dir = dirname(__DIR__) . '/uploads/fingerprints/';
+$dest_dir = dirname(__DIR__) . '/uploads/trial_records/';
 if (!is_dir($dest_dir)) {
     @mkdir($dest_dir, 0777, true);
 } else {

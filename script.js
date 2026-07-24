@@ -93,7 +93,7 @@ if (window.innerWidth <= 768) {
         if (width <= 480) {
             return {
                 x: 0,
-                y: height * -0.05,
+                y: height * -0.20,
                 scale: 0.58,
                 rotation: 0
             };
@@ -102,7 +102,7 @@ if (window.innerWidth <= 768) {
         if (width <= 768) {
             return {
                 x: 0,
-                y: height * -0.05,
+                y: height * -0.50,
                 scale: 0.62,
                 rotation: 0
             };

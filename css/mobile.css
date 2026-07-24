@@ -553,8 +553,8 @@
 
     .bento-card.card-large .bento-toggle-icon,
     .bento-card.card-dark-green .bento-toggle-icon {
-        background: rgba(255, 255, 255, 0.2) !important;
-        color: #FFFFFF !important;
+        background: rgba(49, 66, 47, 0.08) !important;
+        color: #31422F !important;
     }
 
     .bento-card.is-expanded .bento-toggle-icon {
@@ -564,7 +564,8 @@
 
     .bento-card.card-large.is-expanded .bento-toggle-icon,
     .bento-card.card-dark-green.is-expanded .bento-toggle-icon {
-        background: rgba(255, 255, 255, 0.35) !important;
+        background: rgba(49, 66, 47, 0.18) !important;
+        color: #31422F !important;
     }
 
     .bento-card p,

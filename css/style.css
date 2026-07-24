@@ -1232,8 +1232,8 @@ section {
 
 .bento-card.card-large .bento-toggle-icon,
 .bento-card.card-dark-green .bento-toggle-icon {
-    background: rgba(255, 255, 255, 0.2);
-    color: #FFFFFF;
+    background: rgba(49, 66, 47, 0.08);
+    color: #31422F;
 }
 
 .bento-card.is-expanded .bento-toggle-icon {
@@ -2946,5 +2946,4 @@ img {
     background-color: #263324;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(49, 66, 47, 0.2);
-}
-}
+}

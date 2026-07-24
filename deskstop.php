@@ -533,44 +533,74 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
             </div>
 
             <div class="bento-grid">
-                <div class="bento-card card-large">
+                <div class="bento-card card-large" tabindex="0" role="button" aria-expanded="false">
                     <div class="bento-card-content">
-                        <h3>Eco-Friendly &amp; Biodegradable</h3>
+                        <div class="bento-card-header">
+                            <h3>Eco-Friendly &amp; Biodegradable</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </span>
+                        </div>
                         <p>Natural calcium carbonate breaks down safely without environmental harm</p>
                     </div>
                 </div>
 
-                <div class="bento-card card-stacked-1">
+                <div class="bento-card card-stacked-1" tabindex="0" role="button" aria-expanded="false">
                     <div class="bento-card-content">
-                        <h3>Cost-Effective Alternative</h3>
+                        <div class="bento-card-header">
+                            <h3>Cost-Effective Alternative</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </span>
+                        </div>
                         <p>Utilizes waste material, reducing production costs significantly</p>
                     </div>
                 </div>
 
-                <div class="bento-card card-stacked-2">
+                <div class="bento-card card-stacked-2" tabindex="0" role="button" aria-expanded="false">
                     <div class="bento-card-content">
-                        <h3>Safer for Forensic Users</h3>
+                        <div class="bento-card-header">
+                            <h3>Safer for Forensic Users</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </span>
+                        </div>
                         <p>Non-toxic composition eliminates health risks from heavy metals</p>
                     </div>
                 </div>
 
-                <div class="bento-card card-bottom-1">
+                <div class="bento-card card-bottom-1" tabindex="0" role="button" aria-expanded="false">
                     <div class="bento-card-content">
-                        <h3>Supports Waste Reduction</h3>
+                        <div class="bento-card-header">
+                            <h3>Supports Waste Reduction</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </span>
+                        </div>
                         <p>Transforms food industry waste into valuable forensic resource</p>
                     </div>
                 </div>
 
-                <div class="bento-card card-bottom-2">
+                <div class="bento-card card-bottom-2" tabindex="0" role="button" aria-expanded="false">
                     <div class="bento-card-content">
-                        <h3>Criminology Training Tool</h3>
+                        <div class="bento-card-header">
+                            <h3>Criminology Training Tool</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </span>
+                        </div>
                         <p>Ideal for educational institutions and student practice</p>
                     </div>
                 </div>
 
-                <div class="bento-card card-dark-green card-bottom-3">
+                <div class="bento-card card-dark-green card-bottom-3" tabindex="0" role="button" aria-expanded="false">
                     <div class="bento-card-content">
-                        <h3>Supports SDG 12 &amp; 13</h3>
+                        <div class="bento-card-header">
+                            <h3>Supports SDG 12 &amp; 13</h3>
+                            <span class="bento-toggle-icon" aria-hidden="true">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </span>
+                        </div>
                         <p>Aligns with sustainable consumption and climate action goals</p>
                     </div>
                 </div>

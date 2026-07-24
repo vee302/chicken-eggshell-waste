@@ -801,7 +801,20 @@ if (window.innerWidth <= 768) {
                     toggleActions: 'play reverse play reverse'
                 }
             }
-        );
+        // Bento Card Accordion Click Listener
+        document.querySelectorAll('.bento-card').forEach((card) => {
+            card.addEventListener('click', function() {
+                const isExpanded = this.classList.contains('is-expanded');
+                this.classList.toggle('is-expanded');
+                this.setAttribute('aria-expanded', !isExpanded);
+            });
+            card.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
 
         // Stakeholders networks reveal
         gsap.from('.stakeholders-section .section-label, .stakeholders-section .section-title', {

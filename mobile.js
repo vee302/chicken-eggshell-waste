@@ -601,7 +601,7 @@ if (window.innerWidth > 768) {
         });
 
         // Benefits section (Bento Grid) reveal with enter & exit scroll animations
-        gsap.fromTo('.benefits-section .section-label, .benefits-section .section-title', 
+        gsap.fromTo('.benefits-section .section-label, .benefits-section .section-title',
             {
                 opacity: 0,
                 y: 35
@@ -621,7 +621,7 @@ if (window.innerWidth > 768) {
             }
         );
 
-        gsap.fromTo('.bento-card', 
+        gsap.fromTo('.bento-card',
             {
                 opacity: 0.08, // Slightly invisible when out of viewport
                 y: 45,
@@ -641,21 +641,8 @@ if (window.innerWidth > 768) {
                     toggleActions: 'play reverse play reverse'
                 }
             }
-        // Bento Card Accordion Click Listener
-        document.querySelectorAll('.bento-card').forEach((card) => {
-            card.addEventListener('click', function() {
-                const isExpanded = this.classList.contains('is-expanded');
-                this.classList.toggle('is-expanded');
-                this.setAttribute('aria-expanded', !isExpanded);
-            });
-            card.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    this.click();
-                }
-            });
-        });
-    
+        );
+
         gsap.from('.stakeholders-section .section-label, .stakeholders-section .section-title', {
             opacity: 0,
             y: 40,
@@ -912,7 +899,7 @@ if (window.innerWidth > 768) {
         const btnCloseModal = document.getElementById('btnCookiePreferencesClose');
         const btnSavePreferences = document.getElementById('btnCookieSavePreferences');
         const overlay = document.querySelector('.cookie-preferences-overlay');
-        
+
         if (!banner) return;
 
         // Internal debug function to inspect saved settings
@@ -966,13 +953,13 @@ if (window.innerWidth > 768) {
             // Read saved settings or default to false
             const preferences = localStorage.getItem('cookiePreference') === 'true';
             const analytics = localStorage.getItem('cookieAnalytics') === 'true';
-            
+
             const preferencesCheckbox = document.getElementById('cookiePreferences');
             const analyticsCheckbox = document.getElementById('cookieAnalytics');
-            
+
             if (preferencesCheckbox) preferencesCheckbox.checked = preferences;
             if (analyticsCheckbox) analyticsCheckbox.checked = analytics;
-            
+
             modal.classList.add('active');
         });
 
@@ -980,7 +967,7 @@ if (window.innerWidth > 768) {
         function closeModal() {
             modal.classList.remove('active');
         }
-        
+
         if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
         if (overlay) overlay.addEventListener('click', closeModal);
 
@@ -988,14 +975,14 @@ if (window.innerWidth > 768) {
         btnSavePreferences.addEventListener('click', () => {
             const preferencesCheckbox = document.getElementById('cookiePreferences');
             const analyticsCheckbox = document.getElementById('cookieAnalytics');
-            
+
             const preferences = preferencesCheckbox ? preferencesCheckbox.checked : false;
             const analytics = analyticsCheckbox ? analyticsCheckbox.checked : false;
-            
+
             localStorage.setItem('cookieConsent', 'customized');
             localStorage.setItem('cookiePreference', preferences ? 'true' : 'false');
             localStorage.setItem('cookieAnalytics', analytics ? 'true' : 'false');
-            
+
             logCookieStatus('Preferences Saved');
             closeModal();
             hideBanner();

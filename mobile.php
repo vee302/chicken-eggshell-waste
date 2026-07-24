@@ -591,74 +591,44 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
             </div>
 
             <div class="bento-grid">
-                <div class="bento-card card-large" tabindex="0" role="button" aria-expanded="false">
+                <div class="bento-card card-large">
                     <div class="bento-card-content">
-                        <div class="bento-card-header">
-                            <h3>Eco-Friendly &amp; Biodegradable</h3>
-                            <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            </span>
-                        </div>
+                        <h3>Eco-Friendly &amp; Biodegradable</h3>
                         <p>Natural calcium carbonate breaks down safely without environmental harm</p>
                     </div>
                 </div>
 
-                <div class="bento-card card-stacked-1" tabindex="0" role="button" aria-expanded="false">
+                <div class="bento-card card-stacked-1">
                     <div class="bento-card-content">
-                        <div class="bento-card-header">
-                            <h3>Cost-Effective Alternative</h3>
-                            <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            </span>
-                        </div>
+                        <h3>Cost-Effective Alternative</h3>
                         <p>Utilizes waste material, reducing production costs significantly</p>
                     </div>
                 </div>
 
-                <div class="bento-card card-stacked-2" tabindex="0" role="button" aria-expanded="false">
+                <div class="bento-card card-stacked-2">
                     <div class="bento-card-content">
-                        <div class="bento-card-header">
-                            <h3>Safer for Forensic Users</h3>
-                            <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            </span>
-                        </div>
+                        <h3>Safer for Forensic Users</h3>
                         <p>Non-toxic composition eliminates health risks from heavy metals</p>
                     </div>
                 </div>
 
-                <div class="bento-card card-bottom-1" tabindex="0" role="button" aria-expanded="false">
+                <div class="bento-card card-bottom-1">
                     <div class="bento-card-content">
-                        <div class="bento-card-header">
-                            <h3>Supports Waste Reduction</h3>
-                            <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            </span>
-                        </div>
+                        <h3>Supports Waste Reduction</h3>
                         <p>Transforms food industry waste into valuable forensic resource</p>
                     </div>
                 </div>
 
-                <div class="bento-card card-bottom-2" tabindex="0" role="button" aria-expanded="false">
+                <div class="bento-card card-bottom-2">
                     <div class="bento-card-content">
-                        <div class="bento-card-header">
-                            <h3>Criminology Training Tool</h3>
-                            <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            </span>
-                        </div>
+                        <h3>Criminology Training Tool</h3>
                         <p>Ideal for educational institutions and student practice</p>
                     </div>
                 </div>
 
-                <div class="bento-card card-dark-green card-bottom-3" tabindex="0" role="button" aria-expanded="false">
+                <div class="bento-card card-dark-green card-bottom-3">
                     <div class="bento-card-content">
-                        <div class="bento-card-header">
-                            <h3>Supports SDG 12 &amp; 13</h3>
-                            <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            </span>
-                        </div>
+                        <h3>Supports SDG 12 &amp; 13</h3>
                         <p>Aligns with sustainable consumption and climate action goals</p>
                     </div>
                 </div>
@@ -898,7 +868,9 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
         <div class="cookie-consent-content">
             <h4 class="cookie-consent-title">We value your privacy</h4>
             <p class="cookie-consent-description">
-                We use cookies to enhance your browsing experience, remember your preferences, and analyze site traffic. By clicking “Accept”, you consent to our use of cookies. <a href="#" class="cookie-policy-link">Cookie Policy</a>
+                We use cookies to enhance your browsing experience, remember your preferences, and analyze site traffic.
+                By clicking “Accept”, you consent to our use of cookies. <a href="#" class="cookie-policy-link">Cookie
+                    Policy</a>
             </p>
         </div>
         <div class="cookie-consent-buttons">
@@ -917,12 +889,14 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 <button type="button" id="btnCookiePreferencesClose" class="cookie-preferences-close">&times;</button>
             </div>
             <div class="cookie-preferences-body">
-                <p>Customize your cookie settings below. Necessary cookies are required for the website to function properly.</p>
-                
+                <p>Customize your cookie settings below. Necessary cookies are required for the website to function
+                    properly.</p>
+
                 <div class="cookie-preference-item">
                     <div class="cookie-preference-info">
                         <label>Necessary Cookies</label>
-                        <span class="cookie-preference-desc">Required for basic website features like secure login and session management.</span>
+                        <span class="cookie-preference-desc">Required for basic website features like secure login and
+                            session management.</span>
                     </div>
                     <div class="cookie-preference-toggle">
                         <input type="checkbox" checked disabled>
@@ -932,7 +906,8 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 <div class="cookie-preference-item">
                     <div class="cookie-preference-info">
                         <label for="cookiePreferences">Preferences Cookies</label>
-                        <span class="cookie-preference-desc">Allow the website to remember choices you make (such as UI themes or settings).</span>
+                        <span class="cookie-preference-desc">Allow the website to remember choices you make (such as UI
+                            themes or settings).</span>
                     </div>
                     <div class="cookie-preference-toggle">
                         <label class="switch-toggle">
@@ -945,7 +920,8 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 <div class="cookie-preference-item">
                     <div class="cookie-preference-info">
                         <label for="cookieAnalytics">Analytics Cookies</label>
-                        <span class="cookie-preference-desc">Help us analyze site usage and performance to improve user experience.</span>
+                        <span class="cookie-preference-desc">Help us analyze site usage and performance to improve user
+                            experience.</span>
                     </div>
                     <div class="cookie-preference-toggle">
                         <label class="switch-toggle">
@@ -956,12 +932,13 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 </div>
             </div>
             <div class="cookie-preferences-footer">
-                <button type="button" id="btnCookieSavePreferences" class="cookie-btn cookie-btn-save">Save Preferences</button>
+                <button type="button" id="btnCookieSavePreferences" class="cookie-btn cookie-btn-save">Save
+                    Preferences</button>
             </div>
         </div>
     </div>
 
-<?php include __DIR__ . '/support-assistant/support_widget.php'; ?>
+    <?php include __DIR__ . '/support-assistant/support_widget.php'; ?>
 </body>
 
 </html>

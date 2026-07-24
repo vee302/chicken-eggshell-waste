@@ -27,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
             $error = "Please fill in all required fields.";
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = "Invalid email format.";
-        } elseif (!in_array($role, ['super_admin','faculty_researcher','criminology_student','alumni_police_partner'], true)) {
+        } elseif (!in_array($role, ['super_admin', 'faculty_researcher', 'criminology_student', 'alumni_police_partner'], true)) {
             $error = "Invalid role selected.";
         } else {
             try {
@@ -115,7 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                 $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
                 $stmt = $pdo->prepare("UPDATE users SET password = :password WHERE id = :id");
                 $stmt->execute([':password' => $hashed_password, ':id' => $id]);
-                
+
                 // Fetch email for logging
                 $u_stmt = $pdo->prepare("SELECT email FROM users WHERE id = :id LIMIT 1");
                 $u_stmt->execute([':id' => $id]);
@@ -164,14 +164,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                 $u_stmt->execute([':id' => $id]);
                 $u_email = $u_stmt->fetchColumn();
 
+                require_once dirname(__DIR__) . '/includes/gdrive_service.php';
                 // Fetch all associated files for this student's fingerprint tests to prevent orphaned files
-                $f_stmt = $pdo->prepare("SELECT image_path, enhanced_image_path FROM fingerprint_tests WHERE student_id = :id");
+                $f_stmt = $pdo->prepare("SELECT image_path, enhanced_image_path, gdrive_file_id FROM fingerprint_tests WHERE student_id = :id");
                 $f_stmt->execute([':id' => $id]);
                 $trials = $f_stmt->fetchAll(PDO::FETCH_ASSOC);
                 foreach ($trials as $t) {
+                    if (!empty($t['gdrive_file_id'])) {
+                        gdrive_delete_file($t['gdrive_file_id']);
+                    }
                     if (!empty($t['image_path'])) {
                         $fn = basename($t['image_path']);
-                        @unlink(dirname(__DIR__) . '/uploads/trial_records/' . $fn);
                         @unlink(dirname(__DIR__) . '/uploads/fingerprints/' . $fn);
                     }
                     if (!empty($t['enhanced_image_path'])) {
@@ -182,7 +185,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
 
                 $stmt = $pdo->prepare("DELETE FROM users WHERE id = :id");
                 $stmt->execute([':id' => $id]);
-                
+
                 log_activity("Delete User", "Deleted user account: $u_email");
                 $success = "User account deleted successfully!";
             } catch (PDOException $e) {
@@ -221,7 +224,8 @@ $stmt = $pdo->prepare($query_str);
 $stmt->execute($params);
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-function role_label($r) {
+function role_label($r)
+{
     $map = [
         'criminology_student' => 'Criminology Student',
         'faculty_researcher' => 'Faculty Researcher',
@@ -324,7 +328,7 @@ function role_label($r) {
                             <input type="text" name="search" class="form-control-inline"
                                 placeholder="Search by name, email, department..."
                                 value="<?php echo htmlspecialchars($search); ?>" style="min-width: 250px;">
-                            
+
                             <select name="role" class="form-control-inline">
                                 <option value="">All Roles</option>
                                 <option value="super_admin" <?php echo $filter_role === 'super_admin' ? 'selected' : ''; ?>>Super Administrator</option>
@@ -335,11 +339,16 @@ function role_label($r) {
 
                             <select name="status" class="form-control-inline">
                                 <option value="">All Statuses</option>
-                                <option value="active" <?php echo $filter_status === 'active' ? 'selected' : ''; ?>>Active</option>
-                                <option value="inactive" <?php echo $filter_status === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
-                                <option value="pending" <?php echo $filter_status === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                <option value="rejected" <?php echo $filter_status === 'rejected' ? 'selected' : ''; ?>>Rejected</option>
-                                <option value="suspended" <?php echo $filter_status === 'suspended' ? 'selected' : ''; ?>>Suspended</option>
+                                <option value="active" <?php echo $filter_status === 'active' ? 'selected' : ''; ?>>Active
+                                </option>
+                                <option value="inactive" <?php echo $filter_status === 'inactive' ? 'selected' : ''; ?>>
+                                    Inactive</option>
+                                <option value="pending" <?php echo $filter_status === 'pending' ? 'selected' : ''; ?>>
+                                    Pending</option>
+                                <option value="rejected" <?php echo $filter_status === 'rejected' ? 'selected' : ''; ?>>
+                                    Rejected</option>
+                                <option value="suspended" <?php echo $filter_status === 'suspended' ? 'selected' : ''; ?>>
+                                    Suspended</option>
                             </select>
 
                             <button type="submit" class="btn btn-secondary">Filter</button>
@@ -379,8 +388,10 @@ function role_label($r) {
                                                 </span>
                                             </td>
                                             <td>
-                                                <span style="display:block; font-weight:500;"><?php echo htmlspecialchars($user['department'] ?: '—'); ?></span>
-                                                <span style="font-size:.75rem; color:#888;"><?php echo htmlspecialchars($user['affiliation'] ?: '—'); ?></span>
+                                                <span
+                                                    style="display:block; font-weight:500;"><?php echo htmlspecialchars($user['department'] ?: '—'); ?></span>
+                                                <span
+                                                    style="font-size:.75rem; color:#888;"><?php echo htmlspecialchars($user['affiliation'] ?: '—'); ?></span>
                                             </td>
                                             <td>
                                                 <span class="badge badge-<?php echo $user['status']; ?>">
@@ -671,7 +682,7 @@ function role_label($r) {
             document.getElementById("resetModal").classList.remove("active");
         }
     </script>
-<?php include dirname(__DIR__) . '/support-assistant/support_widget.php'; ?>
+    <?php include dirname(__DIR__) . '/support-assistant/support_widget.php'; ?>
 </body>
 
 </html>

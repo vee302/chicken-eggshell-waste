@@ -12,7 +12,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset(
 }
 
 $student_id = $_SESSION['user_id'] ?? 0;
-$test_id = isset($_GET['test_id']) ? (int)$_GET['test_id'] : 0;
+$test_id = isset($_GET['test_id']) ? (int) $_GET['test_id'] : 0;
 
 if ($test_id <= 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid trial ID.']);
@@ -47,11 +47,7 @@ try {
     // Add image exists check
     $trial['image_exists'] = false;
     if (!empty($trial['image_path'])) {
-        $filename = basename($trial['image_path']);
-        $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
-        if (!file_exists($filePath)) {
-            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
-        }
+        $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $trial['image_path'];
         if (file_exists($filePath)) {
             $trial['image_exists'] = true;
         }

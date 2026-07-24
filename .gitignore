@@ -18,10 +18,11 @@ uploads/**
 !uploads/**/
 !uploads/**/.gitkeep
 
-# Environment variables
+# Environment variables and Credentials
 .env
 .env.*
 !.env.example
+config/gdrive_credentials.json
 
 # Backups and Logs
 /admin/backups/

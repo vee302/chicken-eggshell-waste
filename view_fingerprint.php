@@ -1,6 +1,7 @@
 <?php
 // view_fingerprint.php — Secure Fingerprint Image Viewer
 require_once 'config.php';
+require_once 'includes/gdrive_service.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
@@ -10,10 +11,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 $user_role = $_SESSION['user_role'] ?? '';
-$user_id   = $_SESSION['user_id']  ?? 0;
+$user_id = $_SESSION['user_id'] ?? 0;
 
 // Get test_id from URL
-$test_id = isset($_GET['test_id']) ? (int)$_GET['test_id'] : 0;
+$test_id = isset($_GET['test_id']) ? (int) $_GET['test_id'] : 0;
 if ($test_id <= 0) {
     http_response_code(400);
     echo "Bad Request: Invalid trial ID.";
@@ -22,7 +23,7 @@ if ($test_id <= 0) {
 
 try {
     // Query fingerprint_tests
-    $stmt = $pdo->prepare("SELECT student_id, image_path, enhanced_image_path, status FROM fingerprint_tests WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT student_id, image_path, enhanced_image_path, gdrive_file_id, status FROM fingerprint_tests WHERE id = ?");
     $stmt->execute([$test_id]);
     $test = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -32,10 +33,11 @@ try {
         exit;
     }
 
-    $owner_id            = (int)$test['student_id'];
-    $image_path          = $test['image_path'];
+    $owner_id = (int) $test['student_id'];
+    $image_path = $test['image_path'];
     $enhanced_image_path = $test['enhanced_image_path'];
-    $status              = $test['status'];
+    $gdrive_file_id = $test['gdrive_file_id'] ?? null;
+    $status = $test['status'];
 
     // Check authorization:
     // - super_admin
@@ -74,15 +76,19 @@ try {
         }
         $filepath = __DIR__ . '/uploads/fingerprint_enhanced/' . basename($enhanced_image_path);
     } else {
+        // Try streaming directly from Google Drive first if File ID is present
+        if (!empty($gdrive_file_id)) {
+            if (gdrive_stream_file($gdrive_file_id)) {
+                exit;
+            }
+        }
+
         if (empty($image_path)) {
             http_response_code(404);
             echo "Not Found: No original image associated with this record.";
             exit;
         }
-        $filepath = __DIR__ . '/uploads/trial_records/' . basename($image_path);
-        if (!file_exists($filepath)) {
-            $filepath = __DIR__ . '/uploads/fingerprints/' . basename($image_path);
-        }
+        $filepath = __DIR__ . '/uploads/fingerprints/' . basename($image_path);
     }
 
     // Check if the file exists on the server
@@ -97,9 +103,12 @@ try {
     if (!$mime || !str_starts_with($mime, 'image/')) {
         // Fallback mime type based on extension
         $ext = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
-        if ($ext === 'png') $mime = 'image/png';
-        elseif ($ext === 'webp') $mime = 'image/webp';
-        else $mime = 'image/jpeg';
+        if ($ext === 'png')
+            $mime = 'image/png';
+        elseif ($ext === 'webp')
+            $mime = 'image/webp';
+        else
+            $mime = 'image/jpeg';
     }
 
     header("Content-Type: " . $mime);

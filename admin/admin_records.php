@@ -61,11 +61,7 @@ $trial_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 foreach ($trial_records as &$rec) {
     $rec['image_exists'] = false;
     if (!empty($rec['image_path'])) {
-        $filename = basename($rec['image_path']);
-        $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
-        if (!file_exists($filePath)) {
-            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
-        }
+        $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $rec['image_path'];
         if (file_exists($filePath)) {
             $rec['image_exists'] = true;
         }

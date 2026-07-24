@@ -259,6 +259,7 @@ try {
     $addTestColumn('enhanced_image_path', "`enhanced_image_path` VARCHAR(255) DEFAULT NULL AFTER `image_path`");
     $addTestColumn('image_label', "`image_label` VARCHAR(255) DEFAULT NULL AFTER `image_path`");
     $addTestColumn('image_hash', "`image_hash` VARCHAR(64) DEFAULT NULL AFTER `image_path`");
+    $addTestColumn('gdrive_file_id', "`gdrive_file_id` VARCHAR(255) DEFAULT NULL AFTER `image_hash`");
 
     if (in_array('created_by', $testCols, true)) {
         $pdo->exec("UPDATE `fingerprint_tests` SET `student_id` = `created_by` WHERE `student_id` IS NULL");

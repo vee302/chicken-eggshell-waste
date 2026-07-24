@@ -12,8 +12,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset(
 }
 
 $student_id = $_SESSION['user_id'] ?? 0;
-$filter_status  = $_GET['status']  ?? '';
-$filter_powder  = $_GET['powder']  ?? '';
+$filter_status = $_GET['status'] ?? '';
+$filter_powder = $_GET['powder'] ?? '';
 $filter_surface = $_GET['surface'] ?? '';
 
 try {
@@ -53,11 +53,7 @@ try {
     foreach ($records as &$r) {
         $r['image_exists'] = false;
         if (!empty($r['image_path'])) {
-            $filename = basename($r['image_path']);
-            $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
-            if (!file_exists($filePath)) {
-                $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
-            }
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . basename($r['image_path']);
             if (file_exists($filePath)) {
                 $r['image_exists'] = true;
             }

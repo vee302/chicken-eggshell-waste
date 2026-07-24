@@ -47,11 +47,7 @@ try {
     foreach ($records as &$row) {
         $row['image_exists'] = false;
         if (!empty($row['image_path'])) {
-            $filename = basename($row['image_path']);
-            $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
-            if (!file_exists($filePath)) {
-                $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
-            }
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $row['image_path'];
             if (file_exists($filePath)) {
                 $row['image_exists'] = true;
             }
@@ -352,7 +348,8 @@ try {
         }
 
         /* Image Preview Box */
-        .inspect-img-box, .comp-img-box {
+        .inspect-img-box,
+        .comp-img-box {
             background: #fafafa;
             border: 1px solid #e9ecef;
             border-radius: 12px;
@@ -365,14 +362,16 @@ try {
             min-height: 250px;
         }
 
-        .inspect-img-box img, .comp-img-box img {
+        .inspect-img-box img,
+        .comp-img-box img {
             max-height: 250px;
             max-width: 100%;
             object-fit: contain;
             border-radius: 8px;
         }
 
-        .inspect-img-caption, .comp-img-subtitle {
+        .inspect-img-caption,
+        .comp-img-subtitle {
             font-size: 0.75rem;
             color: #6c757d;
             text-align: center;
@@ -461,7 +460,10 @@ try {
         }
 
         /* Cards & Analysis Notes Boxes */
-        .analysis-notes-box, .comp-explanation-box, .comp-img-card, .info-details-card {
+        .analysis-notes-box,
+        .comp-explanation-box,
+        .comp-img-card,
+        .info-details-card {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 12px;
@@ -501,7 +503,8 @@ try {
             color: var(--medium-green, #2d6a4f);
         }
 
-        .analysis-notes-title, .comp-explanation-title {
+        .analysis-notes-title,
+        .comp-explanation-title {
             font-size: 0.9rem;
             font-weight: 700;
             color: var(--dark-green, #1b4332);
@@ -846,7 +849,7 @@ try {
                                 <?php else: ?>
                                     <?php foreach ($records as $i => $r): ?>
                                         <tr data-trial-db-id="<?= $r['id'] ?>"
-                                            onclick="openDetailModalByData(<?= (int)$r['id'] ?>)">
+                                            onclick="openDetailModalByData(<?= (int) $r['id'] ?>)">
                                             <td style="font-weight: 700; color: var(--dark-green);">
                                                 <?= htmlspecialchars($r['trial_id'] ?: 'TR-' . str_pad($r['id'], 4, '0', STR_PAD_LEFT)) ?>
                                             </td>
@@ -923,10 +926,10 @@ try {
                                                 <div
                                                     style="display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:nowrap;">
                                                     <button type="button" class="btn btn-secondary btn-sm"
-                                                        onclick="event.stopPropagation(); openDetailModalByData(<?= (int)$r['id'] ?>);"
+                                                        onclick="event.stopPropagation(); openDetailModalByData(<?= (int) $r['id'] ?>);"
                                                         style="font-size:0.75rem; padding:4px 8px;">View Details</button>
                                                     <button type="button" class="btn btn-primary btn-sm"
-                                                        onclick="event.stopPropagation(); openComparisonModalByData(<?= (int)$r['id'] ?>);"
+                                                        onclick="event.stopPropagation(); openComparisonModalByData(<?= (int) $r['id'] ?>);"
                                                         style="background:#2FBF71; border-color:#2FBF71; color:#10261D; font-weight:700; font-size:0.75rem; padding:4px 8px;">View
                                                         Comparison</button>
                                                     <a href="print_fingerprint_report.php?test_id=<?= $r['id'] ?>"
@@ -1718,10 +1721,10 @@ try {
                         }
                     }
 
-                    ['comp-val-clarity','comp-val-contrast','comp-val-visibility','comp-val-sharpness','comp-val-adhesion'].forEach(id => {
+                    ['comp-val-clarity', 'comp-val-contrast', 'comp-val-visibility', 'comp-val-sharpness', 'comp-val-adhesion'].forEach(id => {
                         const el = document.getElementById(id); if (el) el.textContent = '—';
                     });
-                    ['comp-fill-clarity','comp-fill-contrast','comp-fill-visibility','comp-fill-sharpness','comp-fill-adhesion'].forEach(id => {
+                    ['comp-fill-clarity', 'comp-fill-contrast', 'comp-fill-visibility', 'comp-fill-sharpness', 'comp-fill-adhesion'].forEach(id => {
                         const el = document.getElementById(id); if (el) el.style.width = '0%';
                     });
                 }

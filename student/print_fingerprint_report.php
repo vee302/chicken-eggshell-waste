@@ -7,7 +7,8 @@ require_once 'auth.php';
 check_student_auth();
 
 // Themed error display function that cleans output buffer
-function showThemedError($error_message, $http_code = 500) {
+function showThemedError($error_message, $http_code = 500)
+{
     if (ob_get_length()) {
         ob_clean();
     }
@@ -16,6 +17,7 @@ function showThemedError($error_message, $http_code = 500) {
     ?>
     <!DOCTYPE html>
     <html lang="en">
+
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,34 +32,39 @@ function showThemedError($error_message, $http_code = 500) {
                 margin: 0;
                 font-family: system-ui, -apple-system, sans-serif;
             }
+
             .error-card {
                 background: white;
                 padding: 2.5rem;
                 border-radius: 16px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
                 max-width: 450px;
                 width: 90%;
                 text-align: center;
                 border-top: 5px solid #1b4332;
             }
+
             .error-icon {
                 color: #ef4444;
                 margin-bottom: 1.25rem;
                 display: flex;
                 justify-content: center;
             }
+
             .error-title {
                 color: #1b4332;
                 font-size: 1.25rem;
                 font-weight: 700;
                 margin-bottom: 0.75rem;
             }
+
             .error-desc {
                 color: #4b5563;
                 font-size: 0.9rem;
                 line-height: 1.5;
                 margin-bottom: 1.5rem;
             }
+
             .btn-back {
                 display: inline-block;
                 background: #1b4332;
@@ -69,16 +76,21 @@ function showThemedError($error_message, $http_code = 500) {
                 font-size: 0.88rem;
                 transition: background 0.2s;
             }
+
             .btn-back:hover {
                 background: #2d6a4f;
             }
         </style>
     </head>
+
     <body>
         <div class="error-card">
             <div class="error-icon">
-                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
             </div>
             <div class="error-title">Evaluation Report Error</div>
@@ -86,13 +98,14 @@ function showThemedError($error_message, $http_code = 500) {
             <a href="student_dashboard.php" class="btn-back">Go back to Dashboard</a>
         </div>
     </body>
+
     </html>
     <?php
     exit;
 }
 
 $student_id = $_SESSION['user_id'] ?? 0;
-$test_id = isset($_GET['test_id']) ? (int)$_GET['test_id'] : 0;
+$test_id = isset($_GET['test_id']) ? (int) $_GET['test_id'] : 0;
 
 if ($test_id <= 0) {
     error_log("print_fingerprint_report.php: Invalid test_id = " . $test_id);
@@ -127,11 +140,7 @@ try {
     // Verify image file existence
     $image_exists = false;
     if (!empty($trial['image_path'])) {
-        $filename = basename($trial['image_path']);
-        $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
-        if (!file_exists($filePath)) {
-            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
-        }
+        $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $trial['image_path'];
         if (file_exists($filePath)) {
             $image_exists = true;
         }
@@ -144,24 +153,26 @@ try {
     showThemedError("Unable to generate Fingerprint Evaluation Report. Please try again later or contact the System Administrator.", 500);
 }
 
-function safeFloat($value, $default = 0.0) {
+function safeFloat($value, $default = 0.0)
+{
     if ($value === null || $value === '') {
         return $default;
     }
     if (is_numeric($value)) {
-        return (float)$value;
+        return (float) $value;
     }
     return $default;
 }
 
-function formatScore($value) {
+function formatScore($value)
+{
     if ($value === null || $value === '') {
         return 'N/A';
     }
     if (!is_numeric($value)) {
         return 'N/A';
     }
-    return number_format((float)$value, 1) . '%';
+    return number_format((float) $value, 1) . '%';
 }
 
 // Format trial ID
@@ -169,6 +180,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -182,13 +194,13 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             font-family: 'Inter', Arial, sans-serif;
             color: #1f2937;
         }
-        
+
         .print-btn-container {
             max-width: 794px;
             margin: 0 auto 15px auto;
             text-align: right;
         }
-        
+
         .btn-print {
             background-color: #10b981;
             color: white;
@@ -198,9 +210,10 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             font-weight: 600;
             border-radius: 6px;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             transition: background 0.2s;
         }
+
         .btn-print:hover {
             background-color: #059669;
         }
@@ -208,7 +221,8 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
         .print-report {
             background: white;
             width: 100%;
-            max-width: 794px; /* A4 width at 96 DPI */
+            max-width: 794px;
+            /* A4 width at 96 DPI */
             margin: 0 auto;
             padding: 40px;
             box-sizing: border-box;
@@ -224,7 +238,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             padding-bottom: 20px;
             margin-bottom: 25px;
         }
-        
+
         .report-header h1 {
             margin: 0;
             font-size: 1.6rem;
@@ -262,7 +276,8 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             font-size: 0.85rem;
         }
 
-        .info-table th, .info-table td {
+        .info-table th,
+        .info-table td {
             text-align: left;
             padding: 8px 10px;
             border-bottom: 1px solid #e5e7eb;
@@ -298,7 +313,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             max-height: 240px;
             object-fit: contain;
             border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .image-missing-text {
@@ -379,21 +394,25 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
         .status-pending_validation {
             background-color: #fef3c7;
             color: #d97706;
             border: 1px solid #fde68a;
         }
+
         .status-approved {
             background-color: #d1fae5;
             color: #065f46;
             border: 1px solid #a7f3d0;
         }
+
         .status-rejected {
             background-color: #fee2e2;
             color: #991b1b;
             border: 1px solid #fca5a5;
         }
+
         .status-needs_revision {
             background-color: #dbeafe;
             color: #1e40af;
@@ -411,7 +430,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             color: #374151;
             margin-top: 10px;
         }
-        
+
         .remarks-box strong {
             color: #12372a;
             display: block;
@@ -424,7 +443,9 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
         }
 
         @media print {
-            html, body {
+
+            html,
+            body {
                 width: 210mm;
                 height: 297mm;
                 margin: 0;
@@ -463,13 +484,16 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                 margin-bottom: 15px;
                 border-bottom: 2px solid #12372a;
             }
+
             .report-header h1 {
                 font-size: 20px !important;
             }
+
             .report-header h2 {
                 font-size: 14px !important;
                 margin: 4px 0 2px 0;
             }
+
             .report-header p {
                 font-size: 13px !important;
                 margin: 2px 0 0 0;
@@ -481,7 +505,8 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                 margin-bottom: 15px;
             }
 
-            .info-table th, .info-table td {
+            .info-table th,
+            .info-table td {
                 padding: 6px 8px;
                 font-size: 12px !important;
             }
@@ -490,7 +515,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                 padding: 12px;
                 min-height: 200px;
             }
-            
+
             .image-container img {
                 max-width: 210px !important;
                 max-height: 230px !important;
@@ -514,9 +539,11 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                 padding: 10px 8px;
                 border-radius: 4px;
             }
+
             .score-card-label {
                 font-size: 10px !important;
             }
+
             .score-card-value {
                 font-size: 20px !important;
             }
@@ -524,9 +551,11 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             .score-card.main-score {
                 padding: 12px 20px;
             }
+
             .score-card.main-score .score-card-label {
                 font-size: 13px !important;
             }
+
             .score-card.main-score .score-card-value {
                 font-size: 24px !important;
             }
@@ -565,31 +594,38 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                 padding: 10px;
                 background-color: #f3f4f6;
             }
+
             .print-report {
                 padding: 20px;
                 box-shadow: none;
                 border-radius: 8px;
                 max-width: 100%;
             }
+
             .report-grid {
                 grid-template-columns: 1fr;
                 gap: 1.5rem;
             }
+
             .image-container {
                 min-height: auto;
                 padding: 15px;
             }
+
             .image-container img {
                 max-width: 100%;
                 height: auto;
             }
+
             .scores-grid {
                 grid-template-columns: 1fr 1fr;
                 gap: 10px;
             }
+
             .score-card.main-score {
                 grid-column: span 2;
             }
+
             .print-btn-container {
                 position: fixed;
                 bottom: 20px;
@@ -597,6 +633,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                 z-index: 1000;
                 margin: 0;
             }
+
             .btn-print {
                 background-color: #1b4332;
                 color: white;
@@ -606,7 +643,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                 font-weight: 700;
                 border-radius: 50px;
                 cursor: pointer;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
                 display: flex;
                 align-items: center;
                 gap: 8px;
@@ -614,14 +651,17 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
         }
     </style>
 </head>
+
 <body>
 
     <div class="print-btn-container no-print">
         <button class="btn-print" onclick="window.print()">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;">
-                <polyline points="6 9 6 2 18 2 18 9"/>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                <rect x="6" y="14" width="12" height="8"/>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round"
+                style="display:inline-block; vertical-align:middle; margin-right:4px;">
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
             </svg>
             Print / Download PDF
         </button>
@@ -686,7 +726,8 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                     </tr>
                     <tr>
                         <th>Validation Date</th>
-                        <td><?= $trial['validated_at'] ? date('F d, Y h:i A', strtotime($trial['validated_at'])) : '—' ?></td>
+                        <td><?= $trial['validated_at'] ? date('F d, Y h:i A', strtotime($trial['validated_at'])) : '—' ?>
+                        </td>
                     </tr>
                 </table>
             </div>
@@ -694,15 +735,21 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             <!-- Fingerprint Image -->
             <div class="image-container">
                 <?php if ($image_exists): ?>
-                    <img id="report-image" src="../view_fingerprint.php?test_id=<?= $trial['id'] ?>" alt="Fingerprint Image">
+                    <img id="report-image" src="../view_fingerprint.php?test_id=<?= $trial['id'] ?>"
+                        alt="Fingerprint Image">
                 <?php else: ?>
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; color:#9ca3af; text-align:center; height:100%; width:100%;">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;color:#d1d5db; display:block; margin-left:auto; margin-right:auto;">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                            <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    <div
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; color:#9ca3af; text-align:center; height:100%; width:100%;">
+                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            style="margin-bottom:8px;color:#d1d5db; display:block; margin-left:auto; margin-right:auto;">
+                            <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                            <line x1="12" y1="22.08" x2="12" y2="12" />
                         </svg>
-                        <div class="image-missing-text" style="color:#6b7280; font-size:0.8rem; font-weight:600;">Fingerprint Image Not Available</div>
+                        <div class="image-missing-text" style="color:#6b7280; font-size:0.8rem; font-weight:600;">
+                            Fingerprint Image Not Available</div>
                     </div>
                 <?php endif; ?>
             </div>
@@ -713,20 +760,21 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
             <div class="report-section remarks-section">
                 <div class="remarks-box" style="border-left: 4px solid #d97706; background-color: #fffbeb;">
                     <strong>Awaiting Faculty Validation</strong>
-                    This fingerprint trial has been uploaded and preliminary metrics are calculated. Official ratings and faculty approval are currently pending review.
+                    This fingerprint trial has been uploaded and preliminary metrics are calculated. Official ratings and
+                    faculty approval are currently pending review.
                 </div>
             </div>
         <?php endif; ?>
 
         <!-- Official Faculty Final Evaluation (Only for Approved records, shown FIRST) -->
-        <?php if ($trial['status'] === 'approved'): 
+        <?php if ($trial['status'] === 'approved'):
             $f_score = safeFloat($trial['faculty_final_score']);
             $f_clarity = safeFloat($trial['faculty_ridge_clarity_score']);
             $f_contrast = safeFloat($trial['faculty_contrast_score']);
             $f_visibility = safeFloat($trial['faculty_visibility_score']);
             $f_sharpness = safeFloat($trial['faculty_ridge_clarity_score']); // fallback
             $f_adhesion = safeFloat($trial['faculty_adhesion_score']);
-        ?>
+            ?>
             <div class="report-section">
                 <div class="section-title">Official Faculty Final Evaluation</div>
                 <div class="scores-grid metric-grid">
@@ -798,10 +846,15 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
                 <div class="section-title">Validation Remarks</div>
                 <div class="remarks-box">
                     <strong>Faculty Review Remarks / Feedback:</strong>
-                    <p class="remarks-text" style="margin: 0; white-space: pre-wrap;"><?= $trial['faculty_remarks'] ? htmlspecialchars($trial['faculty_remarks']) : 'No remarks or feedback provided by the faculty reviewer.' ?></p>
-                    <div style="margin-top: 15px; font-size: 0.8rem; color: #4b5563; border-top: 1px solid #e5e7eb; padding-top: 8px; display: flex; justify-content: space-between;">
-                        <span><strong>Validated By:</strong> <?= htmlspecialchars($trial['faculty_reviewer'] ?: 'Faculty Reviewer') ?></span>
-                        <span><strong>Validated At:</strong> <?= $trial['validated_at'] ? date('F d, Y h:i A', strtotime($trial['validated_at'])) : '—' ?></span>
+                    <p class="remarks-text" style="margin: 0; white-space: pre-wrap;">
+                        <?= $trial['faculty_remarks'] ? htmlspecialchars($trial['faculty_remarks']) : 'No remarks or feedback provided by the faculty reviewer.' ?>
+                    </p>
+                    <div
+                        style="margin-top: 15px; font-size: 0.8rem; color: #4b5563; border-top: 1px solid #e5e7eb; padding-top: 8px; display: flex; justify-content: space-between;">
+                        <span><strong>Validated By:</strong>
+                            <?= htmlspecialchars($trial['faculty_reviewer'] ?: 'Faculty Reviewer') ?></span>
+                        <span><strong>Validated At:</strong>
+                            <?= $trial['validated_at'] ? date('F d, Y h:i A', strtotime($trial['validated_at'])) : '—' ?></span>
                     </div>
                 </div>
             </div>
@@ -811,7 +864,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
-            
+
             if (!isMobile) {
                 const img = document.getElementById('report-image');
                 if (img) {
@@ -833,6 +886,7 @@ $trial_id_str = $trial['trial_id'] ?: 'TR-' . str_pad($trial['id'], 4, '0', STR_
         });
     </script>
 </body>
+
 </html>
 <?php
 ob_end_flush();

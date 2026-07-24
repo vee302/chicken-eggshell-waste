@@ -2,12 +2,14 @@
 // student/ajax_upload_fingerprint.php — Student AJAX Upload Fingerprint with Anti-Spam & Duplicate Submission Protection
 @ob_start();
 require_once '../config.php';
+require_once '../includes/gdrive_service.php';
 require_once 'auth.php';
 
 header('Content-Type: application/json');
 
 // Helper function to send standard JSON response with new token and exit
-function sendResponse($success, $message, $data = null) {
+function sendResponse($success, $message, $data = null)
+{
     if (ob_get_length()) {
         ob_end_clean();
     }
@@ -55,14 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['fingerprint_image']
     sendResponse(false, 'No image file uploaded.');
 }
 
-$file         = $_FILES['fingerprint_image'];
-$powder_type  = trim($_POST['powder_type'] ?? '');
+$file = $_FILES['fingerprint_image'];
+$powder_type = trim($_POST['powder_type'] ?? '');
 $surface_type = trim($_POST['surface_type'] ?? '');
-$label        = trim($_POST['image_label'] ?? '');
-$student_id   = $_SESSION['user_id'] ?? 0;
+$label = trim($_POST['image_label'] ?? '');
+$student_id = $_SESSION['user_id'] ?? 0;
 
-$allowed_exts  = ['jpg', 'jpeg', 'png', 'webp'];
-$max_bytes     = 5 * 1024 * 1024; // 5 MB
+$allowed_exts = ['jpg', 'jpeg', 'png', 'webp'];
+$max_bytes = 5 * 1024 * 1024; // 5 MB
 
 if (!$powder_type || !$surface_type) {
     sendResponse(false, 'Powder Type and Surface Type are required.');
@@ -104,7 +106,7 @@ try {
 }
 
 $filename = $trial_id . '.' . $ext;
-$dest_dir = dirname(__DIR__) . '/uploads/trial_records/';
+$dest_dir = dirname(__DIR__) . '/uploads/fingerprints/';
 if (!is_dir($dest_dir)) {
     @mkdir($dest_dir, 0777, true);
 } else {
@@ -121,7 +123,7 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
 
     // Determine absolute paths for Python script execution
     $python_script = dirname(__DIR__) . '/python/evaluate_fingerprint.py';
-    
+
     // Default score fields to NULL (Awaiting Faculty Validation)
     $clarity = null;
     $visibility = null;
@@ -132,17 +134,17 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
     $ai_evaluated_at = null;
     $evaluation_source = 'AI Preliminary';
     $enhanced_image_path = null;
-    
+
     $ai_msg = "";
     $ai_success = false;
-    
+
     // Execute Python script safely checking if shell_exec is disabled
     $output = null;
     if (function_exists('shell_exec') && !in_array('shell_exec', array_map('trim', explode(',', ini_get('disable_functions'))))) {
         $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " " . escapeshellarg($surface_type) . " 2>&1";
         $output = @shell_exec($command);
     }
-    
+
     if ($output === null || empty(trim($output))) {
         // Python missing or command failed
         $ai_msg = "AI evaluation service is currently unavailable. Please contact the administrator.";
@@ -204,18 +206,38 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
             sendResponse(false, 'Please wait 15 seconds before submitting another fingerprint evaluation.');
         }
 
+        // Upload to Google Drive
+        $gdrive_file_id = gdrive_upload_file($dest, $filename);
+        if (!$gdrive_file_id) {
+            $gdrive_file_id = null;
+        }
+
         // Insert trial record
         $stmt = $pdo->prepare("
             INSERT INTO fingerprint_tests 
-                (trial_id, student_id, image_path, enhanced_image_path, image_label, image_hash, powder_type, surface_type, 
+                (trial_id, student_id, image_path, enhanced_image_path, image_label, image_hash, gdrive_file_id, powder_type, surface_type, 
                  ridge_clarity_score, visibility_score, adhesion_score, contrast_score, accuracy_score, 
                  status, submitted_at, ai_evaluated_at, evaluation_source, ai_accuracy_score)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_validation', NOW(), ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_validation', NOW(), ?, ?, ?)
         ");
         $stmt->execute([
-            $trial_id, $student_id, $filename, $enhanced_image_path, $label, $image_hash, $powder_type, $surface_type,
-            $clarity, $visibility, $adhesion, $contrast, $accuracy, 
-            $ai_evaluated_at, $evaluation_source, $ai_accuracy
+            $trial_id,
+            $student_id,
+            $filename,
+            $enhanced_image_path,
+            $label,
+            $image_hash,
+            $gdrive_file_id,
+            $powder_type,
+            $surface_type,
+            $clarity,
+            $visibility,
+            $adhesion,
+            $contrast,
+            $accuracy,
+            $ai_evaluated_at,
+            $evaluation_source,
+            $ai_accuracy
         ]);
 
         $inserted_id = $pdo->lastInsertId();

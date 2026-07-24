@@ -14,7 +14,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset(
 try {
     $where_clause = "WHERE ft.status = 'pending_validation'";
     $params = [];
-    
+
     // Dynamic check for assigned_faculty_id column to restrict visibility
     $check_cols = $pdo->query("SHOW COLUMNS FROM `fingerprint_tests` LIKE 'assigned_faculty_id'")->fetch();
     if ($check_cols) {
@@ -37,11 +37,7 @@ try {
     foreach ($submissions as &$s) {
         $s['image_exists'] = false;
         if (!empty($s['image_path'])) {
-            $filename = basename($s['image_path']);
-            $filePath = dirname(__DIR__) . '/uploads/trial_records/' . $filename;
-            if (!file_exists($filePath)) {
-                $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $filename;
-            }
+            $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $s['image_path'];
             if (file_exists($filePath)) {
                 $s['image_exists'] = true;
             }

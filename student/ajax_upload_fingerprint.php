@@ -206,11 +206,8 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
             sendResponse(false, 'Please wait 15 seconds before submitting another fingerprint evaluation.');
         }
 
-        // Upload to Google Drive
-        $gdrive_file_id = gdrive_upload_file($dest, $filename);
-        if (!$gdrive_file_id) {
-            $gdrive_file_id = null;
-        }
+        // Google Drive upload will happen only when Faculty Researcher approves the submission
+        $gdrive_file_id = null;
 
         // Insert trial record
         $stmt = $pdo->prepare("

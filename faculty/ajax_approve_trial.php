@@ -1,6 +1,7 @@
 <?php
 // faculty/ajax_approve_trial.php — Faculty AJAX Approve Fingerprint Trial
 require_once '../config.php';
+require_once '../includes/gdrive_service.php';
 require_once 'auth.php';
 
 header('Content-Type: application/json');
@@ -61,13 +62,26 @@ $faculty_final_score = round(
 try {
     $pdo->beginTransaction();
 
-    // Verify if test ID is valid
-    $check_stmt = $pdo->prepare("SELECT id FROM fingerprint_tests WHERE id = ?");
+    // Verify if test ID is valid & fetch image details
+    $check_stmt = $pdo->prepare("SELECT id, image_path, gdrive_file_id FROM fingerprint_tests WHERE id = ?");
     $check_stmt->execute([$test_id]);
-    if ($check_stmt->rowCount() === 0) {
+    $trial = $check_stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$trial) {
         $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => 'Trial record not found.']);
         exit;
+    }
+
+    $gdrive_file_id = $trial['gdrive_file_id'] ?? null;
+    if (empty($gdrive_file_id) && !empty($trial['image_path'])) {
+        $local_path = dirname(__DIR__) . '/uploads/fingerprints/' . basename($trial['image_path']);
+        if (file_exists($local_path)) {
+            $gdrive_file_id = gdrive_upload_file($local_path, basename($trial['image_path']));
+            if (!$gdrive_file_id) {
+                $gdrive_file_id = null;
+            }
+        }
     }
 
     $stmt = $pdo->prepare("
@@ -80,6 +94,7 @@ try {
             faculty_contrast_score = ?,
             faculty_final_score = ?,
             faculty_remarks = ?,
+            gdrive_file_id = ?,
             validated_by = ?,
             validated_at = NOW()
         WHERE id = ?
@@ -92,6 +107,7 @@ try {
         $faculty_contrast_score,
         $faculty_final_score,
         $remarks,
+        $gdrive_file_id,
         $faculty_id,
         $test_id
     ]);

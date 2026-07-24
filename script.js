@@ -93,8 +93,8 @@ if (window.innerWidth <= 768) {
         if (width <= 480) {
             return {
                 x: 0,
-                y: height * -0.13,
-                scale: 0.60,
+                y: height * -0.05,
+                scale: 0.58,
                 rotation: 0
             };
         }
@@ -102,8 +102,8 @@ if (window.innerWidth <= 768) {
         if (width <= 768) {
             return {
                 x: 0,
-                y: height * -0.12,
-                scale: 0.60,
+                y: height * -0.05,
+                scale: 0.62,
                 rotation: 0
             };
         }
@@ -133,18 +133,11 @@ if (window.innerWidth <= 768) {
         // 1. Lock scroll during preloader
         document.body.classList.add("is-loading");
 
-        const product = document.querySelector("#mainProductVisual");
-        const jarImg = document.querySelector("#mainProductVisual .jar-image");
-        if (jarImg) {
-            jarImg.decoding = "async";
-            if (jarImg.decode) {
-                jarImg.decode().catch(() => {});
-            }
-        }
-
         // Calculate dynamic landing position relative to viewport center in real-time
         function getTargetPosition(targetSelector) {
             const target = document.querySelector(targetSelector);
+            const product = document.querySelector("#mainProductVisual");
+
             if (!target || !product) return { x: 0, y: 0 };
 
             const rect = target.getBoundingClientRect();
@@ -181,6 +174,7 @@ if (window.innerWidth <= 768) {
         const loaderPos = getTargetPosition(".intro-product-wrap");
         const loaderScale = getIntroJarScale();
         const initialLoaderScale = window.innerHeight <= 550 ? Math.min(0.82, loaderScale + 0.14) : 0.82;
+        const isMobile = window.innerWidth <= 768;
 
         // Calculate hero section starting coordinates using the shared function
         const heroState = getHeroJarState();
@@ -189,7 +183,8 @@ if (window.innerWidth <= 768) {
         const heroScale = heroState.scale;
         const heroRotation = heroState.rotation;
 
-        // Set static properties once on mainProductVisual
+        // Set initial centered states to ensure transform origin is perfect
+        // and place it at loader position initially, opacity 0, z-index 10000 (above loader background)
         gsap.set("#mainProductVisual", {
             position: "fixed",
             top: "50%",
@@ -204,16 +199,8 @@ if (window.innerWidth <= 768) {
             opacity: 0,
             visibility: "visible",
             zIndex: 10000,
-            force3D: true,
             overwrite: "auto"
         });
-
-        // Initialize cached quickSetters for high-frequency scroll performance
-        const setX = gsap.quickSetter(product, "x", "px");
-        const setY = gsap.quickSetter(product, "y", "px");
-        const setScale = gsap.quickSetter(product, "scale");
-        const setRotation = gsap.quickSetter(product, "rotation");
-        const setZIndex = gsap.quickSetter(product, "zIndex");
 
         // 2. Main Preloader Timeline
         const introTL = gsap.timeline({
@@ -296,9 +283,16 @@ if (window.innerWidth <= 768) {
 
         // Function to calculate and update jar coordinates dynamically based on timeline progress
         function updateJarPosition(progress) {
+            // If loader is active, don't let ScrollTrigger modify the position
             if (document.body.classList.contains("is-loading")) return;
-            if (!product) return;
 
+            const isMobile = window.innerWidth <= 768;
+            const product = document.querySelector("#mainProductVisual");
+            const targetContainer = document.querySelector("#processFinalJarTarget .step-image-wrap");
+
+            if (!product || !targetContainer) return;
+
+            // Calculate perfect dynamic responsive scale when landed in the final 100px target card slot
             const width = window.innerWidth;
             let finalLandedScale = 0.64; // Desktop default (perfectly achieves 95% height fill inside the 1:1 box)
             if (width <= 480) {
@@ -319,22 +313,25 @@ if (window.innerWidth <= 768) {
 
             // Get the shared hero coordinates/scales
             const heroState = getHeroJarState();
-            const heroX = heroState.x;
-            const heroY = heroState.y;
-            const heroScale = heroState.scale;
-            const heroRotation = heroState.rotation;
-
-            const problemX = problemTargetPos.x;
-            const problemY = problemTargetPos.y;
-            const problemScale = 1.15;
-            const problemRotation = -3; // Perfect natural slant
-
-            const landedX = targetPos.x;
-            const landedY = targetPos.y;
-
-            let currentZIndex = 999;
 
             if (progress < 1.0) {
+                // Return to body as a fixed element if it's currently nested in the card
+                if (product.parentElement !== document.body) {
+                    document.body.appendChild(product);
+                }
+
+                // DESKTOP & TABLET LOGIC
+                const heroX = heroState.x;
+                const heroY = heroState.y;
+                const heroScale = heroState.scale;
+                const heroRotation = heroState.rotation;
+
+                // Land the jar exactly over the glowing pedestal center dynamically!
+                const problemX = problemTargetPos.x;
+                const problemY = problemTargetPos.y;
+                const problemScale = 1.15;
+                const problemRotation = -3; // Perfect natural slant
+
                 if (progress < 0.40) {
                     // ==========================================
                     // 1st Page: "GREEN FORENSICS" (Hero)
@@ -382,30 +379,66 @@ if (window.innerWidth <= 768) {
 
                     // Quadratic Bezier Formula
                     const invT = 1 - easeT;
-                    x = invT * invT * problemX + 2 * invT * easeT * controlX + easeT * easeT * landedX;
-                    y = invT * invT * problemY + 2 * invT * easeT * controlY + easeT * easeT * landedY;
+                    x = invT * invT * problemX + 2 * invT * easeT * controlX + easeT * easeT * targetPos.x;
+                    y = invT * invT * problemY + 2 * invT * easeT * controlY + easeT * easeT * targetPos.y;
 
                     scale = problemScale + (finalLandedScale - problemScale) * easeT;
                     rotation = problemRotation + (0 - problemRotation) * easeT;
                 }
 
-                currentZIndex = 999;
-            } else {
-                // LANDED & LOCKED STATE: Pixel-perfect transform locking on target card slot WITHOUT DOM reparenting!
-                x = landedX;
-                y = landedY;
-                scale = finalLandedScale;
-                rotation = 0;
-                currentZIndex = 5;
-            }
+                // Dynamic Stacking: Float in the front (z-index: 999) so it overlays backgrounds and pedestal
+                let currentZIndex = 999;
 
-            // High-speed GPU setter updates
-            setX(x);
-            setY(y);
-            setScale(scale);
-            setRotation(rotation);
-            setZIndex(currentZIndex);
+                // Apply dynamic fixed calculations
+                gsap.set(product, {
+                    position: "fixed",
+                    top: "50%",
+                    left: "50%",
+                    xPercent: -50,
+                    yPercent: -50,
+                    x: x,
+                    y: y,
+                    scale: scale,
+                    rotation: rotation,
+                    opacity: 1,
+                    visibility: "visible",
+                    zIndex: currentZIndex,
+                    overwrite: "auto"
+                });
+            } else {
+                // LANDED & LOCKED STATE: Physically nest the product visual container inside the target card's .step-image-wrap!
+                if (!targetContainer.contains(product)) {
+                    targetContainer.appendChild(product);
+                }
+
+                // Force target container relative positioning and visible overflow
+                targetContainer.style.position = "relative";
+                targetContainer.style.overflow = "visible";
+
+                // Position it natively centered inside the box
+                gsap.set(product, {
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    xPercent: -50,
+                    yPercent: -50,
+                    x: 0,
+                    y: 0,
+                    scale: finalLandedScale,
+                    rotation: 0,
+                    opacity: 1,
+                    visibility: "visible",
+                    zIndex: 5
+                });
+            }
         }
+
+        // Set initial centered states to ensure transform origin is perfect
+        gsap.set("#mainProductVisual", {
+            xPercent: -50,
+            yPercent: -50,
+            transformOrigin: "center center"
+        });
 
         // Single ScrollTrigger to drive the jar position dynamically in real-time
         const jarTrigger = ScrollTrigger.create({

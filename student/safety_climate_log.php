@@ -118,6 +118,7 @@ try {
                                 <option value="glass">Glass</option>
                                 <option value="plastic">Plastic</option>
                                 <option value="metal">Metal</option>
+                                <option value="paper">Paper</option>
                             </select>
                         </div>
                         <div class="form-group">

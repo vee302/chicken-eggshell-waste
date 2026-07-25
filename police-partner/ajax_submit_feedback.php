@@ -33,9 +33,9 @@ if (empty($feedback_type)) {
 }
 
 if (!empty($surface_type) && $surface_type !== 'none') {
-    $allowed_surfaces = ['glass', 'plastic', 'metal'];
+    $allowed_surfaces = ['glass', 'plastic', 'metal', 'paper'];
     if (!in_array(strtolower($surface_type), $allowed_surfaces)) {
-        echo json_encode(['success' => false, 'message' => 'Invalid surface type selected. Allowed surfaces are Glass, Plastic, and Metal.']);
+        echo json_encode(['success' => false, 'message' => 'Invalid surface type selected. Allowed surfaces are Glass, Plastic, Metal, and Paper.']);
         exit;
     }
 }

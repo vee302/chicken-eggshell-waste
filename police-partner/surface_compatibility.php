@@ -8,7 +8,7 @@ $active_page = 'surface_compatibility';
 $partner_name = $_SESSION['user_name'] ?? 'Partner';
 $partner_id = $_SESSION['user_id'] ?? 0;
 
-$surfaces = ['glass', 'plastic', 'metal'];
+$surfaces = ['glass', 'plastic', 'metal', 'paper'];
 $compatibility_data = [];
 
 try {

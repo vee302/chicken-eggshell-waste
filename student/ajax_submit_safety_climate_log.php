@@ -80,9 +80,9 @@ if (empty($surface_type)) {
     echo json_encode(['success' => false, 'message' => 'Surface Material Type is required.']);
     exit;
 }
-$allowed_surfaces = ['glass','plastic','metal'];
+$allowed_surfaces = ['glass','plastic','metal','paper'];
 if (!in_array(strtolower($surface_type), $allowed_surfaces)) {
-    echo json_encode(['success' => false, 'message' => 'Invalid Surface Material Type. Allowed surfaces are Glass, Plastic, and Metal.']);
+    echo json_encode(['success' => false, 'message' => 'Invalid Surface Material Type. Allowed surfaces are Glass, Plastic, Metal, and Paper.']);
     exit;
 }
 

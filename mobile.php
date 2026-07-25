@@ -582,6 +582,64 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
         </div>
     </section>
 
+    <!-- Implementation Timeline Section -->
+    <section class="timeline-section" id="timeline">
+        <div class="container-full">
+            <div class="section-header">
+                <span class="section-label">Roadmap</span>
+                <h2 class="section-title">Project Implementation</h2>
+            </div>
+
+            <div class="timeline-container">
+                <div class="timeline-track">
+                    <div class="timeline-item" data-phase="1">
+                        <div class="timeline-content">
+                            <div class="timeline-card-header">
+                                <span class="phase-badge">Phase 01</span>
+                                <span class="timeline-duration">Month 1-3</span>
+                            </div>
+                            <h3>Research &amp; Planning</h3>
+                            <p>Team organization, budget mapping, and primary raw material extraction</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item" data-phase="2">
+                        <div class="timeline-content">
+                            <div class="timeline-card-header">
+                                <span class="phase-badge">Phase 02</span>
+                                <span class="timeline-duration">Month 4-6</span>
+                            </div>
+                            <h3>Curriculum Integration</h3>
+                            <p>Criminology course module updates and forensic lab manual guides</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item" data-phase="3">
+                        <div class="timeline-content">
+                            <div class="timeline-card-header">
+                                <span class="phase-badge">Phase 03</span>
+                                <span class="timeline-duration">Month 7-9</span>
+                            </div>
+                            <h3>Community Extension</h3>
+                            <p>Local police department training, field testing, and forensic workshops</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item" data-phase="4">
+                        <div class="timeline-content">
+                            <div class="timeline-card-header">
+                                <span class="phase-badge">Phase 04</span>
+                                <span class="timeline-duration">Month 10+</span>
+                            </div>
+                            <h3>Monitoring &amp; Sustainability</h3>
+                            <p>Quality testing feedback loop, policy recommendations, and expansions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Benefits Section -->
     <section class="benefits-section" id="benefits">
         <div class="container">

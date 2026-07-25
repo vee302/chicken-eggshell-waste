@@ -47,7 +47,7 @@ try {
         $r['image_exists'] = false;
         if (!empty($r['image_path'])) {
             $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $r['image_path'];
-            if (file_exists($filePath)) {
+            if (file_exists($filePath) || !empty($r['gdrive_file_id']) || !empty($r['image_path'])) {
                 $r['image_exists'] = true;
             }
         }

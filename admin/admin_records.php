@@ -62,7 +62,7 @@ foreach ($trial_records as &$rec) {
     $rec['image_exists'] = false;
     if (!empty($rec['image_path'])) {
         $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $rec['image_path'];
-        if (file_exists($filePath)) {
+        if (file_exists($filePath) || !empty($rec['gdrive_file_id']) || !empty($rec['image_path'])) {
             $rec['image_exists'] = true;
         }
     }

@@ -46,7 +46,7 @@ try {
         $row['image_exists'] = false;
         if (!empty($row['image_path'])) {
             $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $row['image_path'];
-            if (file_exists($filePath)) {
+            if (file_exists($filePath) || !empty($row['gdrive_file_id']) || !empty($row['image_path'])) {
                 $row['image_exists'] = true;
             }
         }
@@ -75,7 +75,7 @@ if (isset($_GET['id'])) {
             $selected_trial['image_exists'] = false;
             if (!empty($selected_trial['image_path'])) {
                 $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $selected_trial['image_path'];
-                if (file_exists($filePath)) {
+                if (file_exists($filePath) || !empty($selected_trial['gdrive_file_id']) || !empty($selected_trial['image_path'])) {
                     $selected_trial['image_exists'] = true;
                 }
             }

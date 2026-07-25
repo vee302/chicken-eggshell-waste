@@ -54,14 +54,14 @@ try {
         $r['image_exists'] = false;
         if (!empty($r['image_path'])) {
             $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . basename($r['image_path']);
-            if (file_exists($filePath)) {
+            if (file_exists($filePath) || !empty($r['gdrive_file_id']) || !empty($r['image_path'])) {
                 $r['image_exists'] = true;
             }
         }
         $r['enhanced_image_exists'] = false;
         if (!empty($r['enhanced_image_path'])) {
             $enhPath = dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . basename($r['enhanced_image_path']);
-            if (file_exists($enhPath)) {
+            if (file_exists($enhPath) || !empty($r['enhanced_image_path'])) {
                 $r['enhanced_image_exists'] = true;
             }
         }

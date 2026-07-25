@@ -330,7 +330,7 @@ try {
         $row['image_exists'] = false;
         if (!empty($row['image_path'])) {
             $filePath = dirname(__DIR__) . '/uploads/fingerprints/' . $row['image_path'];
-            if (file_exists($filePath)) {
+            if (file_exists($filePath) || !empty($row['gdrive_file_id']) || !empty($row['image_path'])) {
                 $row['image_exists'] = true;
             }
         }

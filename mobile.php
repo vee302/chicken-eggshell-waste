@@ -678,58 +678,74 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
         </div>
     </section>
 
-    <!-- Implementation Timeline Section -->
-    <section class="timeline-section" id="timeline">
-        <div class="container-full">
+    <!-- Cost & Waste Tracker Section -->
+    <section class="tracker-section" id="tracker">
+        <div class="container">
             <div class="section-header">
-                <span class="section-label">Roadmap</span>
-                <h2 class="section-title">Project Implementation</h2>
+                <span class="section-label">Research Evaluation</span>
+                <h2 class="section-title">Cost &amp; Waste Tracker</h2>
+                <p class="section-description-main">
+                    Visual comparison of the environmental and economic advantages of sustainable eggshell-based fingerprint powder over conventional fingerprint powders.
+                </p>
             </div>
 
-            <div class="timeline-container">
-                <div class="timeline-track">
-                    <div class="timeline-item" data-phase="1">
-                        <div class="timeline-content">
-                            <div class="timeline-card-header">
-                                <span class="phase-badge">Phase 01</span>
-                                <span class="timeline-duration">Month 1-3</span>
+            <div class="tracker-grid">
+                <!-- Left Column: Statistic Cards -->
+                <div class="stat-cards-group">
+                    <!-- Card 1 -->
+                    <div class="tracker-stat-card">
+                        <span class="stat-card-label">Total PHP Saved</span>
+                        <div class="stat-card-value">₱0.00</div>
+                        <p class="stat-card-desc">Displays the estimated reduction in production costs achieved by using recycled eggshell waste.</p>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="tracker-stat-card">
+                        <span class="stat-card-label">Eggshell Waste Diverted</span>
+                        <div class="stat-card-value">0 kg</div>
+                        <p class="stat-card-desc">Shows the quantity of eggshell waste converted into sustainable forensic powder instead of being discarded.</p>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="tracker-stat-card">
+                        <span class="stat-card-label">Cost Per Application</span>
+                        <div class="stat-card-value">₱0.00</div>
+                        <p class="stat-card-desc">Illustrates the average application cost compared with commercial fingerprint powder.</p>
+                    </div>
+                </div>
+
+                <!-- Right Column: Comparison Visualization & Summary -->
+                <div class="tracker-viz-column">
+                    <div class="comparison-viz-card">
+                        <h3 class="comparison-title">Traditional Powder vs Green Powder</h3>
+                        
+                        <div class="chart-bars-container">
+                            <div class="chart-bar-item">
+                                <div class="chart-label-row">
+                                    <span class="chart-bar-label">Traditional Powder Production Cost</span>
+                                </div>
+                                <div class="chart-bar-track">
+                                    <div class="chart-bar-fill bar-traditional"></div>
+                                </div>
                             </div>
-                            <h3>Research &amp; Planning</h3>
-                            <p>Team organization, budget mapping, and primary raw material extraction</p>
+
+                            <div class="chart-bar-item">
+                                <div class="chart-label-row">
+                                    <span class="chart-bar-label">Green Powder Production Cost</span>
+                                </div>
+                                <div class="chart-bar-track">
+                                    <div class="chart-bar-fill bar-green"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="timeline-item" data-phase="2">
-                        <div class="timeline-content">
-                            <div class="timeline-card-header">
-                                <span class="phase-badge">Phase 02</span>
-                                <span class="timeline-duration">Month 4-6</span>
-                            </div>
-                            <h3>Curriculum Integration</h3>
-                            <p>Criminology course module updates and forensic lab manual guides</p>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item" data-phase="3">
-                        <div class="timeline-content">
-                            <div class="timeline-card-header">
-                                <span class="phase-badge">Phase 03</span>
-                                <span class="timeline-duration">Month 7-9</span>
-                            </div>
-                            <h3>Community Extension</h3>
-                            <p>Local police department training, field testing, and forensic workshops</p>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item" data-phase="4">
-                        <div class="timeline-content">
-                            <div class="timeline-card-header">
-                                <span class="phase-badge">Phase 04</span>
-                                <span class="timeline-duration">Month 10+</span>
-                            </div>
-                            <h3>Monitoring &amp; Sustainability</h3>
-                            <p>Quality testing feedback loop, policy recommendations, and expansions</p>
-                        </div>
+                    <!-- Research Summary Panel -->
+                    <div class="research-summary-card">
+                        <h4 class="summary-card-title">Research Summary</h4>
+                        <p class="summary-card-text">
+                            The Green Forensics Evaluating System demonstrates how recycled chicken eggshell waste can reduce material costs while promoting sustainable forensic education. This section presents the potential economic and environmental impact of adopting eco-friendly fingerprint powder.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -741,7 +757,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
         <div class="container">
             <div class="section-header">
                 <span class="section-label">Collaboration</span>
-                <h2 class="section-title">Project Stakeholders</h2>
+                <h2 class="section-title">Roles &amp; Responsibilities</h2>
             </div>
 
             <div class="stakeholders-network">

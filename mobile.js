@@ -707,6 +707,45 @@ if (window.innerWidth > 768) {
             });
         })();
 
+        // Cost & Waste Tracker section reveal
+        gsap.from('.tracker-section .section-label, .tracker-section .section-title, .tracker-section .section-description-main', {
+            opacity: 0,
+            y: 40,
+            duration: 1,
+            stagger: 0.15,
+            scrollTrigger: {
+                trigger: '.tracker-section',
+                start: 'top 80%',
+                toggleActions: 'play none none none'
+            }
+        });
+
+        gsap.from('.tracker-stat-card', {
+            opacity: 0,
+            y: 30,
+            duration: 0.8,
+            stagger: 0.12,
+            ease: "power2.out",
+            scrollTrigger: {
+                trigger: '.stat-cards-group',
+                start: 'top 75%',
+                toggleActions: 'play none none none'
+            }
+        });
+
+        gsap.from('.comparison-viz-card, .research-summary-card', {
+            opacity: 0,
+            y: 30,
+            duration: 0.8,
+            stagger: 0.15,
+            ease: "power2.out",
+            scrollTrigger: {
+                trigger: '.tracker-viz-column',
+                start: 'top 75%',
+                toggleActions: 'play none none none'
+            }
+        });
+
         gsap.from('.stakeholders-section .section-label, .stakeholders-section .section-title', {
             opacity: 0,
             y: 40,
@@ -731,7 +770,6 @@ if (window.innerWidth > 768) {
                 toggleActions: 'play none none none'
             }
         });
-
     }
 
     // ===================================

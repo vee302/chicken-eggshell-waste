@@ -683,71 +683,86 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
         </div>
     </section>
 
-    <!-- Implementation Timeline Section -->
-    <section class="timeline-section" id="timeline">
-        <div class="container-full">
+    <!-- Cost & Waste Tracker Section -->
+    <section class="tracker-section" id="tracker">
+        <div class="container">
             <div class="section-header">
-                <span class="section-label">Roadmap</span>
-                <h2 class="section-title">Project Implementation</h2>
+                <span class="section-label">Research Evaluation</span>
+                <h2 class="section-title">Cost &amp; Waste Tracker</h2>
+                <p class="section-description-main">
+                    Visual comparison of the environmental and economic advantages of sustainable eggshell-based fingerprint powder over conventional fingerprint powders.
+                </p>
             </div>
 
-            <div class="timeline-container">
-                <div class="timeline-track">
-                    <div class="timeline-item" data-phase="1">
-                        <div class="timeline-marker">
-                            <span class="phase-number">01</span>
-                        </div>
-                        <div class="timeline-content">
-                            <h3>Research & Planning</h3>
-                            <p>Team organization, budget mapping, and primary raw material extraction</p>
-                            <span class="timeline-duration">Month 1-3</span>
+            <div class="tracker-grid">
+                <!-- Left Column: Statistic Cards -->
+                <div class="stat-cards-group">
+                    <!-- Card 1 -->
+                    <div class="tracker-stat-card">
+                        <span class="stat-card-label">Total PHP Saved</span>
+                        <div class="stat-card-value">₱0.00</div>
+                        <p class="stat-card-desc">Displays the estimated reduction in production costs achieved by using recycled eggshell waste.</p>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="tracker-stat-card">
+                        <span class="stat-card-label">Eggshell Waste Diverted</span>
+                        <div class="stat-card-value">0 kg</div>
+                        <p class="stat-card-desc">Shows the quantity of eggshell waste converted into sustainable forensic powder instead of being discarded.</p>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="tracker-stat-card">
+                        <span class="stat-card-label">Cost Per Application</span>
+                        <div class="stat-card-value">₱0.00</div>
+                        <p class="stat-card-desc">Illustrates the average application cost compared with commercial fingerprint powder.</p>
+                    </div>
+                </div>
+
+                <!-- Right Column: Comparison Visualization & Summary -->
+                <div class="tracker-viz-column">
+                    <div class="comparison-viz-card">
+                        <h3 class="comparison-title">Traditional Powder vs Green Powder</h3>
+                        
+                        <div class="chart-bars-container">
+                            <div class="chart-bar-item">
+                                <div class="chart-label-row">
+                                    <span class="chart-bar-label">Traditional Powder Production Cost</span>
+                                </div>
+                                <div class="chart-bar-track">
+                                    <div class="chart-bar-fill bar-traditional"></div>
+                                </div>
+                            </div>
+
+                            <div class="chart-bar-item">
+                                <div class="chart-label-row">
+                                    <span class="chart-bar-label">Green Powder Production Cost</span>
+                                </div>
+                                <div class="chart-bar-track">
+                                    <div class="chart-bar-fill bar-green"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="timeline-item" data-phase="2">
-                        <div class="timeline-marker">
-                            <span class="phase-number">02</span>
-                        </div>
-                        <div class="timeline-content">
-                            <h3>Curriculum Integration</h3>
-                            <p>Criminology course module updates and forensic lab manual guides</p>
-                            <span class="timeline-duration">Month 4-6</span>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item" data-phase="3">
-                        <div class="timeline-marker">
-                            <span class="phase-number">03</span>
-                        </div>
-                        <div class="timeline-content">
-                            <h3>Community Extension</h3>
-                            <p>Local police department training, field testing, and forensic workshops</p>
-                            <span class="timeline-duration">Month 7-9</span>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item" data-phase="4">
-                        <div class="timeline-marker">
-                            <span class="phase-number">04</span>
-                        </div>
-                        <div class="timeline-content">
-                            <h3>Monitoring & Sustainability</h3>
-                            <p>Quality testing feedback loop, policy recommendations, and expansions</p>
-                            <span class="timeline-duration">Month 10+</span>
-                        </div>
+                    <!-- Research Summary Panel -->
+                    <div class="research-summary-card">
+                        <h4 class="summary-card-title">Research Summary</h4>
+                        <p class="summary-card-text">
+                            The Green Forensics Evaluating System demonstrates how recycled chicken eggshell waste can reduce material costs while promoting sustainable forensic education. This section presents the potential economic and environmental impact of adopting eco-friendly fingerprint powder.
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-
     <!-- Stakeholders Section -->
     <section class="stakeholders-section" id="stakeholders">
         <div class="container">
             <div class="section-header-left">
                 <span class="section-label">Collaboration</span>
-                <h2 class="section-title">Roles & Responsibilities</h2>
+                <h2 class="section-title">Roles &amp; Responsibilities</h2>
                 <p class="section-description-main">A network of stakeholders working together to build, sustain, and
                     elevate the program — each contributing a distinct piece of the whole.</p>
             </div>
@@ -808,7 +823,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 <div class="stakeholder-card" data-role="community">
                     <span class="card-number">06</span>
                     <div class="card-content">
-                        <h3>Community & Law Enforcement</h3>
+                        <h3>Community &amp; Law Enforcement</h3>
                         <p>External collaboration and real-world application</p>
                     </div>
                 </div>
@@ -829,6 +844,64 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 <div class="footer-meta">
                     <span class="meta-left">SEVEN PILLARS — ONE MISSION</span>
                     <span class="meta-right">01 — 07</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Implementation Timeline Section -->
+    <section class="timeline-section" id="timeline">
+        <div class="container-full">
+            <div class="section-header">
+                <span class="section-label">Roadmap</span>
+                <h2 class="section-title">Project Implementation</h2>
+            </div>
+
+            <div class="timeline-container">
+                <div class="timeline-track">
+                    <div class="timeline-item" data-phase="1">
+                        <div class="timeline-marker">
+                            <span class="phase-number">01</span>
+                        </div>
+                        <div class="timeline-content">
+                            <h3>Research &amp; Planning</h3>
+                            <p>Team organization, budget mapping, and primary raw material extraction</p>
+                            <span class="timeline-duration">Month 1-3</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item" data-phase="2">
+                        <div class="timeline-marker">
+                            <span class="phase-number">02</span>
+                        </div>
+                        <div class="timeline-content">
+                            <h3>Curriculum Integration</h3>
+                            <p>Criminology course module updates and forensic lab manual guides</p>
+                            <span class="timeline-duration">Month 4-6</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item" data-phase="3">
+                        <div class="timeline-marker">
+                            <span class="phase-number">03</span>
+                        </div>
+                        <div class="timeline-content">
+                            <h3>Community Extension</h3>
+                            <p>Local police department training, field testing, and forensic workshops</p>
+                            <span class="timeline-duration">Month 7-9</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item" data-phase="4">
+                        <div class="timeline-marker">
+                            <span class="phase-number">04</span>
+                        </div>
+                        <div class="timeline-content">
+                            <h3>Monitoring &amp; Sustainability</h3>
+                            <p>Quality testing feedback loop, policy recommendations, and expansions</p>
+                            <span class="timeline-duration">Month 10+</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -118,7 +118,6 @@ try {
                                 <option value="glass">Glass</option>
                                 <option value="plastic">Plastic</option>
                                 <option value="metal">Metal</option>
-                                <option value="wood">Wood</option>
                             </select>
                         </div>
                         <div class="form-group">

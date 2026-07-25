@@ -789,7 +789,7 @@ try {
                         <label>Surface</label>
                         <select name="surface" id="filter-surface">
                             <option value="">All Surfaces</option>
-                            <?php foreach (['glass', 'plastic', 'metal', 'wood'] as $s): ?>
+                            <?php foreach (['glass', 'plastic', 'metal'] as $s): ?>
                                 <option value="<?= $s ?>" <?= $filter_surface === $s ? 'selected' : '' ?>><?= ucfirst($s) ?>
                                 </option>
                             <?php endforeach; ?>

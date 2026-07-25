@@ -785,7 +785,6 @@ try {
                                         <option value="glass">Glass</option>
                                         <option value="plastic">Plastic</option>
                                         <option value="metal">Metal</option>
-                                        <option value="wood">Wood</option>
                                     </select>
                                 </div>
                             </div>
@@ -1546,7 +1545,7 @@ try {
             const bgGray = corners.reduce((a, b) => a + b, 0) / 4;
 
             // Light background (white card) -> ridges are dark
-            // Dark background (glass/wood surface) -> ridges are light (developed white powder)
+            // Dark background (glass/metal surface) -> ridges are light (developed white powder)
             const isLightBg = bgGray > 128;
             const diffThreshold = 40; // minimum difference from background
 

@@ -80,7 +80,6 @@ try {
                             <option value="glass">Glass</option>
                             <option value="plastic">Plastic</option>
                             <option value="metal">Metal</option>
-                            <option value="wood">Wood</option>
                         </select>
 
                         <select id="filter-irritation" class="form-control-inline" onchange="triggerFilter()">

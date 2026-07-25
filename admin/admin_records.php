@@ -204,7 +204,6 @@ if (isset($_GET['view'])) {
                                 <option value="glass" <?php echo $filter_surface === 'glass' ? 'selected' : ''; ?>>Glass</option>
                                 <option value="plastic" <?php echo $filter_surface === 'plastic' ? 'selected' : ''; ?>>Plastic</option>
                                 <option value="metal" <?php echo $filter_surface === 'metal' ? 'selected' : ''; ?>>Metal</option>
-                                <option value="wood" <?php echo $filter_surface === 'wood' ? 'selected' : ''; ?>>Wood</option>
                             </select>
 
                             <select name="status" id="filter-status" class="form-control-inline">

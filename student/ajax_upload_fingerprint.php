@@ -70,9 +70,9 @@ if (!$powder_type || !$surface_type) {
     sendResponse(false, 'Powder Type and Surface Type are required.');
 }
 
-$allowed_surface_types = ['glass', 'plastic', 'metal', 'wood'];
+$allowed_surface_types = ['glass', 'plastic', 'metal'];
 if (!in_array(strtolower($surface_type), $allowed_surface_types)) {
-    sendResponse(false, 'Invalid surface type. Allowed surfaces are Glass, Plastic, Metal, and Wood.');
+    sendResponse(false, 'Invalid surface type. Allowed surfaces are Glass, Plastic, and Metal.');
 }
 
 if ($file['error'] !== UPLOAD_ERR_OK) {

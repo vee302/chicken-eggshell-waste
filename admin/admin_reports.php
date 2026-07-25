@@ -275,7 +275,6 @@ function role_label($r) {
                             <option value="glass">Glass Only</option>
                             <option value="plastic">Plastic Only</option>
                             <option value="metal">Metal Only</option>
-                            <option value="wood">Wood Only</option>
                         </select>
                     </div>
                     <p style="font-size:0.75rem; color: var(--gray); font-style:italic; line-height:1.4;">

@@ -23,6 +23,7 @@ uploads/**
 .env.*
 !.env.example
 config/gdrive_credentials.json
+config/gdrive_user_credentials.json
 
 # Backups and Logs
 /admin/backups/

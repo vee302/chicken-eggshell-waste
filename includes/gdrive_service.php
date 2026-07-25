@@ -1,6 +1,12 @@
 <?php
-// includes/gdrive_service.php — Google Drive API v3 Native Service Account Module
+// includes/gdrive_service.php — Google Drive API v3 Service & User Account Integration Module
 
+/**
+ * Acquire Google Drive OAuth2 Access Token.
+ * Supports both Service Account (JWT) and User OAuth2 (Refresh Token) authentication.
+ * 
+ * @return string|false Access Token on success, false on failure
+ */
 function get_gdrive_access_token()
 {
     static $cached_token = null;
@@ -10,8 +16,49 @@ function get_gdrive_access_token()
         return $cached_token;
     }
 
+    // 1. Try OAuth 2.0 Refresh Token authentication first (User Quota)
+    $refresh_token = env('GDRIVE_REFRESH_TOKEN');
+    $client_id     = env('GDRIVE_CLIENT_ID');
+    $client_secret = env('GDRIVE_CLIENT_SECRET');
+
+    $user_cred_file = dirname(__DIR__) . '/config/gdrive_user_credentials.json';
+    if ((!$refresh_token || !$client_id || !$client_secret) && file_exists($user_cred_file)) {
+        $user_creds = json_decode(file_get_contents($user_cred_file), true);
+        if ($user_creds) {
+            $refresh_token = $user_creds['refresh_token'] ?? $refresh_token;
+            $client_id     = $user_creds['client_id'] ?? $client_id;
+            $client_secret = $user_creds['client_secret'] ?? $client_secret;
+        }
+    }
+
+    if ($refresh_token && $client_id && $client_secret) {
+        $ch = curl_init('https://oauth2.googleapis.com/token');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+            'client_id'     => $client_id,
+            'client_secret' => $client_secret,
+            'refresh_token' => $refresh_token,
+            'grant_type'    => 'refresh_token'
+        ]));
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode === 200 && $response) {
+            $tokenData = json_decode($response, true);
+            if (!empty($tokenData['access_token'])) {
+                $cached_token = $tokenData['access_token'];
+                $token_expires_at = time() + ($tokenData['expires_in'] ?? 3600);
+                return $cached_token;
+            }
+        }
+    }
+
+    // 2. Fallback to Service Account JWT authentication (Shared Drive / Delegated)
     $client_email = null;
-    $private_key = null;
+    $private_key  = null;
 
     $cred_file = dirname(__DIR__) . '/config/gdrive_credentials.json';
     if (file_exists($cred_file)) {
@@ -39,22 +86,22 @@ function get_gdrive_access_token()
     }
 
     if (!$client_email || !$private_key) {
-        error_log("Google Drive Credentials missing from file and environment variables.");
+        error_log("Google Drive Credentials missing from config files and environment variables.");
         return false;
     }
 
     $now = time();
     $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
     $claim = json_encode([
-        'iss' => $client_email,
+        'iss'   => $client_email,
         'scope' => 'https://www.googleapis.com/auth/drive',
-        'aud' => 'https://oauth2.googleapis.com/token',
-        'exp' => $now + 3600,
-        'iat' => $now
+        'aud'   => 'https://oauth2.googleapis.com/token',
+        'exp'   => $now + 3600,
+        'iat'   => $now
     ]);
 
     $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
-    $base64UrlClaim = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($claim));
+    $base64UrlClaim  = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($claim));
 
     $signatureInput = $base64UrlHeader . "." . $base64UrlClaim;
     $privateKey = str_replace('\n', "\n", $private_key);
@@ -79,7 +126,7 @@ function get_gdrive_access_token()
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
         'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        'assertion' => $jwt
+        'assertion'  => $jwt
     ]));
 
     $response = curl_exec($ch);
@@ -102,7 +149,7 @@ function get_gdrive_access_token()
 }
 
 /**
- * Upload a local file to Google Drive.
+ * Upload a local file to Google Drive via multipart API.
  * 
  * @param string $localFilePath Path to local file
  * @param string $fileName Target filename in Drive
@@ -112,6 +159,7 @@ function get_gdrive_access_token()
 function gdrive_upload_file($localFilePath, $fileName, $folderId = null)
 {
     if (!file_exists($localFilePath)) {
+        error_log("gdrive_upload_file error: Local file not found at $localFilePath");
         return false;
     }
 
@@ -124,7 +172,7 @@ function gdrive_upload_file($localFilePath, $fileName, $folderId = null)
         $folderId = env('GDRIVE_FOLDER_ID', '1ng2iHXR2KzHSBQTr-F60TwkxiVloRmym');
     }
 
-    $mimeType = mime_content_type($localFilePath) ?: 'image/jpeg';
+    $mimeType = @mime_content_type($localFilePath) ?: 'image/jpeg';
     $fileData = file_get_contents($localFilePath);
 
     $metadata = [
@@ -178,12 +226,12 @@ function gdrive_upload_file($localFilePath, $fileName, $folderId = null)
  */
 function gdrive_stream_file($fileId)
 {
-    $token = get_gdrive_access_token();
-    if (!$token) {
-        return false;
-    }
+    if (empty($fileId)) return false;
 
-    $url = "https://www.googleapis.com/drive/v3/files/" . urlencode($fileId) . "?alt=media";
+    $token = get_gdrive_access_token();
+    if (!$token) return false;
+
+    $url = "https://www.googleapis.com/drive/v3/files/" . urlencode($fileId) . "?alt=media&supportsAllDrives=true";
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -216,14 +264,12 @@ function gdrive_stream_file($fileId)
  */
 function gdrive_delete_file($fileId)
 {
-    if (empty($fileId))
-        return false;
+    if (empty($fileId)) return false;
 
     $token = get_gdrive_access_token();
-    if (!$token)
-        return false;
+    if (!$token) return false;
 
-    $url = "https://www.googleapis.com/drive/v3/files/" . urlencode($fileId);
+    $url = "https://www.googleapis.com/drive/v3/files/" . urlencode($fileId) . "?supportsAllDrives=true";
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");

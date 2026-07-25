@@ -236,16 +236,19 @@ try {
             background: #ffffff !important;
             color: #212529 !important;
             border: 1px solid rgba(27, 67, 50, 0.15) !important;
-            max-width: 850px !important;
-            width: 95% !important;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important;
+            max-width: 1060px !important;
+            width: 94% !important;
+            max-height: 90vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3) !important;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             border-radius: 16px !important;
-            overflow: hidden;
+            overflow: hidden !important;
         }
 
         #comparisonOverlay .detail-modal {
-            max-width: 1180px !important;
+            max-width: 1200px !important;
         }
 
         #detailOverlay .detail-modal-header,
@@ -256,6 +259,7 @@ try {
             padding: 1.1rem 1.5rem !important;
             border-top-left-radius: 15px !important;
             border-top-right-radius: 15px !important;
+            flex-shrink: 0;
         }
 
         #detailOverlay .detail-modal-header h3,
@@ -288,23 +292,34 @@ try {
 
         #detailOverlay .detail-modal-body,
         #comparisonOverlay .detail-modal-body {
-            padding: 1.5rem !important;
+            padding: 1.75rem !important;
             background: #ffffff !important;
             color: #212529 !important;
+            overflow-y: auto !important;
+            flex: 1;
         }
 
         /* Layout Grid */
         .inspect-grid {
             display: grid;
-            grid-template-columns: 1.15fr 1fr;
-            gap: 2rem;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.25rem;
             margin-bottom: 1.5rem;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .inspect-grid {
                 grid-template-columns: 1fr;
                 gap: 1.5rem;
+            }
+            #detailOverlay .detail-modal,
+            #comparisonOverlay .detail-modal {
+                width: 96% !important;
+                max-height: 93vh !important;
+            }
+            #detailOverlay .detail-modal-body,
+            #comparisonOverlay .detail-modal-body {
+                padding: 1.25rem !important;
             }
         }
 

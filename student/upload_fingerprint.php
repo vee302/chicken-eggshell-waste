@@ -356,26 +356,27 @@ try {
         /* Dark theme Detailed Quality Inspection modal scoped under #detailOverlay */
         #detailOverlay .detail-modal {
             background: #10261D !important;
-            /* Charcoal forest green background */
             color: #F4F4F0 !important;
-            /* Off-white text */
             border: 1px solid rgba(167, 201, 177, 0.18) !important;
-            /* Sage border */
-            max-width: 800px !important;
-            width: 95% !important;
+            max-width: 1060px !important;
+            width: 94% !important;
+            max-height: 90vh !important;
+            display: flex !important;
+            flex-direction: column !important;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             border-radius: 16px !important;
+            overflow: hidden !important;
         }
 
         #detailOverlay .detail-modal-header {
             background: #123524 !important;
-            /* Dark header panel */
             border-bottom: 1px solid rgba(167, 201, 177, 0.18) !important;
             color: #F4F4F0 !important;
             padding: 1.1rem 1.5rem !important;
             border-top-left-radius: 15px !important;
             border-top-right-radius: 15px !important;
+            flex-shrink: 0;
         }
 
         #detailOverlay .detail-modal-header h3 {
@@ -403,21 +404,30 @@ try {
         }
 
         #detailOverlay .detail-modal-body {
-            padding: 1.5rem !important;
+            padding: 1.75rem !important;
+            overflow-y: auto !important;
+            flex: 1;
         }
 
         /* Layout Grid */
         .inspect-grid {
             display: grid;
-            grid-template-columns: 1.15fr 1fr;
-            gap: 2rem;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.25rem;
             margin-bottom: 1.5rem;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .inspect-grid {
                 grid-template-columns: 1fr;
                 gap: 1.5rem;
+            }
+            #detailOverlay .detail-modal {
+                width: 96% !important;
+                max-height: 93vh !important;
+            }
+            #detailOverlay .detail-modal-body {
+                padding: 1.25rem !important;
             }
         }
 

@@ -343,9 +343,28 @@ function role_label($r) {
         }
 
         const hasProof = user.proof_of_affiliation && user.proof_of_affiliation.trim() !== '';
-        const proofHtml = hasProof 
-            ? `<a href="view_proof.php?user_id=${user.id}" target="_blank" class="btn-view" style="padding: 4px 8px; font-size: 0.75rem;">View Proof</a>`
-            : `<span style="font-size:.85rem;color:#888;font-style:italic;">No Proof Uploaded</span>`;
+        let proofHtml = '';
+        if (hasProof) {
+            const ext = user.proof_of_affiliation.split('.').pop().toLowerCase();
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+            proofHtml = `
+                <div style="margin-top:4px;">
+                    <a href="view_proof.php?user_id=${user.id}" target="_blank" class="btn-view" style="padding: 6px 12px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: #2D6A4F; color: #fff; text-decoration: none; border-radius: 4px; font-weight: 600;">
+                        🔍 View Full Document / Image
+                    </a>
+                    ${isImage ? `
+                        <div style="margin-top: 10px; border: 1px solid #d0d0d0; border-radius: 8px; overflow: hidden; background: #f9f9f9; padding: 8px; text-align: center;">
+                            <p style="margin: 0 0 6px 0; font-size: 0.75rem; color: #666; font-weight: 600;">Uploaded Proof Preview:</p>
+                            <img src="view_proof.php?user_id=${user.id}" style="max-width: 100%; max-height: 260px; border-radius: 6px; object-fit: contain;" alt="Uploaded Proof of Affiliation" onerror="this.parentElement.style.display='none';">
+                        </div>
+                    ` : `
+                        <div style="margin-top: 6px; font-size: 0.75rem; color: #555;">(PDF Document uploaded — click button above to view)</div>
+                    `}
+                </div>
+            `;
+        } else {
+            proofHtml = `<span style="font-size:.85rem;color:#d9534f;font-weight:600;">No Proof Uploaded</span>`;
+        }
 
         body.innerHTML = `
             <p class="section-divider">Personal Information</p>

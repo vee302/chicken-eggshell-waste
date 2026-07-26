@@ -84,7 +84,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $has_proof = isset($_FILES['proof_of_affiliation']) && $_FILES['proof_of_affiliation']['error'] !== UPLOAD_ERR_NO_FILE;
         $file_error = false;
 
-        if ($has_proof) {
+        if (!$has_proof) {
+            $error_message = "Proof of Affiliation is required. Please upload a valid ID or document.";
+            $file_error = true;
+        } else {
             $file = $_FILES['proof_of_affiliation'];
             if ($file['error'] !== UPLOAD_ERR_OK) {
                 $error_message = "Invalid proof file. Only JPG, JPEG, PNG, and PDF files up to 5MB are allowed.";
@@ -576,9 +579,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     </div>
 
                     <div class="form-group">
-                        <label for="proof_of_affiliation">Proof of Affiliation (Optional)</label>
+                        <label for="proof_of_affiliation">Proof of Affiliation <span class="required-star">*</span></label>
                         <input type="file" id="proof_of_affiliation" name="proof_of_affiliation"
-                            class="form-control-plain" accept=".jpg,.jpeg,.png,.pdf">
+                            class="form-control-plain" accept=".jpg,.jpeg,.png,.pdf" required>
                         <p class="field-hint">Allowed types: JPG, JPEG, PNG, PDF. Max file size: 5MB.</p>
                     </div>
 
@@ -867,6 +870,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
             // Client-side file validation
             const fileInput = document.getElementById("proof_of_affiliation");
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                showClientError("Proof of Affiliation is required. Please upload a valid ID or document.");
+                return false;
+            }
             if (fileInput && fileInput.files && fileInput.files.length > 0) {
                 const file = fileInput.files[0];
                 const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];

@@ -229,7 +229,7 @@ function role_label($r)
     $map = [
         'criminology_student' => 'Criminology Student',
         'faculty_researcher' => 'Faculty Researcher',
-        'alumni_police_partner' => 'Alumni / Police Partner',
+        'alumni_police_partner' => 'Law Enforcement Partners',
         'super_admin' => 'Super Administrator'
     ];
     return $map[$r] ?? str_replace('_', ' ', $r);
@@ -334,7 +334,7 @@ function role_label($r)
                                 <option value="super_admin" <?php echo $filter_role === 'super_admin' ? 'selected' : ''; ?>>Super Administrator</option>
                                 <option value="faculty_researcher" <?php echo $filter_role === 'faculty_researcher' ? 'selected' : ''; ?>>Faculty Researcher</option>
                                 <option value="criminology_student" <?php echo $filter_role === 'criminology_student' ? 'selected' : ''; ?>>Criminology Student</option>
-                                <option value="alumni_police_partner" <?php echo $filter_role === 'alumni_police_partner' ? 'selected' : ''; ?>>Alumni / Police Partner</option>
+                                <option value="alumni_police_partner" <?php echo $filter_role === 'alumni_police_partner' ? 'selected' : ''; ?>>Law Enforcement Partners</option>
                             </select>
 
                             <select name="status" class="form-control-inline">
@@ -512,7 +512,7 @@ function role_label($r)
                         <select name="role" id="add_role" class="form-control">
                             <option value="criminology_student">Criminology Student</option>
                             <option value="faculty_researcher">Faculty Researcher</option>
-                            <option value="alumni_police_partner">Alumni / Police Partner</option>
+                            <option value="alumni_police_partner">Law Enforcement Partners</option>
                             <option value="super_admin">Super Admin</option>
                         </select>
                     </div>
@@ -568,7 +568,7 @@ function role_label($r)
                         <select name="role" id="edit_role" class="form-control">
                             <option value="criminology_student">Criminology Student</option>
                             <option value="faculty_researcher">Faculty Researcher</option>
-                            <option value="alumni_police_partner">Alumni / Police Partner</option>
+                            <option value="alumni_police_partner">Law Enforcement Partners</option>
                             <option value="super_admin">Super Admin</option>
                         </select>
                     </div>

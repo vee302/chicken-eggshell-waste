@@ -76,7 +76,7 @@ function role_label($r) {
     $map = [
         'criminology_student' => 'Criminology Student',
         'faculty_researcher' => 'Faculty Researcher',
-        'alumni_police_partner' => 'Alumni / Police Partner',
+        'alumni_police_partner' => 'Law Enforcement Partners',
         'super_admin' => 'Super Administrator'
     ];
     return $map[$r] ?? str_replace('_', ' ', $r);
@@ -157,7 +157,7 @@ function role_label($r) {
                                 <option value="super_admin" <?php echo $filter_role === 'super_admin' ? 'selected' : ''; ?>>Super Administrator</option>
                                 <option value="faculty_researcher" <?php echo $filter_role === 'faculty_researcher' ? 'selected' : ''; ?>>Faculty Researcher</option>
                                 <option value="criminology_student" <?php echo $filter_role === 'criminology_student' ? 'selected' : ''; ?>>Criminology Student</option>
-                                <option value="alumni_police_partner" <?php echo $filter_role === 'alumni_police_partner' ? 'selected' : ''; ?>>Alumni / Police Partner</option>
+                                <option value="alumni_police_partner" <?php echo $filter_role === 'alumni_police_partner' ? 'selected' : ''; ?>>Law Enforcement Partners</option>
                             </select>
 
                             <button type="submit" class="btn btn-secondary">Filter</button>
@@ -206,7 +206,7 @@ function role_label($r) {
                                                     <option value="" disabled>Select Role...</option>
                                                     <option value="criminology_student" <?php echo ($user['role'] === 'criminology_student') ? 'selected' : ''; ?>>Criminology Student</option>
                                                     <option value="faculty_researcher" <?php echo ($user['role'] === 'faculty_researcher') ? 'selected' : ''; ?>>Faculty Researcher</option>
-                                                    <option value="alumni_police_partner" <?php echo ($user['role'] === 'alumni_police_partner') ? 'selected' : ''; ?>>Alumni / Police Partner</option>
+                                                    <option value="alumni_police_partner" <?php echo ($user['role'] === 'alumni_police_partner') ? 'selected' : ''; ?>>Law Enforcement Partners</option>
                                                     <option value="super_admin" <?php echo ($user['role'] === 'super_admin') ? 'selected' : ''; ?>>Super Administrator</option>
                                                 </select>
                                             </td>

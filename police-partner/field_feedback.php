@@ -1,5 +1,5 @@
 <?php
-// partner/field_feedback.php — Alumni / Police Partner Field Feedback Submission & History
+// partner/field_feedback.php — Law Enforcement Partners Field Feedback Submission & History
 require_once '../config.php';
 require_once 'auth.php';
 check_partner_auth();
@@ -173,7 +173,7 @@ try {
                     </svg>
                 </button>
                 <div class="header-title">
-                    <h2>Alumni / Police Partner Portal</h2>
+                    <h2>Law Enforcement Partners Portal</h2>
                 </div>
             </div>
         </header>

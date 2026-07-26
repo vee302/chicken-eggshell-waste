@@ -275,7 +275,7 @@ $lockout_time = $settings['lockout_time'] ?? '15';
                                     <label class="checkbox-item">
                                         <input type="checkbox" name="allowed_roles[]" value="alumni_police_partner"
                                             <?php echo in_array('alumni_police_partner', $allowed_registration_roles) ? 'checked' : ''; ?>>
-                                        <span>Alumni / Police Partner Feedbacks Scope</span>
+                                        <span>Law Enforcement Partners Feedbacks Scope</span>
                                     </label>
                                 </div>
                             </div>

@@ -1,5 +1,5 @@
 <?php
-// partner/partner_dashboard.php — Alumni / Police Partner Main Dashboard
+// partner/partner_dashboard.php — Law Enforcement Partners Main Dashboard
 require_once '../config.php';
 require_once 'auth.php';
 check_partner_auth();
@@ -272,7 +272,7 @@ try {
                     </svg>
                 </button>
                 <div class="header-title">
-                    <h2>Alumni / Police Partner Dashboard</h2>
+                    <h2>Law Enforcement Partners Dashboard</h2>
                 </div>
             </div>
             <div class="header-right">
@@ -282,7 +282,7 @@ try {
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
                     </svg>
-                    Alumni / Police Partner
+                    Law Enforcement Partners
                 </div>
             </div>
         </header>

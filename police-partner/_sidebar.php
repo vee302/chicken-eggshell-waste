@@ -1,5 +1,5 @@
 <?php
-// partner/_sidebar.php - Reusable Sidebar for Alumni / Police Partner Portal
+// partner/_sidebar.php - Reusable Sidebar for Law Enforcement Partners Portal
 
 $p_name = $_SESSION['user_name'] ?? 'Partner';
 $p_words = explode(' ', trim($p_name));
@@ -31,7 +31,7 @@ function nav_active(string $page, string $current): string {
     <!-- Role Badge -->
     <div class="sidebar-role-badge">
         <span class="role-dot" style="background-color:#6B8F71;"></span>
-        <span class="role-label">Alumni / Police Partner</span>
+        <span class="role-label">Law Enforcement Partners</span>
     </div>
 
     <!-- Navigation Menu -->
@@ -134,7 +134,7 @@ function nav_active(string $page, string $current): string {
             <div class="profile-avatar"><?= htmlspecialchars($initials) ?></div>
             <div class="profile-info">
                 <div class="profile-name" title="<?= htmlspecialchars($p_name) ?>"><?= htmlspecialchars($p_name) ?></div>
-                <div class="profile-role">Police Partner</div>
+                <div class="profile-role">Law Enforcement Partners</div>
             </div>
         </div>
     </div>

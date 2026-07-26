@@ -1,5 +1,5 @@
 <?php
-// partner/approved_reports.php — Alumni / Police Partner Approved Reports & Trial Submissions
+// partner/approved_reports.php — Law Enforcement Partners Approved Reports & Trial Submissions
 require_once '../config.php';
 require_once 'auth.php';
 check_partner_auth();
@@ -284,7 +284,7 @@ if (isset($_GET['print']) && isset($_GET['id'])) {
         </table>
 
         <div class="print-footer">
-            <div>Printed by: <strong><?= htmlspecialchars($partner_name) ?> (Alumni / Police Partner)</strong></div>
+            <div>Printed by: <strong><?= htmlspecialchars($partner_name) ?> (Law Enforcement Partners)</strong></div>
             <div>Date Printed: <?= date('F d, Y h:i A') ?></div>
         </div>
     </body>
@@ -528,7 +528,7 @@ try {
                         </svg>
                     </button>
                     <div class="header-title">
-                        <h2>Alumni / Police Partner Portal</h2>
+                        <h2>Law Enforcement Partners Portal</h2>
                     </div>
                 </div>
             </header>

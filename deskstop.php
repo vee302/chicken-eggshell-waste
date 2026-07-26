@@ -604,7 +604,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="timeline-content">
                             <h3>Research &amp; Planning</h3>
                             <p>Team organization, budget mapping, and primary raw material extraction</p>
-                            <span class="timeline-duration">Month 1-3</span>
+                            <span class="timeline-duration">week 1-2</span>
                         </div>
                     </div>
 
@@ -615,7 +615,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="timeline-content">
                             <h3>Curriculum Integration</h3>
                             <p>Criminology course module updates and forensic lab manual guides</p>
-                            <span class="timeline-duration">Month 4-6</span>
+                            <span class="timeline-duration">week 2-6</span>
                         </div>
                     </div>
 
@@ -626,7 +626,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="timeline-content">
                             <h3>Community Extension</h3>
                             <p>Local police department training, field testing, and forensic workshops</p>
-                            <span class="timeline-duration">Month 7-9</span>
+                            <span class="timeline-duration">Upon Approval</span>
                         </div>
                     </div>
 
@@ -637,7 +637,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="timeline-content">
                             <h3>Monitoring &amp; Sustainability</h3>
                             <p>Quality testing feedback loop, policy recommendations, and expansions</p>
-                            <span class="timeline-duration">Month 10+</span>
+                            <span class="timeline-duration">Upon Approval</span>
                         </div>
                     </div>
                 </div>
@@ -659,8 +659,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Eco-Friendly &amp; Biodegradable</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>
@@ -673,8 +675,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Cost-Effective Alternative</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>
@@ -687,8 +691,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Safer for Forensic Users</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>
@@ -701,8 +707,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Supports Waste Reduction</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>
@@ -715,8 +723,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Criminology Training Tool</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>
@@ -729,8 +739,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Supports SDG 12 &amp; 13</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>

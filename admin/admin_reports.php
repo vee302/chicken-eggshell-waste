@@ -78,7 +78,7 @@ function role_label($r) {
     $map = [
         'criminology_student' => 'Criminology Student',
         'faculty_researcher' => 'Faculty Researcher',
-        'alumni_police_partner' => 'Alumni / Police Partner',
+        'alumni_police_partner' => 'Law Enforcement Partners',
         'super_admin' => 'Super Administrator'
     ];
     return $map[$r] ?? str_replace('_', ' ', $r);

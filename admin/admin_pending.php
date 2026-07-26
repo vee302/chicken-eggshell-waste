@@ -79,7 +79,7 @@ function role_label($r) {
     $map = [
         'criminology_student' => 'Criminology Student',
         'faculty_researcher' => 'Faculty Researcher',
-        'alumni_police_partner' => 'Alumni / Police Partner',
+        'alumni_police_partner' => 'Law Enforcement Partners',
         'super_admin' => 'Super Administrator'
     ];
     return $map[$r] ?? str_replace('_', ' ', $r);
@@ -229,7 +229,7 @@ function role_label($r) {
                                                 <option value="">Edit Assigned Role...</option>
                                                 <option value="criminology_student" <?php echo ($u['requested_role'] === 'criminology_student') ? 'selected' : ''; ?>>Criminology Student</option>
                                                 <option value="faculty_researcher" <?php echo ($u['requested_role'] === 'faculty_researcher') ? 'selected' : ''; ?>>Faculty Researcher</option>
-                                                <option value="alumni_police_partner" <?php echo ($u['requested_role'] === 'alumni_police_partner') ? 'selected' : ''; ?>>Alumni / Police Partner</option>
+                                                <option value="alumni_police_partner" <?php echo ($u['requested_role'] === 'alumni_police_partner') ? 'selected' : ''; ?>>Law Enforcement Partners</option>
                                                 <option value="super_admin">Super Administrator</option>
                                             </select>
                                             <button type="submit" class="btn-approve">Approve</button>
@@ -277,7 +277,7 @@ function role_label($r) {
         const map = {
             'criminology_student': 'Criminology Student',
             'faculty_researcher': 'Faculty Researcher',
-            'alumni_police_partner': 'Alumni / Police Partner',
+            'alumni_police_partner': 'Law Enforcement Partners',
             'super_admin': 'Super Administrator'
         };
         return map[r] || r.replace(/_/g, ' ');
@@ -333,7 +333,7 @@ function role_label($r) {
                     <select name="approved_role" class="role-select-sm" required style="flex:1;padding:8px;">
                         <option value="criminology_student" ${user.requested_role==='criminology_student'?'selected':''}>Criminology Student</option>
                         <option value="faculty_researcher" ${user.requested_role==='faculty_researcher'?'selected':''}>Faculty Researcher</option>
-                        <option value="alumni_police_partner" ${user.requested_role==='alumni_police_partner'?'selected':''}>Alumni / Police Partner</option>
+                        <option value="alumni_police_partner" ${user.requested_role==='alumni_police_partner'?'selected':''}>Law Enforcement Partners</option>
                         <option value="super_admin">Super Administrator</option>
                     </select>
                     <button type="submit" class="btn-approve" style="padding:8px 16px;">Approve Access</button>
@@ -585,7 +585,7 @@ function role_label($r) {
                                                 <option value="">Edit Assigned Role...</option>
                                                 <option value="criminology_student" \${u.requested_role === 'criminology_student' ? 'selected' : ''}>Criminology Student</option>
                                                 <option value="faculty_researcher" \${u.requested_role === 'faculty_researcher' ? 'selected' : ''}>Faculty Researcher</option>
-                                                <option value="alumni_police_partner" \${u.requested_role === 'alumni_police_partner' ? 'selected' : ''}>Alumni / Police Partner</option>
+                                                <option value="alumni_police_partner" \${u.requested_role === 'alumni_police_partner' ? 'selected' : ''}>Law Enforcement Partners</option>
                                                 <option value="super_admin">Super Administrator</option>
                                             </select>
                                             <button type="submit" class="btn-approve">Approve</button>

@@ -596,7 +596,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="timeline-content">
                             <div class="timeline-card-header">
                                 <span class="phase-badge">Phase 01</span>
-                                <span class="timeline-duration">Month 1-3</span>
+                                <span class="timeline-duration">week 1-2</span>
                             </div>
                             <h3>Research &amp; Planning</h3>
                             <p>Team organization, budget mapping, and primary raw material extraction</p>
@@ -607,7 +607,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="timeline-content">
                             <div class="timeline-card-header">
                                 <span class="phase-badge">Phase 02</span>
-                                <span class="timeline-duration">Month 4-6</span>
+                                <span class="timeline-duration">week 2-6</span>
                             </div>
                             <h3>Curriculum Integration</h3>
                             <p>Criminology course module updates and forensic lab manual guides</p>
@@ -618,7 +618,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="timeline-content">
                             <div class="timeline-card-header">
                                 <span class="phase-badge">Phase 03</span>
-                                <span class="timeline-duration">Month 7-9</span>
+                                <span class="timeline-duration">Upon Approval</span>
                             </div>
                             <h3>Community Extension</h3>
                             <p>Local police department training, field testing, and forensic workshops</p>
@@ -629,7 +629,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="timeline-content">
                             <div class="timeline-card-header">
                                 <span class="phase-badge">Phase 04</span>
-                                <span class="timeline-duration">Month 10+</span>
+                                <span class="timeline-duration">Upon Approval</span>
                             </div>
                             <h3>Monitoring &amp; Sustainability</h3>
                             <p>Quality testing feedback loop, policy recommendations, and expansions</p>

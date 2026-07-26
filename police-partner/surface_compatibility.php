@@ -1,5 +1,5 @@
 <?php
-// partner/surface_compatibility.php — Alumni / Police Partner Surface Compatibility Matrix
+// partner/surface_compatibility.php — Law Enforcement Partners Surface Compatibility Matrix
 require_once '../config.php';
 require_once 'auth.php';
 check_partner_auth();
@@ -186,7 +186,7 @@ try {
                     </svg>
                 </button>
                 <div class="header-title">
-                    <h2>Alumni / Police Partner Portal</h2>
+                    <h2>Law Enforcement Partners Portal</h2>
                 </div>
             </div>
         </header>

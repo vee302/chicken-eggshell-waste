@@ -1,5 +1,5 @@
 <?php
-// partner/performance_data.php — Alumni / Police Partner Performance Data Analysis
+// partner/performance_data.php — Law Enforcement Partners Performance Data Analysis
 require_once '../config.php';
 require_once 'auth.php';
 check_partner_auth();
@@ -317,7 +317,7 @@ try {
                     </svg>
                 </button>
                 <div class="header-title">
-                    <h2>Alumni / Police Partner Portal</h2>
+                    <h2>Law Enforcement Partners Portal</h2>
                 </div>
             </div>
         </header>

@@ -1,5 +1,5 @@
 <?php
-// partner/profile.php — Alumni / Police Partner User Profile Settings
+// partner/profile.php — Law Enforcement Partners User Profile Settings
 require_once '../config.php';
 require_once 'auth.php';
 check_partner_auth();
@@ -204,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </svg>
                 </button>
                 <div class="header-title">
-                    <h2>Alumni / Police Partner Portal</h2>
+                    <h2>Law Enforcement Partners Portal</h2>
                 </div>
             </div>
         </header>
@@ -258,7 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <div class="info-row">
                             <span class="info-label">Access Role</span>
-                            <span class="info-value">Alumni / Police Partner</span>
+                            <span class="info-value">Law Enforcement Partners</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Account Status</span>

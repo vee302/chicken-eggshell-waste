@@ -1,5 +1,5 @@
 <?php
-// partner/auth.php - Alumni / Police Partner Session Authentication
+// partner/auth.php - Law Enforcement Partners Session Authentication
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
@@ -64,7 +64,7 @@ function check_partner_auth() {
             </svg>
         </div>
         <h1>Unauthorized Access</h1>
-        <p>You do not have permission to view this page. This area is restricted to Alumni / Police Partner accounts only.</p>
+        <p>You do not have permission to view this page. This area is restricted to Law Enforcement Partners accounts only.</p>
         <a href="../login.php" class="btn">Back to Login</a>
     </div>
 </body>

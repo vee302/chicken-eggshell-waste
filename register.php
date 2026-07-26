@@ -564,7 +564,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                             <option value="" disabled <?php echo empty($form_data['requested_role']) ? 'selected' : ''; ?>>Select your role</option>
                             <option value="criminology_student" <?php echo ($form_data['requested_role'] ?? '') === 'criminology_student' ? 'selected' : ''; ?>>Criminology Student</option>
                             <option value="faculty_researcher" <?php echo ($form_data['requested_role'] ?? '') === 'faculty_researcher' ? 'selected' : ''; ?>>Faculty Researcher</option>
-                            <option value="alumni_police_partner" <?php echo ($form_data['requested_role'] ?? '') === 'alumni_police_partner' ? 'selected' : ''; ?>>Alumni / Police Partner</option>
+                            <option value="alumni_police_partner" <?php echo ($form_data['requested_role'] ?? '') === 'alumni_police_partner' ? 'selected' : ''; ?>>Law Enforcement Partners</option>
                         </select>
                         <p class="field-hint">Super Administrator role is not available for public registration.</p>
                     </div>

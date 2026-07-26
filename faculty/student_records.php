@@ -424,7 +424,8 @@ if (isset($_GET['view'])) {
                                                         style="width:48px;height:48px;border-radius:8px;background:#f4f6f0;display:flex;align-items:center;justify-content:center;">
                                                         <span
                                                             style="font-size:0.65rem;color:var(--danger);font-weight:600;text-align:center;padding:2px;">Image
-                                                            not found</span></div>
+                                                            not found</span>
+                                                    </div>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
@@ -548,7 +549,7 @@ if (isset($_GET['view'])) {
                     </div>
                     <div class="detail-row"
                         style="background: var(--cream); padding: 8px 12px; border-radius: 6px; border-left: 4px solid var(--medium-green); margin-bottom: 0.5rem;">
-                        <span class="detail-label" style="font-weight: 700;">AI Preliminary Score <span style="font-size:0.65rem; font-weight:700; color:#b45309; background:#fef3c7; border:1px solid #fde68a; padding:2px 6px; border-radius:10px; margin-left:4px;">Ongoing Calibration</span></span>
+                        <span class="detail-label" style="font-weight: 700;">AI Preliminary Score</span>
                         <span class="detail-value"
                             style="font-weight: 800; color: var(--dark-green); font-size:1.1rem;"><?= $view_record['ai_accuracy_score'] !== null ? number_format($view_record['ai_accuracy_score'], 1) . '%' : 'Awaiting AI Evaluation' ?></span>
                     </div>

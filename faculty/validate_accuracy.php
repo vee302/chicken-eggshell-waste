@@ -1040,6 +1040,10 @@ if (isset($_GET['id'])) {
             <!-- Right Column: Read-only AI Quality Metrics -->
             <div>
                 <div class="quality-metrics-container">
+                    <div style="background: rgba(234, 179, 8, 0.15); color: #854d0e; border: 1px solid rgba(234, 179, 8, 0.35); padding: 8px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 1rem;">
+                        <span style="width: 8px; height: 8px; background-color: #d97706; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+                        <span>AI Auto-Evaluation Module: Ongoing Calibration</span>
+                    </div>
                     <h3 class="metrics-heading">AI Preliminary Quality Metrics (Read-Only)</h3>
                     
                     <div class="metric-score-card overall-card">

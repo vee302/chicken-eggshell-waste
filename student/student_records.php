@@ -1128,7 +1128,7 @@ try {
                                 <span class="info-detail-value" id="det-status"></span>
                             </div>
                             <div class="info-detail-row">
-                                <span class="info-detail-label">AI Preliminary Score:</span>
+                                <span class="info-detail-label">AI Preliminary Score <span style="font-size:0.65rem; font-weight:700; color:#b45309; background:#fef3c7; border:1px solid #fde68a; padding:2px 6px; border-radius:10px; margin-left:4px;">Ongoing Calibration</span>:</span>
                                 <span class="info-detail-value" id="det-ai-score"></span>
                             </div>
                             <div class="info-detail-row" id="det-faculty-row">

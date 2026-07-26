@@ -211,7 +211,7 @@ function role_label($r) {
                                 </td>
                                 <td>
                                     <?php if (!empty($u['proof_of_affiliation'])): ?>
-                                        <a href="view_proof.php?user_id=<?php echo $u['id']; ?>" target="_blank" class="btn-view" style="padding: 4px 8px; font-size: 0.7rem;">View Proof</a>
+                                        <span style="font-size:0.75rem;font-weight:700;color:#2D6A4F;background:rgba(45,106,79,0.12);padding:4px 8px;border-radius:4px;">Attached</span>
                                     <?php else: ?>
                                         <span style="font-size:.75rem;color:#888;font-style:italic;">No Proof Uploaded</span>
                                     <?php endif; ?>
@@ -221,9 +221,6 @@ function role_label($r) {
                                 <td style="text-align:right;">
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;">
                                         <button type="button" class="btn-view" onclick='showUserDetails(<?php echo json_encode($u, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)'>View Details</button>
-                                        <?php if (!empty($u['proof_of_affiliation'])): ?>
-                                            <a href="view_proof.php?user_id=<?php echo $u['id']; ?>" target="_blank" class="btn-view">View Proof</a>
-                                        <?php endif; ?>
                                         <form class="approve-form" onsubmit="handleApprove(event, <?php echo $u['id']; ?>)">
                                             <select name="approved_role" class="role-select-sm" required>
                                                 <option value="">Edit Assigned Role...</option>
@@ -564,12 +561,8 @@ function role_label($r) {
                             const escU = JSON.stringify(u).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                             const hasProof = u.proof_of_affiliation && u.proof_of_affiliation.trim() !== '';
                             const proofHtml = hasProof 
-                                ? `<a href="view_proof.php?user_id=${u.id}" target="_blank" class="btn-view" style="padding: 4px 8px; font-size: 0.7rem;">View Proof</a>`
+                                ? `<span style="font-size:0.75rem;font-weight:700;color:#2D6A4F;background:rgba(45,106,79,0.12);padding:4px 8px;border-radius:4px;">Attached</span>`
                                 : `<span style="font-size:.75rem;color:#888;font-style:italic;">No Proof Uploaded</span>`;
-
-                            const viewProofAction = hasProof
-                                ? `<a href="view_proof.php?user_id=${u.id}" target="_blank" class="btn-view">View Proof</a>`
-                                : '';
                             
                             tr.innerHTML = `
                                 <td>
@@ -598,7 +591,6 @@ function role_label($r) {
                                 <td style="text-align:right;">
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;">
                                         <button type="button" class="btn-view" onclick='showUserDetails(\${escU})'>View Details</button>
-                                        \${viewProofAction}
                                         <form class="approve-form" onsubmit="handleApprove(event, \${u.id})">
                                             <select name="approved_role" class="role-select-sm" required>
                                                 <option value="">Edit Assigned Role...</option>

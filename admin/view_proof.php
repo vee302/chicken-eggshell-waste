@@ -35,30 +35,72 @@ if ($user_id <= 0) {
 
 try {
     // Fetch proof of affiliation from DB
-    $stmt = $pdo->prepare("SELECT proof_of_affiliation FROM users WHERE id = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT proof_of_affiliation, full_name FROM users WHERE id = ? LIMIT 1");
     $stmt->execute([$user_id]);
-    $proof_path = $stmt->fetchColumn();
+    $user_row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (empty($proof_path)) {
+    if (!$user_row || empty($user_row['proof_of_affiliation'])) {
         http_response_code(404);
-        echo "No proof of affiliation file was uploaded for this user.";
+        echo "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Proof Not Found</title><style>body{font-family:sans-serif;text-align:center;padding:50px;background:#f8f9fa;color:#333;}.card{max-width:500px;margin:auto;padding:30px;background:white;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.05);}</style></head><body><div class='card'><h2>No Proof File</h2><p>No proof of affiliation file was uploaded for this user.</p></div></body></html>";
         exit;
     }
 
-    // Resolve absolute path and prevent directory traversal
+    $proof_path = $user_row['proof_of_affiliation'];
     $base_dir = dirname(__DIR__); // root directory of the application
-    $file_path = $base_dir . '/' . $proof_path;
-    $real_path = realpath($file_path);
-    $allowed_dir = realpath($base_dir . '/uploads/proofs');
+    
+    // Normalize slashes
+    $clean_path = str_replace(['\\', '/'], '/', trim($proof_path));
+    
+    // Candidate paths to check
+    $candidate_paths = [
+        $base_dir . '/' . ltrim($clean_path, '/'),
+        $clean_path,
+        $base_dir . '/uploads/proofs/' . basename($clean_path),
+        __DIR__ . '/' . ltrim($clean_path, '/')
+    ];
+
+    $real_path = false;
+    foreach ($candidate_paths as $cand) {
+        if (!empty($cand) && file_exists($cand) && !is_dir($cand)) {
+            $real_path = realpath($cand) ?: $cand;
+            break;
+        }
+    }
 
     if ($real_path === false || !file_exists($real_path)) {
         http_response_code(404);
-        echo "The requested file could not be found on the server.";
+        $user_name = htmlspecialchars($user_row['full_name'] ?? 'User');
+        echo "<!DOCTYPE html>
+        <html lang='en'>
+        <head>
+            <meta charset='UTF-8'>
+            <title>File Not Found</title>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 50px; background-color: #f4f6f8; color: #333; }
+                .card { max-width: 520px; margin: auto; padding: 30px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+                h2 { color: #d9534f; margin-top: 0; }
+                p { font-size: 0.95rem; color: #555; line-height: 1.6; }
+                .file-path { background: #f8f9fa; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; color: #666; word-break: break-all; margin: 15px 0; border: 1px solid #eee; }
+                .btn { display: inline-block; padding: 8px 16px; background: #2D6A4F; color: white; text-decoration: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600; margin-top: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class='card'>
+                <h2>File Not Found on Server</h2>
+                <p>The uploaded proof document for <strong>{$user_name}</strong> is not available on the server filesystem.</p>
+                <div class='file-path'>" . htmlspecialchars($proof_path) . "</div>
+                <p>This can happen if the account was registered before mandatory file uploads were enforced, or if server files were reset.</p>
+                <a href='javascript:window.close()' class='btn'>Close Window</a>
+            </div>
+        </body>
+        </html>";
         exit;
     }
 
     // Path traversal validation
-    if ($allowed_dir === false || strpos($real_path, $allowed_dir) !== 0) {
+    $norm_real = strtolower(str_replace('\\', '/', $real_path));
+    $norm_uploads = strtolower(str_replace('\\', '/', $base_dir . '/uploads'));
+    if (strpos($norm_real, $norm_uploads) === false) {
         http_response_code(403);
         echo "Forbidden: Invalid file path.";
         exit;

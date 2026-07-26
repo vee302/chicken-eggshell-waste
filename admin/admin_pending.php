@@ -347,7 +347,7 @@ function role_label($r) {
             proofHtml = `
                 <div style="margin-top:4px;">
                     <a href="view_proof.php?user_id=${user.id}" target="_blank" class="btn-view" style="padding: 6px 12px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: #2D6A4F; color: #fff; text-decoration: none; border-radius: 4px; font-weight: 600;">
-                        🔍 View Full Document / Image
+                        View Full Document / Image
                     </a>
                     ${isImage ? `
                         <div style="margin-top: 10px; border: 1px solid #d0d0d0; border-radius: 8px; overflow: hidden; background: #f9f9f9; padding: 8px; text-align: center;">

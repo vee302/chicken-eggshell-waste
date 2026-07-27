@@ -179,7 +179,7 @@ function role_label($r) {
                                 <th>Department / Affiliation</th>
                                 <th>Requested Role</th>
                                 <th>Reason for Access</th>
-                                <th>Proof of Affiliation</th>
+                                <th>Valid ID / Institutional ID</th>
                                 <th>Registration Date</th>
                                 <th>Status</th>
                                 <th style="text-align:right;">Actions</th>
@@ -374,7 +374,7 @@ function role_label($r) {
             <p class="section-divider">Access Request</p>
             <div class="detail-row"><span class="detail-label">Requested Role</span><span class="detail-value">${roleLabel(user.requested_role)}</span></div>
             <div class="detail-row"><span class="detail-label">Reason for Access</span><span class="detail-value">${(user.reason_for_access || '—').replace(/\n/g, '<br>')}</span></div>
-            <div class="detail-row"><span class="detail-label">Proof of Affiliation</span><span class="detail-value">${proofHtml}</span></div>
+            <div class="detail-row"><span class="detail-label">Valid ID / Institutional ID</span><span class="detail-value">${proofHtml}</span></div>
             <div class="detail-row"><span class="detail-label">Registration Date</span><span class="detail-value">${user.created_at}</span></div>
             <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge-pending">${user.status}</span></span></div>
             ${actionsHtml}

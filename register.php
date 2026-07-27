@@ -85,7 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $file_error = false;
 
         if (!$has_proof) {
-            $error_message = "Proof of Affiliation is required. Please upload a valid ID or document.";
+            $error_message = "Valid ID / Institutional ID is required. Please upload a valid ID image or document.";
             $file_error = true;
         } else {
             $file = $_FILES['proof_of_affiliation'];
@@ -579,10 +579,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     </div>
 
                     <div class="form-group">
-                        <label for="proof_of_affiliation">Proof of Affiliation <span class="required-star">*</span></label>
+                        <label for="proof_of_affiliation">Valid ID / Institutional ID <span class="required-star">*</span></label>
                         <input type="file" id="proof_of_affiliation" name="proof_of_affiliation"
                             class="form-control-plain" accept=".jpg,.jpeg,.png,.pdf" required>
-                        <p class="field-hint">Allowed types: JPG, JPEG, PNG, PDF. Max file size: 5MB.</p>
+                        <p class="field-hint">Allowed types: JPG, JPEG, PNG, PDF. Max file size: 5MB. (e.g. Student ID, Faculty ID, Agency ID)</p>
                     </div>
 
                     <div class="form-group">
@@ -871,7 +871,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             // Client-side file validation
             const fileInput = document.getElementById("proof_of_affiliation");
             if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                showClientError("Proof of Affiliation is required. Please upload a valid ID or document.");
+                showClientError("Valid ID / Institutional ID is required. Please upload a valid ID image or document.");
                 return false;
             }
             if (fileInput && fileInput.files && fileInput.files.length > 0) {

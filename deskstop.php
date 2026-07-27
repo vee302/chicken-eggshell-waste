@@ -15,7 +15,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Green Forensics - Sustainable Fingerprint Powder</title>
+    <title>Green Technology - Sustainable Fingerprint Powder</title>
     <link rel="stylesheet" href="css/style.css?v=<?= time() ?>">
     <!-- GSAP, ScrollTrigger, and ScrollToPlugin CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -63,7 +63,7 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                 <div class="hero-label">INNOVATIVE FORENSIC SCIENCE</div>
                 <h1 class="hero-title">
                     <span class="title-line">GREEN</span>
-                    <span class="title-line">FORENSICS</span>
+                    <span class="title-line">TECHNOLOGY</span>
                 </h1>
                 <p class="hero-subtitle">Sustainable Fingerprint Powder Using Chicken Eggshell Waste</p>
                 <p class="hero-desc"

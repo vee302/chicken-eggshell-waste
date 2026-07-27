@@ -697,7 +697,7 @@ try {
 
                 <div style="display:flex; gap:10px; margin-top:1rem;" class="no-print">
                     <button type="button" class="btn btn-secondary" onclick="closeInspectionModal()" style="flex:1; background:#163B2A; border-color:rgba(167, 201, 177, 0.25); color:#F4F4F0;">Close</button>
-                    <a id="printReportBtn" href="#" target="_blank" class="btn btn-primary" style="flex:1; background:#2FBF71; border-color:#2FBF71; color:#10261D; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Print Report</a>
+                    <a id="printReportBtn" href="#" target="_blank" class="btn btn-primary" style="flex:1; background:var(--medium-green); border-color:var(--medium-green); color:#ffffff; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Print Report</a>
                     <a id="exportWordBtn" href="#" class="btn btn-primary" style="flex:1; background:#163B2A; border-color:rgba(167, 201, 177, 0.30); color:#F4F4F0; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Export to Word</a>
                 </div>
             </div>

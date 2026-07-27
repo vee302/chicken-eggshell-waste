@@ -947,7 +947,7 @@ try {
                                                         style="font-size:0.75rem; padding:4px 8px;">View Details</button>
                                                     <button type="button" class="btn btn-primary btn-sm"
                                                         onclick="event.stopPropagation(); openComparisonModalByData(<?= (int) $r['id'] ?>);"
-                                                        style="background:#2FBF71; border-color:#2FBF71; color:#10261D; font-weight:700; font-size:0.75rem; padding:4px 8px;">View
+                                                        style="background:var(--medium-green); border-color:var(--medium-green); color:#ffffff; font-weight:600; font-size:0.75rem; padding:4px 8px;">View
                                                         Comparison</button>
                                                     <a href="print_fingerprint_report.php?test_id=<?= $r['id'] ?>"
                                                         target="_blank" onclick="event.stopPropagation();"
@@ -1520,7 +1520,7 @@ try {
                 const actionsHtml = `
             <div style="display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:nowrap;">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openDetailModalByData(${r.id});" style="font-size:0.75rem; padding:4px 8px;">View Details</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openComparisonModalByData(${r.id});" style="background:#2FBF71; border-color:#2FBF71; color:#10261D; font-weight:700; font-size:0.75rem; padding:4px 8px;">View Comparison</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openComparisonModalByData(${r.id});" style="background:var(--medium-green); border-color:var(--medium-green); color:#ffffff; font-weight:600; font-size:0.75rem; padding:4px 8px;">View Comparison</button>
                 <a href="print_fingerprint_report.php?test_id=${r.id}" target="_blank" onclick="event.stopPropagation();" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px; text-decoration:none; display:inline-flex; align-items:center;">Print Report</a>
             </div>`;
 

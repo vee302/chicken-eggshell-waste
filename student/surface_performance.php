@@ -76,17 +76,17 @@ try {
             margin: 0 auto;
         }
         .surface-card { background: var(--white); border-radius: 14px; overflow: hidden; box-shadow: var(--box-shadow); border: 1px solid rgba(27,67,50,.05); }
-        .surface-card-head { background: var(--dark-green); color: var(--white); padding: 1.1rem 1.4rem; }
+        .surface-card-head { background: var(--dark-green); color: var(--white); padding: 1.1rem 1.4rem; display: flex; justify-content: space-between; align-items: center; }
         .surface-card-head h3 { font-size: .95rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
-        .surface-card-head span { font-size: .75rem; opacity: .75; }
+        .surface-card-head .subtext { font-size: .78rem; color: rgba(255, 255, 255, 0.75); font-weight: 500; display: block; }
         .surface-card-body { padding: 1.25rem 1.4rem; }
         .metric-row { display: flex; justify-content: space-between; align-items: center; padding: .55rem 0; border-bottom: 1px solid var(--cream); }
         .metric-row:last-child { border-bottom: none; }
         .metric-label { font-size: .8rem; color: var(--gray); }
         .metric-value { font-size: .9rem; font-weight: 700; color: var(--dark-green); }
-        .powder-pill { padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700; }
-        .powder-eggshell  { background: rgba(82,183,136,.12); color: var(--medium-green); }
-        .powder-commercial{ background: rgba(108,117,125,.12); color: #495057; }
+        .powder-pill { padding: 4px 12px; border-radius: 20px; font-size: .75rem; font-weight: 600; display: inline-block; letter-spacing: 0.3px; }
+        .powder-eggshell  { background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.35); }
+        .powder-commercial{ background: rgba(244, 162, 97, 0.25); color: #ffffff; border: 1px solid rgba(244, 162, 97, 0.4); }
     </style>
 </head>
 <body>
@@ -172,8 +172,13 @@ try {
                     <?php foreach ($surface_data as $row): ?>
                     <div class="surface-card">
                         <div class="surface-card-head">
-                            <h3><?= ucfirst(htmlspecialchars($row['surface_type'])) ?></h3>
-                            <span><span class="powder-pill powder-<?= $row['powder_type'] ?>"><?= ucfirst($row['powder_type']) ?> Powder</span></span>
+                            <div>
+                                <h3><?= ucfirst(htmlspecialchars($row['surface_type'])) ?></h3>
+                                <span class="subtext"><?= $row['trial_count'] ?> trial<?= $row['trial_count'] != 1 ? 's' : '' ?> recorded</span>
+                            </div>
+                            <div>
+                                <span class="powder-pill powder-<?= strtolower(htmlspecialchars($row['powder_type'])) ?>"><?= ucfirst(htmlspecialchars($row['powder_type'])) ?> Powder</span>
+                            </div>
                         </div>
                         <div class="surface-card-body">
                             <div class="metric-row">

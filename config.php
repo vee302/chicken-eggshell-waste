@@ -5,6 +5,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+
+
 // Polyfill for getallheaders() if it doesn't exist (e.g. non-Apache or cloud hosting like Railway)
 if (!function_exists('getallheaders')) {
     function getallheaders()
@@ -82,6 +84,10 @@ if (file_exists($env_path)) {
     }
 }
 
+// Set default timezone to Philippines (Asia/Manila, UTC+8)
+date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Manila'));
+
+
 // Production Validation Guard
 if (env('APP_ENV') === 'production') {
     $has_host = !empty(env('DB_HOST')) || !empty(env('MYSQLHOST'));
@@ -123,6 +129,10 @@ try {
         DB_PASSWORD,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
+
+    // Set MySQL session time zone to match Asia/Manila (+08:00)
+    $pdo->exec("SET time_zone = '+08:00'");
+
 
     // ============================================================
     // 4. Create USERS table (role-based)

@@ -434,8 +434,10 @@ body {
 .student-content {
     padding: 2rem;
     flex-grow: 1;
-    max-width: 1600px;
+    max-width: 1400px;
     width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .page-header-wrap {

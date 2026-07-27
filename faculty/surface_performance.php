@@ -49,7 +49,7 @@ foreach ($surfaces as $s) {
     <link rel="stylesheet" href="../css/admin_style.css?v=2.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .surface-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5rem;}
+        .surface-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;}
         .surface-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(27,67,50,.05);border:1px solid rgba(27,67,50,.05);}
         .surface-card-header{padding:1.25rem 1.5rem;background:var(--dark-green);color:#fff;}
         .surface-card-header h3{font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}

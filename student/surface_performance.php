@@ -70,10 +70,9 @@ try {
     <style>
         .surface-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 360px));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;
-            justify-content: center;
-            margin: 0 auto;
+            width: 100%;
         }
         .surface-card { background: var(--white); border-radius: 14px; overflow: hidden; box-shadow: var(--box-shadow); border: 1px solid rgba(27,67,50,.05); }
         .surface-card-head { background: var(--dark-green); color: var(--white); padding: 1.1rem 1.4rem; display: flex; justify-content: space-between; align-items: center; }

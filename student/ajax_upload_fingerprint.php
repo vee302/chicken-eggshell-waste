@@ -94,6 +94,20 @@ if (!$image_hash) {
     sendResponse(false, 'Failed to process fingerprint image hash.');
 }
 
+// 1. Duplicate Image Check (before moving file to disk)
+$stmt = $pdo->prepare("SELECT id FROM fingerprint_tests WHERE student_id = ? AND image_hash = ? LIMIT 1");
+$stmt->execute([$student_id, $image_hash]);
+if ($stmt->fetch()) {
+    sendResponse(false, 'This fingerprint image has already been submitted.');
+}
+
+// 2. Cooldown Check 15s (before moving file to disk)
+$stmt = $pdo->prepare("SELECT id FROM fingerprint_tests WHERE student_id = ? AND submitted_at >= DATE_SUB(NOW(), INTERVAL 15 SECOND) LIMIT 1");
+$stmt->execute([$student_id]);
+if ($stmt->fetch()) {
+    sendResponse(false, 'Please wait 15 seconds before submitting another fingerprint evaluation.');
+}
+
 // Generate a unique trial_id early to use as the filename
 try {
     $stmt = $pdo->prepare("SELECT MAX(id) FROM fingerprint_tests");
@@ -138,11 +152,18 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
     $ai_msg = "";
     $ai_success = false;
 
-    // Execute Python script safely checking if shell_exec is disabled
+    // Execute Python script safely with multi-platform command fallback (python3 vs python)
     $output = null;
     if (function_exists('shell_exec') && !in_array('shell_exec', array_map('trim', explode(',', ini_get('disable_functions'))))) {
-        $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " " . escapeshellarg($surface_type) . " 2>&1";
+        $py_cmd = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? 'python' : 'python3';
+        $command = "$py_cmd " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " " . escapeshellarg($surface_type) . " 2>&1";
         $output = @shell_exec($command);
+
+        // Fallback command if primary binary is not found
+        if (($output === null || empty(trim($output))) && $py_cmd === 'python3') {
+            $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " " . escapeshellarg($surface_type) . " 2>&1";
+            $output = @shell_exec($command);
+        }
     }
 
     if ($output === null || empty(trim($output))) {
@@ -177,35 +198,9 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
         }
     }
 
-    // Wrap the entire insert process in a transaction
+    // Wrap the insert process in a transaction
     $pdo->beginTransaction();
     try {
-        // 1. Duplicate Image Check
-        $stmt = $pdo->prepare("SELECT id FROM fingerprint_tests WHERE student_id = ? AND image_hash = ? LIMIT 1");
-        $stmt->execute([$student_id, $image_hash]);
-        if ($stmt->fetch()) {
-            $pdo->rollBack();
-            // Delete moved file to save space
-            @unlink($dest);
-            if ($enhanced_image_path) {
-                @unlink(dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . $enhanced_image_path);
-            }
-            sendResponse(false, 'This fingerprint image has already been submitted.');
-        }
-
-        // 2. Cooldown Check (15 seconds)
-        $stmt = $pdo->prepare("SELECT id FROM fingerprint_tests WHERE student_id = ? AND submitted_at >= DATE_SUB(NOW(), INTERVAL 15 SECOND) LIMIT 1");
-        $stmt->execute([$student_id]);
-        if ($stmt->fetch()) {
-            $pdo->rollBack();
-            // Delete moved file
-            @unlink($dest);
-            if ($enhanced_image_path) {
-                @unlink(dirname(__DIR__) . '/uploads/fingerprint_enhanced/' . $enhanced_image_path);
-            }
-            sendResponse(false, 'Please wait 15 seconds before submitting another fingerprint evaluation.');
-        }
-
         // Google Drive upload will happen only when Faculty Researcher approves the submission
         $gdrive_file_id = null;
 

@@ -12,18 +12,31 @@ $student_id = $_SESSION['user_id'] ?? 0;
 $total = $pending = $approved = $rejected = 0;
 $avg_display = 'N/A';
 try {
-    $total = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id")->fetchColumn();
-    $pending = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id AND status='pending_validation'")->fetchColumn();
-    $approved = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id AND status='approved'")->fetchColumn();
-    $rejected = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE student_id = $student_id AND status='rejected'")->fetchColumn();
+    $stmt = $pdo->prepare("
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN status = 'pending_validation' THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
+            ROUND(AVG(CASE WHEN status = 'approved' THEN COALESCE(faculty_final_score, accuracy_score) END), 1) as avg_score
+        FROM fingerprint_tests 
+        WHERE student_id = ?
+    ");
+    $stmt->execute([$student_id]);
+    $stats = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Only calculate average accuracy from approved records
-    $avg_score = $pdo->query("SELECT ROUND(AVG(COALESCE(faculty_final_score, accuracy_score)),1) FROM fingerprint_tests WHERE student_id = $student_id AND status='approved'")->fetchColumn();
+    if ($stats) {
+        $total = (int)($stats['total'] ?? 0);
+        $pending = (int)($stats['pending'] ?? 0);
+        $approved = (int)($stats['approved'] ?? 0);
+        $rejected = (int)($stats['rejected'] ?? 0);
+        $avg_score = $stats['avg_score'];
 
-    if ($avg_score !== null) {
-        $avg_display = $avg_score . '%';
-    } else {
-        $avg_display = ($pending > 0) ? 'Awaiting Validation' : 'N/A';
+        if ($avg_score !== null) {
+            $avg_display = $avg_score . '%';
+        } else {
+            $avg_display = ($pending > 0) ? 'Awaiting Validation' : 'N/A';
+        }
     }
 } catch (PDOException $e) {
 }

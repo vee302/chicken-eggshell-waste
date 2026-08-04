@@ -6,6 +6,15 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 /**
+ * Helper to check if current HTTP request is an AJAX/JSON call.
+ */
+function is_ajax_request() {
+    return (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+           (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
+           (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false);
+}
+
+/**
  * Checks if the current session belongs to a criminology_student.
  * Redirects to login or shows Unauthorized Access if not.
  */
@@ -15,12 +24,24 @@ function check_student_auth() {
 
     // 1. Must be logged in
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+        if (is_ajax_request()) {
+            header('Content-Type: application/json');
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Session expired. Please log in again.', 'redirect' => '../login.php']);
+            exit;
+        }
         header('Location: ../login.php');
         exit;
     }
 
     // 2. Must be a criminology_student
     if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'criminology_student') {
+        if (is_ajax_request()) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized access. Student role required.']);
+            exit;
+        }
         $role = $_SESSION['user_role'] ?? '';
 
         // Redirect to correct dashboard by role

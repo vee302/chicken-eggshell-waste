@@ -86,9 +86,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($is_lockout_active && $remaining_seconds > 0) {
         $error_message = "Too many failed login attempts. Account temporarily locked.";
     } else {
-        // Trim input values
-        $email = trim($_POST["email"]);
-        $password = trim($_POST["password"]);
+        // Trim and normalize input values
+        $email = strtolower(trim($_POST["email"] ?? ''));
+        $password = trim($_POST["password"] ?? '');
 
         // Validate credentials
         if (empty($email) || empty($password)) {

@@ -7,18 +7,39 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 /**
+ * Helper to check if current HTTP request is an AJAX/JSON call.
+ */
+function is_admin_ajax_request() {
+    return (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+           (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
+           (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false);
+}
+
+/**
  * Checks if the current user session is a valid logged-in Super Administrator.
  * If not, redirects to login page or blocks access.
  */
 function check_admin_auth() {
     // 1. Check if logged in
     if (!isset($_SESSION["logged_in"]) || $_SESSION["logged_in"] !== true) {
+        if (is_admin_ajax_request()) {
+            header('Content-Type: application/json');
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Session expired. Please log in again.', 'redirect' => '../login.php']);
+            exit;
+        }
         header("Location: ../login.php");
         exit;
     }
 
     // 2. Validate role is super_admin
     if (!isset($_SESSION["user_role"]) || $_SESSION["user_role"] !== 'super_admin') {
+        if (is_admin_ajax_request()) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized access. Super Admin role required.']);
+            exit;
+        }
         $role = $_SESSION["user_role"] ?? '';
         if ($role === 'faculty_researcher') {
             header("Location: ../faculty/faculty_dashboard.php");

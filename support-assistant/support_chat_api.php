@@ -225,7 +225,7 @@ function callPollinationsAI($message, $systemInstruction)
         'Content-Type: application/json',
         'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     ]);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 8); // Fast timeout to prevent long loading states
+    curl_setopt($ch, CURLOPT_TIMEOUT, 4); // Fast timeout to prevent long loading states
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
@@ -239,99 +239,67 @@ function callPollinationsAI($message, $systemInstruction)
     return null;
 }
 
-$systemInstruction = "You are the Green Forensics Support Assistant. Help users with the Green Forensics Evaluating System. Answer clearly, politely, and briefly. You can help with registration, pending accounts, login lockout, account unlock requests, fingerprint image upload, webcam capture, AI-assisted image quality evaluation, faculty validation, Terms of Use, Privacy Policy, and role-based dashboards. For account lockouts, password resets, failed logins, or unlock requests, guide the user to visit request_unlock.php. Do not ask for their password or private credentials. Fingerprint images are used only for academic research evaluation and image quality assessment, not biometric identification. If a user asks about locked account, login failed, forgot password, cannot login, or requesting an unlock, you must respond with: 'If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php'. If a user asks who the developer of the system is, respond with: 'Ang developer nitong system ay si Yvez Jayvee Gesmundo ang full stock developer. ang frontend ay si Marron Brimbuela at si Kevin Cloud Fajardo.' If the user greets you, respond warmly and ask how you can help.";
-
-// 2. Fetch Gemini API Key
-$apiKey = env('GEMINI_API_KEY');
-if (empty($apiKey)) {
-    $err = "Gemini API Error: GEMINI_API_KEY is not defined or empty in the environment configuration.";
-    debug_log($err, true);
-    $pollinationsReply = callPollinationsAI($message, $systemInstruction);
-    if ($pollinationsReply !== null) {
-        send_response(true, $pollinationsReply, "pollinations");
-    } else {
-        $reply = getOfflineSupportAnswer($message);
-        send_response(true, $reply, "offline");
+// Helper to query Groq AI API (Ultra-fast priority AI)
+function callGroqAI($message, $systemInstruction)
+{
+    $groqKey = env('GROQ_API_KEY');
+    if (empty($groqKey)) {
+        return null;
     }
-}
 
-// 3. Fetch Gemini Model (non-hardcoded)
-$model = env('GEMINI_MODEL', 'gemini-3.5-flash');
-debug_log("Attempting call with Model: $model");
-
-// 4. Call Google Gemini API
-$url = "https://generativelanguage.googleapis.com/v1beta/models/" . $model . ":generateContent?key=" . $apiKey;
-
-$data = [
-    "contents" => [
-        [
-            "parts" => [
-                ["text" => $message]
-            ]
-        ]
-    ],
-    "system_instruction" => [
-        "parts" => [
-            ["text" => $systemInstruction]
-        ]
-    ],
-    "generationConfig" => [
+    $model = env('GROQ_MODEL', 'llama-3.3-70b-versatile');
+    $url = "https://api.groq.com/openai/v1/chat/completions";
+    $data = [
+        "model" => $model,
+        "messages" => [
+            ["role" => "system", "content" => $systemInstruction],
+            ["role" => "user", "content" => $message]
+        ],
         "temperature" => 0.4,
-        "maxOutputTokens" => 800,
-        "thinkingConfig" => [
-            "thinkingLevel" => "minimal"
-        ]
-    ]
-];
+        "max_tokens" => 800
+    ];
 
-$ch = curl_init($url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json'
-]);
-curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-
-// Disable SSL verification locally if XAMPP setup lacks certificates
-if (env('APP_ENV') !== 'production') {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $groqKey
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 4);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-    debug_log("Local environment detected. Disabled cURL SSL verification.");
-}
 
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
-curl_close($ch);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
 
-// If request fails or API returns error response code
-if ($response === false || $httpCode !== 200) {
-    $errMessage = "Gemini API Error. HTTP Code: $httpCode. cURL Error: $curlError. Response: " . ($response !== false ? $response : 'No response');
-    debug_log($errMessage, true);
-    $pollinationsReply = callPollinationsAI($message, $systemInstruction);
-    if ($pollinationsReply !== null) {
-        send_response(true, $pollinationsReply, "pollinations");
-    } else {
-        $reply = getOfflineSupportAnswer($message);
-        send_response(true, $reply, "offline");
+    if ($httpCode === 200 && !empty($response)) {
+        $res = json_decode($response, true);
+        $reply = $res['choices'][0]['message']['content'] ?? null;
+        if (!empty($reply)) {
+            return trim($reply);
+        }
     }
+    return null;
 }
 
-$responseData = json_decode($response, true);
-$replyText = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+$systemInstruction = "You are the Green Forensics Support Assistant. Help users with the Green Forensics Evaluating System. Answer clearly, politely, and briefly. You can help with registration, pending accounts, login lockout, account unlock requests, fingerprint image upload, webcam capture, AI-assisted image quality evaluation, faculty validation, Terms of Use, Privacy Policy, and role-based dashboards. For account lockouts, password resets, failed logins, or unlock requests, guide the user to visit request_unlock.php. Do not ask for their password or private credentials. Fingerprint images are used only for academic research evaluation and image quality assessment, not biometric identification. If a user asks about locked account, login failed, forgot password, cannot login, or requesting an unlock, you must respond with: 'If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php'. If a user asks who the developer of the system is, respond with: 'Ang developer nitong system ay si Yvez Jayvee Gesmundo ang full stock developer. ang frontend ay si Marron Brimbuela at si Kevin Cloud Fajardo.' If the user greets you, respond warmly and ask how you can help.";
 
-if (empty($replyText)) {
-    $errMessage = "Gemini API Error: empty response text structure. Response: " . $response;
-    debug_log($errMessage, true);
-    $pollinationsReply = callPollinationsAI($message, $systemInstruction);
-    if ($pollinationsReply !== null) {
-        send_response(true, $pollinationsReply, "pollinations");
-    } else {
-        $reply = getOfflineSupportAnswer($message);
-        send_response(true, $reply, "offline");
-    }
+// 1. Try Groq AI first (Ultra-fast & free tier)
+$groqReply = callGroqAI($message, $systemInstruction);
+if ($groqReply !== null) {
+    send_response(true, $groqReply, "groq");
 }
 
-send_response(true, trim($replyText), "gemini");
+// 2. Fallback to Pollinations AI
+$pollinationsReply = callPollinationsAI($message, $systemInstruction);
+if ($pollinationsReply !== null) {
+    send_response(true, $pollinationsReply, "pollinations");
+}
+
+// 3. Fallback to Offline System Guide
+$reply = getOfflineSupportAnswer($message);
+send_response(true, $reply, "offline");
 ?>

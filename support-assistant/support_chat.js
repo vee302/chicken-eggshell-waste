@@ -120,6 +120,36 @@ function showTypingIndicator() {
     return indicator;
 }
 
+// Disable chat input UI if user is blocked
+function disableSupportChat() {
+    const input = document.getElementById('chatInput');
+    const sendBtn = document.querySelector('.chat-send-btn');
+    const suggestionBtns = document.querySelectorAll('.suggestion-btn');
+    const toggleBtn = document.querySelector('.chat-suggestions-toggle');
+
+    if (input) {
+        input.disabled = true;
+        input.value = '';
+        input.placeholder = 'Access Blocked (Inappropriate Language)';
+        input.style.backgroundColor = '#f8d7da';
+        input.style.color = '#721c24';
+        input.style.cursor = 'not-allowed';
+    }
+    if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+        sendBtn.style.cursor = 'not-allowed';
+    }
+    suggestionBtns.forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+    });
+    if (toggleBtn) {
+        toggleBtn.disabled = true;
+    }
+}
+
 // Fetch response from Groq AI backend
 function getBotResponseAPI(text, callback) {
     const baseUrl = typeof window.GREEN_FORENSICS_BASE_URL !== 'undefined' ? window.GREEN_FORENSICS_BASE_URL : '';
@@ -139,10 +169,13 @@ function getBotResponseAPI(text, callback) {
         return response.json();
     })
     .then(data => {
+        if (data.source === 'blocked' || (data.reply && data.reply.includes('na-block'))) {
+            disableSupportChat();
+        }
         if (data.success === true && typeof data.reply !== 'undefined') {
-            callback(data.reply);
+            callback(data.reply, data.source);
         } else {
-            callback(data.reply || "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator.");
+            callback(data.reply || "Sorry, I cannot connect to the support assistant right now. Please contact the Super Administrator.", data.source);
         }
     })
     .catch(error => {

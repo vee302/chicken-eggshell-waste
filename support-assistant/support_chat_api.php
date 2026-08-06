@@ -29,12 +29,62 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 $input = json_decode(file_get_contents('php://input'), true);
 $message = trim($input['message'] ?? '');
 
-if (empty($message)) {
-    send_response(false, "Message cannot be empty.", 400);
+// Session profanity tracking initialization
+if (!isset($_SESSION['chat_profanity_count'])) {
+    $_SESSION['chat_profanity_count'] = 0;
+}
+if (!isset($_SESSION['chat_profanity_blocked'])) {
+    $_SESSION['chat_profanity_blocked'] = false;
 }
 
-// Unlock & password check
+// 0. Check if user is already blocked
+if ($_SESSION['chat_profanity_blocked'] === true || $_SESSION['chat_profanity_count'] >= 2) {
+    $_SESSION['chat_profanity_blocked'] = true;
+    send_response(
+        false,
+        "Ang iyong access sa AI Support Assistant ay na-block dahil sa paulit-ulit na paggamit ng hindi angkop na pananalita.",
+        "blocked"
+    );
+}
+
+// 1. Profanity Filter & Strike System
 $lowerMessage = strtolower($message);
+
+$profanities = [
+    'gago', 'gaga', 'tanga', 'bobo', 'buba', 'inutil', 'tarantado', 'ulol', 'leche', 'letche',
+    'putangina', 'putang ina', 'pukinangina', 'pukinang ina', 'tangina', 'taena', 'tanginang',
+    'pota', 'puta', 'putaena', 'pucha', 'puchang', 'pakyu', 'pokpok', 'bayag', 'titi', 'puki',
+    'pepe', 'kiki', 'kupal', 'g@go', 't@nga', 'p@t@',
+    'fuck', 'fucking', 'fucked', 'fucker', 'shit', 'shitty', 'bitch', 'asshole', 'bastard',
+    'cunt', 'dick', 'pussy', 'motherfucker', 'bullshit', 'prick', 'cock'
+];
+
+$foundProfanity = false;
+foreach ($profanities as $badWord) {
+    if (preg_match('/\b' . preg_quote($badWord, '/') . '\b/i', $lowerMessage) || strpos($lowerMessage, $badWord) !== false) {
+        $foundProfanity = true;
+        break;
+    }
+}
+
+if ($foundProfanity) {
+    $_SESSION['chat_profanity_count']++;
+
+    if ($_SESSION['chat_profanity_count'] >= 2) {
+        $_SESSION['chat_profanity_blocked'] = true;
+        send_response(
+            false,
+            "Ang iyong access sa AI Support Assistant ay na-block dahil sa paulit-ulit na paggamit ng hindi angkop na pananalita.",
+            "blocked"
+        );
+    } else {
+        send_response(
+            true,
+            "Babala (1/2): Mangyaring gumamit ng magalang at angkop na pananalita. Ang uuliting paggamit ng hindi angkop na salita ay magdudulot ng pagka-block ng iyong chat access.",
+            "warning"
+        );
+    }
+}
 
 // Check for unlock request intent first
 $unlockKeywords = [

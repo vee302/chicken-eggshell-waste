@@ -1,11 +1,11 @@
 <?php
-ob_start(); // Buffer output to prevent warnings or database notices from corrupting the JSON payload
-// support-assistant/support_chat_api.php - Backend API Handler for Groq AI Support Assistant
+ob_start();
+// Backend API Handler for Support Assistant
 header('Content-Type: application/json');
 
 require_once dirname(__DIR__) . "/config.php";
 
-// Helper function to safely output JSON and exit
+// Output JSON and exit
 function send_response($success, $reply, $source = 'offline', $http_code = 200)
 {
     if (ob_get_length()) {
@@ -20,7 +20,7 @@ function send_response($success, $reply, $source = 'offline', $http_code = 200)
     exit;
 }
 
-// Ensure request is POST
+// Require POST method
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     send_response(false, "Method Not Allowed", 405);
 }
@@ -33,7 +33,7 @@ if (empty($message)) {
     send_response(false, "Message cannot be empty.", 400);
 }
 
-// 1. Password Security & Account Unlock Check
+// Unlock & password check
 $lowerMessage = strtolower($message);
 
 // Check for unlock request intent first
@@ -100,7 +100,7 @@ if ($matchedDeveloper) {
 }
 
 
-// Helper for local diagnostic logging
+// Diagnostic logging
 function debug_log($message, $is_error = false)
 {
     $env = env('APP_ENV', 'production');
@@ -115,96 +115,71 @@ function debug_log($message, $is_error = false)
     }
 }
 
-// Offline fallback responder for common Green Forensics questions
+// Offline fallback answers
 function getOfflineSupportAnswer($message)
 {
     $lowerMessage = strtolower(trim($message));
 
-    // 1. Account Lock / Unlock / Login issues
-    $unlockKeywords = [
-        'unlock account', 'locked account', 'cannot login', 'can\'t login', 
-        'cant login', 'login failed', 'forgot password', 'request unlock', 
-        'locked', 'lockout'
-    ];
-    foreach ($unlockKeywords as $keyword) {
-        if (strpos($lowerMessage, $keyword) !== false) {
-            return "If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php";
-        }
+    if (strpos($lowerMessage, 'unlock') !== false || strpos($lowerMessage, 'locked') !== false || strpos($lowerMessage, 'cant login') !== false) {
+        return "If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php";
     }
 
-    // 2. Developer Information
-    $developerKeywords = ['developer', 'developers', 'gumawa', 'creator', 'creators', 'who made'];
-    foreach ($developerKeywords as $keyword) {
-        if (strpos($lowerMessage, $keyword) !== false) {
-            return "Ang developer nitong system ay si Yvez Jayvee Gesmundo ang full stock developer. ang frontend ay si Marron Brimbuela at si Kevin Cloud Fajardo.";
-        }
+    if (strpos($lowerMessage, 'developer') !== false || strpos($lowerMessage, 'gumawa') !== false) {
+        return "Ang developer nitong system ay si Yvez Jayvee Gesmundo ang full stock developer. ang frontend ay si Marron Brimbuela at si Kevin Cloud Fajardo.";
     }
 
-    // 3. Password / Credentials
-    if (strpos($lowerMessage, 'password') !== false || strpos($lowerMessage, 'passcode') !== false || strpos($lowerMessage, 'credential') !== false) {
+    if (strpos($lowerMessage, 'password') !== false || strpos($lowerMessage, 'credential') !== false) {
         return "For security reasons, never share your password. If you need help with your password or your account is locked, please use the Request Unlock page or contact the Super Administrator directly.";
     }
 
-    // 4. Pending Validation status
-    if (strpos($lowerMessage, 'pending validation') !== false || (strpos($lowerMessage, 'pending') !== false && strpos($lowerMessage, 'validation') !== false)) {
+    if (strpos($lowerMessage, 'pending validation') !== false) {
         return "Pending Validation means your fingerprint submission was received but still needs to be reviewed by the Faculty Researcher.";
     }
 
-    // 5. Needs Revision status
-    if (strpos($lowerMessage, 'needs revision') !== false || strpos($lowerMessage, 'need revision') !== false || strpos($lowerMessage, 'revision') !== false) {
+    if (strpos($lowerMessage, 'needs revision') !== false || strpos($lowerMessage, 'revision') !== false) {
         return "Needs Revision means your submission needs improvement. Read the faculty remarks and upload a clearer or corrected fingerprint image.";
     }
 
-    // 6. Why is my account pending?
     if (strpos($lowerMessage, 'pending') !== false) {
         return "Your account is pending because the Super Administrator still needs to review and approve your registration. Please wait for approval or contact your instructor/admin.";
     }
 
-    // 7. How to upload fingerprint image
     if (strpos($lowerMessage, 'upload') !== false) {
-        return "Go to Upload Fingerprint Images, choose powder type and surface type, upload or capture the fingerprint image, then submit. Your record will be marked as Pending Validation until faculty reviews it.";
+        return "Go to Upload Fingerprint Images, choose powder type and surface type, upload or capture the fingerprint image, then submit.";
     }
 
-    // 8. Approved status
-    if (strpos($lowerMessage, 'approved') !== false || strpos($lowerMessage, 'approval') !== false) {
+    if (strpos($lowerMessage, 'approved') !== false) {
         return "Approved means your fingerprint submission has been reviewed and validated by the Faculty Researcher.";
     }
 
-    // 9. Rejected status
-    if (strpos($lowerMessage, 'rejected') !== false || strpos($lowerMessage, 'reject') !== false) {
+    if (strpos($lowerMessage, 'rejected') !== false) {
         return "Rejected means the submission did not meet the required quality or information. Check the faculty remarks and submit a better image if needed.";
     }
 
-    // 10. How does faculty validation work?
-    if (strpos($lowerMessage, 'faculty validation') !== false || strpos($lowerMessage, 'validation work') !== false || strpos($lowerMessage, 'validation') !== false) {
+    if (strpos($lowerMessage, 'faculty validation') !== false || strpos($lowerMessage, 'validation') !== false) {
         return "The system gives an AI preliminary score first, then the Faculty Researcher reviews the image and gives the official final score.";
     }
 
-    // 11. Fingerprint image used for identification disclaimer
-    if (strpos($lowerMessage, 'identification') !== false || strpos($lowerMessage, 'biometric') !== false || strpos($lowerMessage, 'identify') !== false) {
+    if (strpos($lowerMessage, 'biometric') !== false || strpos($lowerMessage, 'identify') !== false) {
         return "No. In this system, fingerprint images are used for academic image quality evaluation only, not for personal biometric identification.";
     }
 
-    // 12. How do I logout?
-    if (strpos($lowerMessage, 'logout') !== false || strpos($lowerMessage, 'log out') !== false) {
+    if (strpos($lowerMessage, 'logout') !== false) {
         return "Tap your profile initials on the top right, then select Logout.";
     }
 
-    // 13. Safety & Climate Log
     if (strpos($lowerMessage, 'safety') !== false || strpos($lowerMessage, 'climate') !== false) {
         return "Safety & Climate Log records powder type, surface type, temperature, humidity, irritation status, and remarks during fingerprint testing.";
     }
 
-    // 14. Greetings like "hi", "hello", "help", "kumusta", "kamusta", "tulong"
-    if (preg_match('/\bhi\b/', $lowerMessage) || preg_match('/\bhello\b/', $lowerMessage) || preg_match('/\bhelp\b/', $lowerMessage) || preg_match('/\bhey\b/', $lowerMessage) || preg_match('/\bkumusta\b/', $lowerMessage) || preg_match('/\bkamusta\b/', $lowerMessage) || preg_match('/\btulong\b/', $lowerMessage)) {
+    if (preg_match('/\bhi\b/', $lowerMessage) || preg_match('/\bhello\b/', $lowerMessage) || preg_match('/\bhelp\b/', $lowerMessage) || preg_match('/\btulong\b/', $lowerMessage)) {
         return "Hi! I can help you with account approval, fingerprint upload, validation status, reports, safety logs, and logout. What do you need help with?";
     }
 
-    // 15. Default fallback response
     return "I can help with registration, account approval, fingerprint upload, validation status, reports, safety logs, and logout.";
 }
 
-// Helper to query Pollinations AI when Groq key is missing/exhausted
+// Pollinations AI query
 function callPollinationsAI($message, $systemInstruction)
 {
     $url = "https://text.pollinations.ai/";
@@ -225,7 +200,7 @@ function callPollinationsAI($message, $systemInstruction)
         'Content-Type: application/json',
         'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     ]);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 4); // Fast timeout to prevent long loading states
+    curl_setopt($ch, CURLOPT_TIMEOUT, 4);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
@@ -239,7 +214,7 @@ function callPollinationsAI($message, $systemInstruction)
     return null;
 }
 
-// Helper to query Groq AI API (Ultra-fast priority AI)
+// Groq AI query
 function callGroqAI($message, $systemInstruction)
 {
     $groqKey = env('GROQ_API_KEY');
@@ -287,19 +262,19 @@ function callGroqAI($message, $systemInstruction)
 
 $systemInstruction = "You are the Green Forensics Support Assistant. Help users with the Green Forensics Evaluating System. Answer clearly, politely, and briefly. You can help with registration, pending accounts, login lockout, account unlock requests, fingerprint image upload, webcam capture, AI-assisted image quality evaluation, faculty validation, Terms of Use, Privacy Policy, and role-based dashboards. For account lockouts, password resets, failed logins, or unlock requests, guide the user to visit request_unlock.php. Do not ask for their password or private credentials. Fingerprint images are used only for academic research evaluation and image quality assessment, not biometric identification. If a user asks about locked account, login failed, forgot password, cannot login, or requesting an unlock, you must respond with: 'If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php'. If a user asks who the developer of the system is, respond with: 'Ang developer nitong system ay si Yvez Jayvee Gesmundo ang full stock developer. ang frontend ay si Marron Brimbuela at si Kevin Cloud Fajardo.' If the user greets you, respond warmly and ask how you can help.";
 
-// 1. Try Groq AI first (Ultra-fast & free tier)
+// 1. Primary: Groq AI
 $groqReply = callGroqAI($message, $systemInstruction);
 if ($groqReply !== null) {
     send_response(true, $groqReply, "groq");
 }
 
-// 2. Fallback to Pollinations AI
+// 2. Fallback: Pollinations AI
 $pollinationsReply = callPollinationsAI($message, $systemInstruction);
 if ($pollinationsReply !== null) {
     send_response(true, $pollinationsReply, "pollinations");
 }
 
-// 3. Fallback to Offline System Guide
+// 3. Fallback: Offline
 $reply = getOfflineSupportAnswer($message);
 send_response(true, $reply, "offline");
 ?>

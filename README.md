@@ -32,12 +32,13 @@ To secure credentials and prevent private secrets from being committed to versio
    APP_KEY="your-strong-random-key-here"
    ```
 
-4. **Add Gemini Support Assistant Key (Optional)**
-   Obtain an API key from Google AI Studio and paste it inside the `GEMINI_API_KEY` placeholder:
+4. **Add Groq AI Support Assistant Key**
+   Obtain an API key from Groq Console and paste it inside the `GROQ_API_KEY` placeholder:
    ```ini
-   GEMINI_API_KEY="your-gemini-api-key"
+   GROQ_API_KEY="gsk_..."
+   GROQ_MODEL="llama-3.3-70b-versatile"
    ```
-   *Note: If no API key is specified, the assistant will automatically fall back to its internal, offline rule-based logic.*
+   *Note: If no API key is specified, the assistant will automatically fall back to Pollinations AI or its internal offline rule-based logic.*
 
 5. **Local Rules**
    * **Do not commit `.env` to GitHub**. It is excluded automatically by `.gitignore`.
@@ -59,7 +60,8 @@ When deploying this application on Railway or any cloud provider:
   * `DB_DATABASE`
   * `DB_USERNAME`
   * `DB_PASSWORD`
-  * `GEMINI_API_KEY`
+  * `GROQ_API_KEY`
+  * `GROQ_MODEL`
   * `SESSION_TIMEOUT_MINUTES`
   * `LOGIN_MAX_ATTEMPTS`
   * `LOGIN_LOCKOUT_MINUTES`

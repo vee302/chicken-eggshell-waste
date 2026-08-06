@@ -1,6 +1,6 @@
 <?php
 ob_start(); // Buffer output to prevent warnings or database notices from corrupting the JSON payload
-// support-assistant/support_chat_api.php - Backend API Handler for Gemini AI Support Assistant
+// support-assistant/support_chat_api.php - Backend API Handler for Groq AI Support Assistant
 header('Content-Type: application/json');
 
 require_once dirname(__DIR__) . "/config.php";
@@ -204,7 +204,7 @@ function getOfflineSupportAnswer($message)
     return "I can help with registration, account approval, fingerprint upload, validation status, reports, safety logs, and logout.";
 }
 
-// Helper to query Pollinations AI when Gemini key is missing/exhausted
+// Helper to query Pollinations AI when Groq key is missing/exhausted
 function callPollinationsAI($message, $systemInstruction)
 {
     $url = "https://text.pollinations.ai/";

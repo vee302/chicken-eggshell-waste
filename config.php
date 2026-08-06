@@ -112,7 +112,8 @@ define('DB_USERNAME', env('DB_USERNAME', env('MYSQLUSER', 'root')));
 define('DB_PASSWORD', env('DB_PASSWORD', env('MYSQLPASSWORD', '')));
 define('DB_NAME', env('DB_DATABASE', env('MYSQLDATABASE', 'green_forensics')));
 define('DB_PORT', env('DB_PORT', env('MYSQLPORT', '3306')));
-define('GEMINI_API_KEY', env('GEMINI_API_KEY', ''));
+define('GROQ_API_KEY', env('GROQ_API_KEY', ''));
+define('GROQ_MODEL', env('GROQ_MODEL', 'llama-3.3-70b-versatile'));
 
 try {
     // 1. Connect to MySQL without selecting a database first

@@ -120,7 +120,7 @@ function showTypingIndicator() {
     return indicator;
 }
 
-// Fetch response from Gemini API backend
+// Fetch response from Groq AI backend
 function getBotResponseAPI(text, callback) {
     const baseUrl = typeof window.GREEN_FORENSICS_BASE_URL !== 'undefined' ? window.GREEN_FORENSICS_BASE_URL : '';
     const url = `${baseUrl}/support-assistant/support_chat_api.php`;

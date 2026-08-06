@@ -1,6 +1,6 @@
 # Green Forensics Support Assistant
 
-A dynamic, AI-powered floating support widget integrated into the Green Forensics Evaluating System. It queries the Google Gemini API to assist users with system guidance, registrations, lockouts, fingerprint uploads, and validation procedures.
+A dynamic, AI-powered floating support widget integrated into the Green Forensics Evaluating System. It queries the Groq AI API (Llama 3.3 70B) to assist users with system guidance, registrations, lockouts, fingerprint uploads, and validation procedures.
 
 ## Folder Structure
 
@@ -9,7 +9,7 @@ support-assistant/
 ├── support_widget.php   # HTML structure of the widget
 ├── support_chat.css     # CSS styles (positioned bottom-right)
 ├── support_chat.js      # Frontend interaction logic (stateless)
-├── support_chat_api.php # Backend Gemini API gateway
+├── support_chat_api.php # Backend Groq AI API gateway
 └── README.md            # This documentation file
 ```
 
@@ -32,8 +32,8 @@ Add the PHP include statement just before the closing `</body>` tag on any page 
 Ensure these environment variables are set in your local `.env` file (or Railway Environment Variables in production):
 
 ```ini
-GEMINI_API_KEY="your-google-ai-studio-api-key"
-GEMINI_MODEL="gemini-3.5-flash"
+GROQ_API_KEY="gsk_..."
+GROQ_MODEL="llama-3.3-70b-versatile"
 APP_ENV="local" # Set to "production" in Railway deployment
 ```
 

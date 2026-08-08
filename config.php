@@ -108,9 +108,9 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Database Connection Settings from Environment (with Railway auto-variable fallback)
 define('DB_SERVER', env('DB_HOST', env('MYSQLHOST', env('RDS_HOSTNAME', 'localhost'))));
-define('DB_USERNAME', env('DB_USERNAME', env('MYSQLUSER', env('RDS_USERNAME', 'root'))));
-define('DB_PASSWORD', env('DB_PASSWORD', env('MYSQLPASSWORD', env('RDS_PASSWORD', ''))));
-define('DB_NAME', env('DB_DATABASE', env('MYSQLDATABASE', env('RDS_DB_NAME', 'green_forensics'))));
+define('DB_USERNAME', env('DB_USERNAME', env('DB_USER', env('MYSQLUSER', env('RDS_USERNAME', 'root')))));
+define('DB_PASSWORD', env('DB_PASSWORD', env('DB_PASS', env('MYSQLPASSWORD', env('RDS_PASSWORD', '')))));
+define('DB_NAME', env('DB_DATABASE', env('DB_NAME', env('MYSQLDATABASE', env('RDS_DB_NAME', 'green_forensics')))));
 define('DB_PORT', env('DB_PORT', env('MYSQLPORT', env('RDS_PORT', '3306'))));
 define('GROQ_API_KEY', env('GROQ_API_KEY', ''));
 define('GROQ_MODEL', env('GROQ_MODEL', 'llama-3.3-70b-versatile'));

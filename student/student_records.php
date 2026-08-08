@@ -888,7 +888,7 @@ try {
                                                         image</span>
                                                 <?php endif; ?>
                                             </td>
-                                            <td><?= htmlspecialchars($r['image_label'] ?: 'Untitled') ?></td>
+                                            <td><?= htmlspecialchars(($r['image_label'] && $r['image_label'] !== 'Untitled') ? $r['image_label'] : 'Fingerprint Sample') ?></td>
                                             <td style="text-transform:capitalize;"><?= htmlspecialchars($r['powder_type']) ?>
                                             </td>
                                             <td style="text-transform:capitalize;"><?= htmlspecialchars($r['surface_type']) ?>
@@ -1527,7 +1527,7 @@ try {
                 if (row) {
                     // Update row fields
                     row.children[1].innerHTML = imageHtml;
-                    row.children[2].textContent = r.image_label || 'Untitled';
+                    row.children[2].textContent = (r.image_label && r.image_label !== 'Untitled') ? r.image_label : 'Fingerprint Sample';
                     row.children[3].textContent = r.powder_type || '';
                     row.children[4].textContent = r.surface_type || '';
                     row.children[5].innerHTML = `<strong>${scoreText}</strong>`;
@@ -1545,7 +1545,7 @@ try {
                     tr.innerHTML = `
                 <td style="font-weight: 700; color: var(--dark-green);">${r.trial_id || 'TR-' + String(r.id).padStart(4, '0')}</td>
                 <td>${imageHtml}</td>
-                <td>${escapeHtml(r.image_label || 'Untitled')}</td>
+                <td>${escapeHtml((r.image_label && r.image_label !== 'Untitled') ? r.image_label : 'Fingerprint Sample')}</td>
                 <td style="text-transform:capitalize;">${r.powder_type || ''}</td>
                 <td style="text-transform:capitalize;">${r.surface_type || ''}</td>
                 <td><strong>${scoreText}</strong></td>
@@ -1634,7 +1634,7 @@ try {
                 if (surfEl) surfEl.textContent = row.surface_type || '';
 
                 const lblEl = document.getElementById('comp-label');
-                if (lblEl) lblEl.textContent = row.image_label || 'Untitled';
+                if (lblEl) lblEl.textContent = (row.image_label && row.image_label !== 'Untitled') ? row.image_label : 'Fingerprint Sample';
 
                 const origImg = document.getElementById('comp-orig-img');
                 const origMissing = document.getElementById('comp-orig-missing');
@@ -1794,7 +1794,7 @@ try {
             document.getElementById('det-trial-id').textContent = row.trial_id || 'TR-' + String(row.id).padStart(4, '0');
             document.getElementById('det-powder').textContent = row.powder_type || '';
             document.getElementById('det-surface').textContent = row.surface_type || '';
-            document.getElementById('det-label').textContent = row.image_label || 'Untitled';
+            document.getElementById('det-label').textContent = (row.image_label && row.image_label !== 'Untitled') ? row.image_label : 'Fingerprint Sample';
 
             // Evaluation Date mapping
             const evalDate = row.ai_evaluated_at ? new Date(row.ai_evaluated_at.replace(/-/g, "/")).toLocaleString() : (row.submitted_at ? new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString() : '—');

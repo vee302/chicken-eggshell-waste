@@ -65,9 +65,13 @@ try {
     // Fetch validated_at timestamp from DB to align timezone/time precisely
     $time_stmt = $pdo->prepare("SELECT validated_at FROM fingerprint_tests WHERE id = ?");
     $time_stmt->execute([$test_id]);
-    $validated_at = $time_stmt->fetchColumn();
-
     $pdo->commit();
+
+    // Trigger automated SMS notification to student
+    if (file_exists(dirname(__DIR__) . '/includes/sms_service.php')) {
+        require_once dirname(__DIR__) . '/includes/sms_service.php';
+        send_trial_status_sms($test_id, 'NEEDS_REVISION', null, $remarks);
+    }
 
     echo json_encode([
         'success' => true,

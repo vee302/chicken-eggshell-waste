@@ -858,8 +858,8 @@ try {
                                             style="font-size: 0.8rem; font-weight:700; color:var(--dark-green);">
                                             <?= htmlspecialchars($img['trial_id']) ?></div>
                                         <div class="image-thumb-label"
-                                            title="<?= htmlspecialchars($img['image_label'] ?: 'No Label') ?>">
-                                            <?= htmlspecialchars($img['image_label'] ?: 'Untitled') ?></div>
+                                             title="<?= htmlspecialchars(($img['image_label'] && $img['image_label'] !== 'Untitled') ? $img['image_label'] : 'Fingerprint Sample') ?>">
+                                             <?= htmlspecialchars(($img['image_label'] && $img['image_label'] !== 'Untitled') ? $img['image_label'] : 'Fingerprint Sample') ?></div>
                                         <div
                                             style="font-size:0.7rem; color:var(--gray); text-transform:capitalize; margin-bottom: 2px;">
                                             <?= htmlspecialchars($img['powder_type']) ?> |
@@ -1981,7 +1981,7 @@ try {
         <img src="../view_fingerprint.php?test_id=${data.id}" alt="Fingerprint image">
         <div class="image-thumb-info">
             <div class="image-thumb-label" style="font-size: 0.8rem; font-weight:700; color:var(--dark-green);">${data.trial_id}</div>
-            <div class="image-thumb-label" title="${data.image_label || 'Untitled'}">${data.image_label || 'Untitled'}</div>
+            <div class="image-thumb-label" title="${(data.image_label && data.image_label !== 'Untitled') ? data.image_label : 'Fingerprint Sample'}">${(data.image_label && data.image_label !== 'Untitled') ? data.image_label : 'Fingerprint Sample'}</div>
             <div style="font-size:0.7rem; color:var(--gray); text-transform:capitalize; margin-bottom: 2px;">
                 ${data.powder_type} | ${data.surface_type}
             </div>
@@ -2032,7 +2032,7 @@ try {
             document.getElementById('det-trial-id').textContent = row.trial_id || 'TR-' + String(row.id).padStart(4, '0');
             document.getElementById('det-powder').textContent = row.powder_type || '';
             document.getElementById('det-surface').textContent = row.surface_type || '';
-            document.getElementById('det-label').textContent = row.image_label || 'Untitled';
+            document.getElementById('det-label').textContent = (row.image_label && row.image_label !== 'Untitled') ? row.image_label : 'Fingerprint Sample';
 
             const evalDate = row.ai_evaluated_at ? new Date(row.ai_evaluated_at.replace(/-/g, "/")).toLocaleString() : (row.submitted_at ? new Date(row.submitted_at.replace(/-/g, "/")).toLocaleString() : '—');
             document.getElementById('det-evaluation-date').textContent = evalDate;

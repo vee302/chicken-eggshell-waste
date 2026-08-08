@@ -14,7 +14,7 @@ try {
     $pending           = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='pending_validation'")->fetchColumn();
     $approved          = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='approved'")->fetchColumn();
     $rejected          = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='rejected'")->fetchColumn();
-    $avg_accuracy      = $pdo->query("SELECT ROUND(AVG(accuracy_score),1) FROM fingerprint_tests")->fetchColumn() ?? 0;
+    $avg_accuracy      = $pdo->query("SELECT ROUND(AVG(COALESCE(faculty_final_score, faculty_accuracy_score, ai_accuracy_score, accuracy_score)),1) FROM fingerprint_tests WHERE (accuracy_score > 0 OR faculty_final_score > 0 OR faculty_accuracy_score > 0 OR ai_accuracy_score > 0)")->fetchColumn() ?? 0;
     $report_count      = $pdo->query("SELECT COUNT(*) FROM reports WHERE generated_by=$faculty_id")->fetchColumn();
 } catch (PDOException $e) {}
 
@@ -232,7 +232,12 @@ try {
                                 <td><?= htmlspecialchars($row['student_name']) ?></td>
                                 <td><span style="text-transform:capitalize;"><?= $row['powder_type'] ?></span></td>
                                 <td style="text-transform:capitalize;"><?= $row['surface_type'] ?></td>
-                                <td><?= number_format($row['accuracy_score'], 1) ?>%</td>
+                                <td>
+                                    <?php 
+                                    $score_disp = ($row['faculty_final_score'] !== null && $row['faculty_final_score'] > 0) ? $row['faculty_final_score'] : (($row['faculty_accuracy_score'] !== null && $row['faculty_accuracy_score'] > 0) ? $row['faculty_accuracy_score'] : (($row['ai_accuracy_score'] !== null && $row['ai_accuracy_score'] > 0) ? $row['ai_accuracy_score'] : $row['accuracy_score']));
+                                    ?>
+                                    <?= number_format((float)$score_disp, 1) ?>%
+                                </td>
                                 <td>
                                     <span class="badge badge-<?= $row['status'] ?>">
                                         <?= $row['status'] === 'pending_validation' ? 'Pending Validation' : ($row['status'] === 'needs_revision' ? 'Needs Revision' : ucfirst($row['status'])) ?>

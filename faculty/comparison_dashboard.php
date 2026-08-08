@@ -122,20 +122,63 @@ if (!empty($rows)) {
             }
         }
         
-        // If counterpart is not in the filtered $rows array, attempt DB query
+        // Fallback 1: DB query for same student + same surface + opposite powder
         if (!$counterpart_rec) {
             try {
                 $cp_sql = "SELECT ft.*, u.full_name AS student_name 
                            FROM fingerprint_tests ft 
                            JOIN users u ON u.id = ft.student_id 
-                           WHERE ft.student_id = ? AND ft.surface_type = ? AND ft.powder_type = ? 
+                           WHERE ft.student_id = ? AND LOWER(ft.surface_type) = LOWER(?) AND LOWER(ft.powder_type) = LOWER(?) 
                            ORDER BY ft.submitted_at DESC LIMIT 1";
                 $cp_stmt = $pdo->prepare($cp_sql);
                 $cp_stmt->execute([$s_id, $s_surf, $opp_powder]);
                 $fetched_cp = $cp_stmt->fetch(PDO::FETCH_ASSOC);
-                if ($fetched_cp) {
-                    $counterpart_rec = $fetched_cp;
-                }
+                if ($fetched_cp) { $counterpart_rec = $fetched_cp; }
+            } catch (PDOException $e) {}
+        }
+
+        // Fallback 2: DB query for ANY student with opposite powder on the SAME surface
+        if (!$counterpart_rec) {
+            try {
+                $cp_sql = "SELECT ft.*, u.full_name AS student_name 
+                           FROM fingerprint_tests ft 
+                           JOIN users u ON u.id = ft.student_id 
+                           WHERE LOWER(ft.surface_type) = LOWER(?) AND LOWER(ft.powder_type) = LOWER(?) 
+                           ORDER BY ft.submitted_at DESC LIMIT 1";
+                $cp_stmt = $pdo->prepare($cp_sql);
+                $cp_stmt->execute([$s_surf, $opp_powder]);
+                $fetched_cp = $cp_stmt->fetch(PDO::FETCH_ASSOC);
+                if ($fetched_cp) { $counterpart_rec = $fetched_cp; }
+            } catch (PDOException $e) {}
+        }
+
+        // Fallback 3: DB query for same student with opposite powder on ANY surface
+        if (!$counterpart_rec) {
+            try {
+                $cp_sql = "SELECT ft.*, u.full_name AS student_name 
+                           FROM fingerprint_tests ft 
+                           JOIN users u ON u.id = ft.student_id 
+                           WHERE ft.student_id = ? AND LOWER(ft.powder_type) = LOWER(?) 
+                           ORDER BY ft.submitted_at DESC LIMIT 1";
+                $cp_stmt = $pdo->prepare($cp_sql);
+                $cp_stmt->execute([$s_id, $opp_powder]);
+                $fetched_cp = $cp_stmt->fetch(PDO::FETCH_ASSOC);
+                if ($fetched_cp) { $counterpart_rec = $fetched_cp; }
+            } catch (PDOException $e) {}
+        }
+
+        // Fallback 4: DB query for ANY trial with opposite powder in the system
+        if (!$counterpart_rec) {
+            try {
+                $cp_sql = "SELECT ft.*, u.full_name AS student_name 
+                           FROM fingerprint_tests ft 
+                           JOIN users u ON u.id = ft.student_id 
+                           WHERE LOWER(ft.powder_type) = LOWER(?) 
+                           ORDER BY ft.submitted_at DESC LIMIT 1";
+                $cp_stmt = $pdo->prepare($cp_sql);
+                $cp_stmt->execute([$opp_powder]);
+                $fetched_cp = $cp_stmt->fetch(PDO::FETCH_ASSOC);
+                if ($fetched_cp) { $counterpart_rec = $fetched_cp; }
             } catch (PDOException $e) {}
         }
         
@@ -488,8 +531,8 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                             <span class="powder-eggshell">Eggshell</span>
                         </h4>
                         <div class="img-placeholder">
-                            <?php if(!empty($selected_pair['eggshell']['image_path']) && file_exists(dirname(__DIR__) . '/uploads/fingerprints/' . $selected_pair['eggshell']['image_path'])): ?>
-                                <img src="../uploads/fingerprints/<?= htmlspecialchars($selected_pair['eggshell']['image_path']) ?>" alt="Eggshell Print">
+                            <?php if(!empty($selected_pair['eggshell']['id'])): ?>
+                                <img src="../view_fingerprint.php?test_id=<?= $selected_pair['eggshell']['id'] ?>" alt="Eggshell Print">
                             <?php else: ?>
                                 <div style="text-align:center; color:#6c757d;">
                                     <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -503,12 +546,13 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                             <strong>Surface:</strong> <?= ucfirst($selected_pair['eggshell']['surface_type'] ?? $selected_pair['surface_type']) ?><br>
                             <strong>Trial ID:</strong> <?= !empty($selected_pair['eggshell']) ? htmlspecialchars($selected_pair['eggshell']['trial_id'] ?? ('TR-' . str_pad($selected_pair['eggshell']['id'], 4, '0', STR_PAD_LEFT))) : 'N/A' ?>
                         </div>
+                        <?php $eg_m = $selected_pair['eggshell'] ?? []; ?>
                         <div class="metrics-grid">
-                            <div class="metric-box"><span>Accuracy</span><strong><?= isset($selected_pair['eggshell']['accuracy_score']) && $selected_pair['eggshell']['accuracy_score'] !== null ? number_format((float)$selected_pair['eggshell']['accuracy_score'], 1) . '%' : 'N/A' ?></strong></div>
-                            <div class="metric-box"><span>Ridge Clarity</span><strong><?= isset($selected_pair['eggshell']['ridge_clarity_score']) && $selected_pair['eggshell']['ridge_clarity_score'] !== null ? number_format((float)$selected_pair['eggshell']['ridge_clarity_score'], 1) . '%' : 'N/A' ?></strong></div>
-                            <div class="metric-box"><span>Visibility</span><strong><?= isset($selected_pair['eggshell']['visibility_score']) && $selected_pair['eggshell']['visibility_score'] !== null ? number_format((float)$selected_pair['eggshell']['visibility_score'], 1) . '%' : 'N/A' ?></strong></div>
-                            <div class="metric-box"><span>Adhesion</span><strong><?= isset($selected_pair['eggshell']['adhesion_score']) && $selected_pair['eggshell']['adhesion_score'] !== null ? number_format((float)$selected_pair['eggshell']['adhesion_score'], 1) . '%' : 'N/A' ?></strong></div>
-                            <div class="metric-box" style="grid-column: span 2;"><span>Contrast</span><strong><?= isset($selected_pair['eggshell']['contrast_score']) && $selected_pair['eggshell']['contrast_score'] !== null ? number_format((float)$selected_pair['eggshell']['contrast_score'], 1) . '%' : 'N/A' ?></strong></div>
+                            <div class="metric-box"><span>Accuracy</span><strong><?= !empty($eg_m) ? number_format((float)($eg_m['faculty_final_score'] ?? ($eg_m['faculty_accuracy_score'] ?? ($eg_m['ai_accuracy_score'] ?? ($eg_m['accuracy_score'] ?? 0)))), 1) . '%' : 'N/A' ?></strong></div>
+                            <div class="metric-box"><span>Ridge Clarity</span><strong><?= !empty($eg_m) ? number_format((float)($eg_m['faculty_ridge_clarity_score'] ?? ($eg_m['ridge_clarity_score'] ?? 0)), 1) . '%' : 'N/A' ?></strong></div>
+                            <div class="metric-box"><span>Visibility</span><strong><?= !empty($eg_m) ? number_format((float)($eg_m['faculty_visibility_score'] ?? ($eg_m['visibility_score'] ?? 0)), 1) . '%' : 'N/A' ?></strong></div>
+                            <div class="metric-box"><span>Adhesion</span><strong><?= !empty($eg_m) ? number_format((float)($eg_m['faculty_adhesion_score'] ?? ($eg_m['adhesion_score'] ?? 0)), 1) . '%' : 'N/A' ?></strong></div>
+                            <div class="metric-box" style="grid-column: span 2;"><span>Contrast</span><strong><?= !empty($eg_m) ? number_format((float)($eg_m['faculty_contrast_score'] ?? ($eg_m['contrast_score'] ?? 0)), 1) . '%' : 'N/A' ?></strong></div>
                         </div>
                     </div>
                     
@@ -519,8 +563,8 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                             <span class="powder-commercial">Commercial</span>
                         </h4>
                         <div class="img-placeholder">
-                            <?php if(!empty($selected_pair['commercial']['image_path']) && file_exists(dirname(__DIR__) . '/uploads/fingerprints/' . $selected_pair['commercial']['image_path'])): ?>
-                                <img src="../uploads/fingerprints/<?= htmlspecialchars($selected_pair['commercial']['image_path']) ?>" alt="Commercial Print">
+                            <?php if(!empty($selected_pair['commercial']['id'])): ?>
+                                <img src="../view_fingerprint.php?test_id=<?= $selected_pair['commercial']['id'] ?>" alt="Commercial Print">
                             <?php else: ?>
                                 <div style="text-align:center; color:#6c757d;">
                                     <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -534,12 +578,13 @@ $chart_surface_success = json_encode(array_map(function($s) { return $s['count']
                             <strong>Surface:</strong> <?= ucfirst($selected_pair['commercial']['surface_type'] ?? $selected_pair['surface_type']) ?><br>
                             <strong>Trial ID:</strong> <?= !empty($selected_pair['commercial']) ? htmlspecialchars($selected_pair['commercial']['trial_id'] ?? ('TR-' . str_pad($selected_pair['commercial']['id'], 4, '0', STR_PAD_LEFT))) : 'N/A' ?>
                         </div>
+                        <?php $co_m = $selected_pair['commercial'] ?? []; ?>
                         <div class="metrics-grid">
-                            <div class="metric-box"><span>Accuracy</span><strong><?= isset($selected_pair['commercial']['accuracy_score']) && $selected_pair['commercial']['accuracy_score'] !== null ? number_format((float)$selected_pair['commercial']['accuracy_score'], 1) . '%' : 'N/A' ?></strong></div>
-                            <div class="metric-box"><span>Ridge Clarity</span><strong><?= isset($selected_pair['commercial']['ridge_clarity_score']) && $selected_pair['commercial']['ridge_clarity_score'] !== null ? number_format((float)$selected_pair['commercial']['ridge_clarity_score'], 1) . '%' : 'N/A' ?></strong></div>
-                            <div class="metric-box"><span>Visibility</span><strong><?= isset($selected_pair['commercial']['visibility_score']) && $selected_pair['commercial']['visibility_score'] !== null ? number_format((float)$selected_pair['commercial']['visibility_score'], 1) . '%' : 'N/A' ?></strong></div>
-                            <div class="metric-box"><span>Adhesion</span><strong><?= isset($selected_pair['commercial']['adhesion_score']) && $selected_pair['commercial']['adhesion_score'] !== null ? number_format((float)$selected_pair['commercial']['adhesion_score'], 1) . '%' : 'N/A' ?></strong></div>
-                            <div class="metric-box" style="grid-column: span 2;"><span>Contrast</span><strong><?= isset($selected_pair['commercial']['contrast_score']) && $selected_pair['commercial']['contrast_score'] !== null ? number_format((float)$selected_pair['commercial']['contrast_score'], 1) . '%' : 'N/A' ?></strong></div>
+                            <div class="metric-box"><span>Accuracy</span><strong><?= !empty($co_m) ? number_format((float)($co_m['faculty_final_score'] ?? ($co_m['faculty_accuracy_score'] ?? ($co_m['ai_accuracy_score'] ?? ($co_m['accuracy_score'] ?? 0)))), 1) . '%' : 'N/A' ?></strong></div>
+                            <div class="metric-box"><span>Ridge Clarity</span><strong><?= !empty($co_m) ? number_format((float)($co_m['faculty_ridge_clarity_score'] ?? ($co_m['ridge_clarity_score'] ?? 0)), 1) . '%' : 'N/A' ?></strong></div>
+                            <div class="metric-box"><span>Visibility</span><strong><?= !empty($co_m) ? number_format((float)($co_m['faculty_visibility_score'] ?? ($co_m['visibility_score'] ?? 0)), 1) . '%' : 'N/A' ?></strong></div>
+                            <div class="metric-box"><span>Adhesion</span><strong><?= !empty($co_m) ? number_format((float)($co_m['faculty_adhesion_score'] ?? ($co_m['adhesion_score'] ?? 0)), 1) . '%' : 'N/A' ?></strong></div>
+                            <div class="metric-box" style="grid-column: span 2;"><span>Contrast</span><strong><?= !empty($co_m) ? number_format((float)($co_m['faculty_contrast_score'] ?? ($co_m['contrast_score'] ?? 0)), 1) . '%' : 'N/A' ?></strong></div>
                         </div>
                     </div>
                 </div>

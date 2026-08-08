@@ -63,7 +63,7 @@ try {
     $pdo->beginTransaction();
 
     // Verify if test ID is valid & fetch image details
-    $check_stmt = $pdo->prepare("SELECT id, image_path, gdrive_file_id FROM fingerprint_tests WHERE id = ?");
+    $check_stmt = $pdo->prepare("SELECT id, powder_type, image_path, gdrive_file_id FROM fingerprint_tests WHERE id = ?");
     $check_stmt->execute([$test_id]);
     $trial = $check_stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -77,7 +77,10 @@ try {
     if (empty($gdrive_file_id) && !empty($trial['image_path'])) {
         $local_path = dirname(__DIR__) . '/uploads/fingerprints/' . basename($trial['image_path']);
         if (file_exists($local_path)) {
-            $gdrive_file_id = gdrive_upload_file($local_path, basename($trial['image_path']));
+            $target_folder = gdrive_get_folder_by_powder_type($trial['powder_type'] ?? '');
+            $ext = pathinfo($trial['image_path'], PATHINFO_EXTENSION) ?: 'png';
+            $target_filename = 'TR-' . str_pad($test_id, 4, '0', STR_PAD_LEFT) . '.' . $ext;
+            $gdrive_file_id = gdrive_upload_file($local_path, $target_filename, $target_folder);
             if (!$gdrive_file_id) {
                 $gdrive_file_id = null;
             }
@@ -87,6 +90,11 @@ try {
     $stmt = $pdo->prepare("
         UPDATE fingerprint_tests 
         SET status = 'approved',
+            accuracy_score = ?,
+            ridge_clarity_score = COALESCE(ridge_clarity_score, ?),
+            visibility_score = COALESCE(visibility_score, ?),
+            adhesion_score = COALESCE(adhesion_score, ?),
+            contrast_score = COALESCE(contrast_score, ?),
             faculty_accuracy_score = ?,
             faculty_ridge_clarity_score = ?,
             faculty_visibility_score = ?,
@@ -100,6 +108,11 @@ try {
         WHERE id = ?
     ");
     $stmt->execute([
+        $faculty_final_score,
+        $faculty_ridge_clarity_score,
+        $faculty_visibility_score,
+        $faculty_adhesion_score,
+        $faculty_contrast_score,
         $faculty_accuracy_score,
         $faculty_ridge_clarity_score,
         $faculty_visibility_score,
@@ -121,9 +134,13 @@ try {
     // Fetch validated_at timestamp from DB to align timezone/time precisely
     $time_stmt = $pdo->prepare("SELECT validated_at FROM fingerprint_tests WHERE id = ?");
     $time_stmt->execute([$test_id]);
-    $validated_at = $time_stmt->fetchColumn();
-
     $pdo->commit();
+
+    // Trigger automated SMS notification to student
+    if (file_exists(dirname(__DIR__) . '/includes/sms_service.php')) {
+        require_once dirname(__DIR__) . '/includes/sms_service.php';
+        send_trial_status_sms($test_id, 'approved', $faculty_final_score, $remarks);
+    }
 
     echo json_encode([
         'success' => true,

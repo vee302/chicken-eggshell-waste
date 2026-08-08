@@ -946,12 +946,12 @@ if (isset($_GET['id'])) {
             const powderType = escapeHtml(t.powder_type || '');
             const surfaceType = escapeHtml(t.surface_type || '');
 
-            // Metrics values
-            const clarity = t.ridge_clarity_score !== null ? parseFloat(t.ridge_clarity_score) : null;
-            const visibility = t.visibility_score !== null ? parseFloat(t.visibility_score) : null;
-            const adhesion = t.adhesion_score !== null ? parseFloat(t.adhesion_score) : null;
-            const contrast = t.contrast_score !== null ? parseFloat(t.contrast_score) : null;
-            const accuracy = t.ai_accuracy_score !== null ? parseFloat(t.ai_accuracy_score) : (t.accuracy_score !== null ? parseFloat(t.accuracy_score) : null);
+            // Metrics values with fallbacks
+            const clarity = (t.ridge_clarity_score !== null && t.ridge_clarity_score > 0) ? parseFloat(t.ridge_clarity_score) : ((t.faculty_ridge_clarity_score !== null && t.faculty_ridge_clarity_score > 0) ? parseFloat(t.faculty_ridge_clarity_score) : null);
+            const visibility = (t.visibility_score !== null && t.visibility_score > 0) ? parseFloat(t.visibility_score) : ((t.faculty_visibility_score !== null && t.faculty_visibility_score > 0) ? parseFloat(t.faculty_visibility_score) : null);
+            const adhesion = (t.adhesion_score !== null && t.adhesion_score > 0) ? parseFloat(t.adhesion_score) : ((t.faculty_adhesion_score !== null && t.faculty_adhesion_score > 0) ? parseFloat(t.faculty_adhesion_score) : null);
+            const contrast = (t.contrast_score !== null && t.contrast_score > 0) ? parseFloat(t.contrast_score) : ((t.faculty_contrast_score !== null && t.faculty_contrast_score > 0) ? parseFloat(t.faculty_contrast_score) : null);
+            const accuracy = (t.ai_accuracy_score !== null && t.ai_accuracy_score > 0) ? parseFloat(t.ai_accuracy_score) : ((t.faculty_final_score !== null && t.faculty_final_score > 0) ? parseFloat(t.faculty_final_score) : ((t.faculty_accuracy_score !== null && t.faculty_accuracy_score > 0) ? parseFloat(t.faculty_accuracy_score) : ((t.accuracy_score !== null && t.accuracy_score > 0) ? parseFloat(t.accuracy_score) : null)));
 
             // Displays
             const displayClarity = clarity !== null ? clarity.toFixed(1) + '%' : 'N/A';

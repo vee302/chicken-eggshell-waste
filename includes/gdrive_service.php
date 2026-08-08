@@ -17,18 +17,24 @@ function get_gdrive_access_token()
     }
 
     // 1. Try OAuth 2.0 Refresh Token authentication first (User Quota)
-    $refresh_token = env('GDRIVE_REFRESH_TOKEN');
-    $client_id     = env('GDRIVE_CLIENT_ID');
-    $client_secret = env('GDRIVE_CLIENT_SECRET');
+    $refresh_token = null;
+    $client_id     = null;
+    $client_secret = null;
 
     $user_cred_file = dirname(__DIR__) . '/config/gdrive_user_credentials.json';
-    if ((!$refresh_token || !$client_id || !$client_secret) && file_exists($user_cred_file)) {
+    if (file_exists($user_cred_file)) {
         $user_creds = json_decode(file_get_contents($user_cred_file), true);
-        if ($user_creds) {
-            $refresh_token = $user_creds['refresh_token'] ?? $refresh_token;
-            $client_id     = $user_creds['client_id'] ?? $client_id;
-            $client_secret = $user_creds['client_secret'] ?? $client_secret;
+        if (!empty($user_creds['refresh_token'])) {
+            $refresh_token = $user_creds['refresh_token'];
+            $client_id     = $user_creds['client_id'] ?? env('GDRIVE_CLIENT_ID');
+            $client_secret = $user_creds['client_secret'] ?? env('GDRIVE_CLIENT_SECRET');
         }
+    }
+
+    if (!$refresh_token) {
+        $refresh_token = env('GDRIVE_REFRESH_TOKEN');
+        $client_id     = env('GDRIVE_CLIENT_ID');
+        $client_secret = env('GDRIVE_CLIENT_SECRET');
     }
 
     if ($refresh_token && $client_id && $client_secret) {
@@ -147,6 +153,29 @@ function get_gdrive_access_token()
 }
 
 /**
+ * Resolve target Google Drive folder ID based on powder_type ('eggshell' vs 'commercial').
+ * 
+ * @param string $powder_type Powder type string ('eggshell' or 'commercial')
+ * @return string Google Drive Folder ID
+ */
+function gdrive_get_folder_by_powder_type($powder_type = '')
+{
+    $eggshell_folder   = env('GDRIVE_EGGSHELL_FOLDER_ID', '1HCQWJXUhXWqcOlUtzV5a-hMR7FPfVxSe');
+    $commercial_folder = env('GDRIVE_COMMERCIAL_FOLDER_ID', '1vXzd6qOtTHXv3tNN1fS4qkf5hnKvjx-Q');
+    $parent_folder     = env('GDRIVE_FOLDER_ID', '1ng2iHXR2KzHSBQTr-F60TwkxiVloRmym');
+
+    $type = strtolower(trim((string)$powder_type));
+
+    if (strpos($type, 'commercial') !== false) {
+        return $commercial_folder;
+    } elseif (strpos($type, 'eggshell') !== false || strpos($type, 'egg') !== false) {
+        return $eggshell_folder;
+    }
+
+    return $parent_folder;
+}
+
+/**
  * Upload a local file to Google Drive via multipart API.
  * 
  * @param string $localFilePath Path to local file
@@ -208,11 +237,38 @@ function gdrive_upload_file($localFilePath, $fileName, $folderId = null)
 
     if (($httpCode === 200 || $httpCode === 201) && $response) {
         $resData = json_decode($response, true);
-        return $resData['id'] ?? false;
+        if (!empty($resData['id'])) {
+            gdrive_make_public($resData['id']);
+            return $resData['id'];
+        }
     }
 
     error_log("gdrive_upload_file failed: HTTP $httpCode - Response: $response");
     return false;
+}
+
+/**
+ * Make a Google Drive file readable by anyone with the link.
+ */
+function gdrive_make_public($fileId)
+{
+    if (empty($fileId)) return false;
+    $token = get_gdrive_access_token();
+    if (!$token) return false;
+
+    $ch = curl_init("https://www.googleapis.com/drive/v3/files/" . urlencode($fileId) . "/permissions?supportsAllDrives=true");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        'role' => 'reader',
+        'type' => 'anyone'
+    ]));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . $token,
+        'Content-Type: application/json'
+    ]);
+    curl_exec($ch);
+    return true;
 }
 
 /**

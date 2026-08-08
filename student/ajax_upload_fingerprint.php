@@ -113,7 +113,7 @@ $unique_suffix = round(microtime(true)) . '_' . bin2hex(random_bytes(4));
 try {
     $stmt = $pdo->prepare("SELECT MAX(id) FROM fingerprint_tests");
     $stmt->execute();
-    $max_id = (int)($stmt->fetchColumn() ?: 0);
+    $max_id = (int) ($stmt->fetchColumn() ?: 0);
     $next_id = $max_id + 1;
     $trial_id = 'TR-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
 } catch (PDOException $e) {
@@ -240,7 +240,7 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
             'trial_id' => $trial_id,
             'image_path' => $filename,
             'enhanced_image_path' => $enhanced_image_path,
-            'image_label' => $label ? $label : 'Untitled',
+            'image_label' => $label ? $label : 'Fingerprint Sample',
             'powder_type' => $powder_type,
             'surface_type' => $surface_type,
             'status' => 'pending_validation',

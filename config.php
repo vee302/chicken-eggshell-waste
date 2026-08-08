@@ -106,15 +106,24 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Smart RDS Auto-Detection
+// Smart RDS Auto-Detection & Credential Enforcement
 $detected_db_server = env('DB_HOST', env('MYSQLHOST', env('RDS_HOSTNAME', 'localhost')));
 $is_rds_host = (strpos($detected_db_server, '.rds.amazonaws.com') !== false);
-$default_db_user = $is_rds_host ? 'admin' : 'root';
-$default_db_pass = $is_rds_host ? 'GreenForensics2026!' : '';
+
+$user_val = env('DB_USER', env('RDS_USERNAME', ''));
+$pass_val = env('DB_PASS', env('RDS_PASSWORD', ''));
+
+if ($is_rds_host) {
+    $db_user = !empty($user_val) ? $user_val : 'admin';
+    $db_pass = !empty($pass_val) ? $pass_val : 'GreenForensics2026!';
+} else {
+    $db_user = env('DB_USERNAME', env('DB_USER', 'root'));
+    $db_pass = env('DB_PASSWORD', env('DB_PASS', ''));
+}
 
 define('DB_SERVER', $detected_db_server);
-define('DB_USERNAME', env('DB_USERNAME', env('DB_USER', env('MYSQLUSER', env('RDS_USERNAME', $default_db_user)))));
-define('DB_PASSWORD', env('DB_PASSWORD', env('DB_PASS', env('MYSQLPASSWORD', env('RDS_PASSWORD', $default_db_pass)))));
+define('DB_USERNAME', $db_user);
+define('DB_PASSWORD', $db_pass);
 define('DB_NAME', env('DB_DATABASE', env('DB_NAME', env('MYSQLDATABASE', env('RDS_DB_NAME', 'green_forensics')))));
 define('DB_PORT', env('DB_PORT', env('MYSQLPORT', env('RDS_PORT', '3306'))));
 define('GROQ_API_KEY', env('GROQ_API_KEY', ''));

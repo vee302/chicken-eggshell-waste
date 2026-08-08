@@ -24,11 +24,21 @@ $error_message = "";
 $form_data = [];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])) {
-    $first_name = trim($_POST["first_name"] ?? "");
-    $middle_name = trim($_POST["middle_name"] ?? "");
-    $last_name = trim($_POST["last_name"] ?? "");
     $id_number = trim($_POST["id_number"] ?? "");
-    $contact_number = trim($_POST["contact_number"] ?? "");
+    if (empty($id_number)) {
+        $id_number = "N/A";
+    }
+
+    // Auto-format Philippine Phone Number (09XXXXXXXXX or +639XXXXXXXXX)
+    $raw_phone = preg_replace('/[^0-9+]/', '', $_POST["contact_number"] ?? "");
+    if (strpos($raw_phone, '+63') === 0) {
+        $contact_number = '0' . substr($raw_phone, 3);
+    } elseif (strpos($raw_phone, '63') === 0 && strlen($raw_phone) === 12) {
+        $contact_number = '0' . substr($raw_phone, 2);
+    } else {
+        $contact_number = $raw_phone;
+    }
+
     $email = strtolower(trim($_POST["email"] ?? ""));
     $requested_role = trim($_POST["requested_role"] ?? "");
     $reason = trim($_POST["reason_for_access"] ?? "");
@@ -44,12 +54,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "First Name is required.";
     } elseif (empty($last_name)) {
         $error_message = "Last Name is required.";
-    } elseif (empty($id_number)) {
-        $error_message = "ID Number is required.";
     } elseif (empty($contact_number)) {
         $error_message = "Contact Number is required.";
     } elseif (!preg_match('/^09[0-9]{9}$/', $contact_number)) {
-        $error_message = "Contact number must be exactly 11 digits and start with 09.";
+        $error_message = "Contact number must be a valid 11-digit Philippine mobile number starting with 09 (or +639).";
     } elseif (empty($email)) {
         $error_message = "Email Address is required.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -539,10 +547,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                         <div class="form-group">
                             <label for="contact_number">Contact Number <span class="required-star">*</span></label>
                             <input type="text" id="contact_number" name="contact_number" class="form-control-plain"
-                                inputmode="numeric" maxlength="11"
-                                placeholder="e.g. 09XXXXXXXXX"
+                                inputmode="numeric" maxlength="11" placeholder="e.g. 09XXXXXXXXX"
                                 value="<?php echo htmlspecialchars($form_data['contact_number'] ?? ''); ?>">
-                            <div id="contact_validation_msg" style="font-size: 0.76rem; margin-top: 0.35rem; font-weight: 500; min-height: 1.25rem;"></div>
+                            <div id="contact_validation_msg"
+                                style="font-size: 0.76rem; margin-top: 0.35rem; font-weight: 500; min-height: 1.25rem;">
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="email">Email Address <span class="required-star">*</span></label>
@@ -578,10 +587,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     </div>
 
                     <div class="form-group">
-                        <label for="proof_of_affiliation">Valid ID / Institutional ID <span class="required-star">*</span></label>
+                        <label for="proof_of_affiliation">Valid ID / Institutional ID <span
+                                class="required-star">*</span></label>
                         <input type="file" id="proof_of_affiliation" name="proof_of_affiliation"
                             class="form-control-plain" accept=".jpg,.jpeg,.png,.pdf" required>
-                        <p class="field-hint">Allowed types: JPG, JPEG, PNG, PDF. Max file size: 5MB. (e.g. Student ID, Faculty ID, Agency ID)</p>
+                        <p class="field-hint">Allowed types: JPG, JPEG, PNG, PDF. Max file size: 5MB. (e.g. Student ID,
+                            Faculty ID, Agency ID)</p>
                     </div>
 
                     <div class="form-group">
@@ -654,9 +665,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     </div>
 
                     <div class="form-group" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
-                        <label class="checkbox-container" style="display: flex; align-items: flex-start; gap: 8px; font-weight: 500; font-size: 0.85rem; cursor: pointer; color: var(--dark-green);">
-                            <input type="checkbox" name="terms_agreed" id="terms_agreed" value="1" required style="margin-top: 3px; cursor: pointer; accent-color: var(--dark-green);">
-                            <span style="text-align: left; line-height: 1.4;">I agree to the <a href="terms.php" target="_blank" rel="noopener noreferrer" style="color: var(--dark-green); font-weight: 700; text-decoration: underline;">Terms of Use</a> and <a href="privacy.php" target="_blank" rel="noopener noreferrer" style="color: var(--dark-green); font-weight: 700; text-decoration: underline;">Privacy Policy</a>.</span>
+                        <label class="checkbox-container"
+                            style="display: flex; align-items: flex-start; gap: 8px; font-weight: 500; font-size: 0.85rem; cursor: pointer; color: var(--dark-green);">
+                            <input type="checkbox" name="terms_agreed" id="terms_agreed" value="1" required
+                                style="margin-top: 3px; cursor: pointer; accent-color: var(--dark-green);">
+                            <span style="text-align: left; line-height: 1.4;">I agree to the <a href="terms.php"
+                                    target="_blank" rel="noopener noreferrer"
+                                    style="color: var(--dark-green); font-weight: 700; text-decoration: underline;">Terms
+                                    of Use</a> and <a href="privacy.php" target="_blank" rel="noopener noreferrer"
+                                    style="color: var(--dark-green); font-weight: 700; text-decoration: underline;">Privacy
+                                    Policy</a>.</span>
                         </label>
                     </div>
 
@@ -689,8 +707,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     <footer>
         <p>&copy; 2026 Green Forensics Project | LSPU CCJE San Pablo City Campus</p>
         <p style="margin-top: 5px;">
-            <a href="terms.php" target="_blank" rel="noopener noreferrer" style="color: var(--gray); text-decoration: underline; margin-right: 10px;">Terms of Use</a>
-            <a href="privacy.php" target="_blank" rel="noopener noreferrer" style="color: var(--gray); text-decoration: underline;">Privacy Policy</a>
+            <a href="terms.php" target="_blank" rel="noopener noreferrer"
+                style="color: var(--gray); text-decoration: underline; margin-right: 10px;">Terms of Use</a>
+            <a href="privacy.php" target="_blank" rel="noopener noreferrer"
+                style="color: var(--gray); text-decoration: underline;">Privacy Policy</a>
         </p>
     </footer>
 
@@ -762,34 +782,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 passwordInput.addEventListener("input", validatePasswordInput);
             }
 
-            // Real-time contact number validation
+            // Real-time contact number validation & auto-formatting
             const contactInput = document.getElementById("contact_number");
             const contactValidationMsg = document.getElementById("contact_validation_msg");
             if (contactInput && contactValidationMsg) {
                 const validateContactInput = () => {
-                    // Prevent non-numeric characters while typing
-                    contactInput.value = contactInput.value.replace(/\D/g, '');
-                    
-                    const val = contactInput.value;
+                    let val = contactInput.value.replace(/[^0-9+]/g, '');
+                    if (val.startsWith("+63")) {
+                        val = "0" + val.slice(3);
+                    } else if (val.startsWith("63") && val.length >= 12) {
+                        val = "0" + val.slice(2);
+                    }
+                    contactInput.value = val;
+
                     if (val.length === 0) {
                         contactValidationMsg.textContent = "";
                     } else if (!val.startsWith("09")) {
-                        contactValidationMsg.textContent = "Contact number must start with 09.";
+                        contactValidationMsg.textContent = "Contact number must start with 09 or +639.";
                         contactValidationMsg.style.color = "var(--error-red, #D9534F)";
                     } else if (val.length < 11) {
-                        contactValidationMsg.textContent = "Contact number must be exactly 11 digits and start with 09.";
+                        contactValidationMsg.textContent = "Contact number must be 11 digits (e.g. 09171234567).";
                         contactValidationMsg.style.color = "var(--error-red, #D9534F)";
                     } else {
-                        contactValidationMsg.textContent = "Contact number is valid.";
+                        contactValidationMsg.textContent = "Valid Philippine mobile number.";
                         contactValidationMsg.style.color = "var(--dark-green, #2F4F3A)";
                     }
                 };
 
                 contactInput.addEventListener("input", validateContactInput);
-                // Run initially if prefilled
-                if (contactInput.value) {
-                    validateContactInput();
-                }
+                if (contactInput.value) { validateContactInput(); }
             }
         });
 
@@ -820,13 +841,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
 
                 if (!fn) { showClientError("First Name is required."); return; }
                 if (!ln) { showClientError("Last Name is required."); return; }
-                if (!idNum) { showClientError("ID Number is required."); return; }
+                if (!idNum) {
+                    document.getElementById("id_number").value = "N/A";
+                }
                 if (!contact) { showClientError("Contact Number is required."); return; }
                 if (!contact.startsWith("09")) {
-                    showClientError("Contact number must start with 09.");
+                    showClientError("Contact number must start with 09 or +639.");
                     return;
                 }
-                if (contact.length !== 11) {
+                if (contact.length < 11) {
                     showClientError("Please enter a valid 11-digit contact number starting with 09.");
                     return;
                 }
@@ -918,7 +941,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             return true;
         }
     </script>
-<?php include __DIR__ . '/support-assistant/support_widget.php'; ?>
+    <?php include __DIR__ . '/support-assistant/support_widget.php'; ?>
 </body>
 
 </html>

@@ -30,7 +30,7 @@ try {
     $stmt->execute();
     $rejected = (int)$stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT ROUND(AVG(accuracy_score),1) FROM fingerprint_tests");
+    $stmt = $pdo->prepare("SELECT ROUND(AVG(COALESCE(faculty_final_score, faculty_accuracy_score, ai_accuracy_score, accuracy_score)),1) FROM fingerprint_tests WHERE (accuracy_score > 0 OR faculty_final_score > 0 OR faculty_accuracy_score > 0 OR ai_accuracy_score > 0)");
     $stmt->execute();
     $avg_accuracy = $stmt->fetchColumn() ?? 0;
 

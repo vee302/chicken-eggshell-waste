@@ -22,11 +22,6 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
-    <script>
-        if (window.innerWidth > 768) {
-            window.location.replace("deskstop.php");
-        }
-    </script>
 </head>
 
 <body>
@@ -654,12 +649,15 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Eco-Friendly &amp; Biodegradable</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>
-                        <p id="mb-bento-desc-1">Natural calcium carbonate breaks down safely without environmental harm</p>
+                        <p id="mb-bento-desc-1">Natural calcium carbonate breaks down safely without environmental harm
+                        </p>
                     </div>
                 </div>
 
@@ -668,8 +666,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Cost-Effective Alternative</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>
@@ -682,8 +682,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Safer for Forensic Users</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>
@@ -696,8 +698,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Supports Waste Reduction</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>
@@ -710,8 +714,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Criminology Training Tool</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>
@@ -724,8 +730,10 @@ if (isset($_SESSION["logged_in"]) && $_SESSION["logged_in"] === true) {
                         <div class="bento-card-header">
                             <h3>Supports SDG 12 &amp; 13</h3>
                             <span class="bento-toggle-icon" aria-hidden="true">
-                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </span>
                         </div>

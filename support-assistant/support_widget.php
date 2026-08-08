@@ -97,8 +97,29 @@ $rootUrl = rtrim($baseUrl, '/');
 
     <!-- Input Area -->
     <div class="chat-footer">
+        <!-- Selected Image Preview Bar -->
+        <div id="chatImagePreviewBar" class="chat-image-preview-bar" style="display: none;">
+            <div class="preview-thumb-wrapper">
+                <img id="chatImagePreviewThumb" src="" alt="Selected image">
+                <button type="button" class="preview-remove-btn" onclick="clearSelectedChatImage()" title="Remove image">&times;</button>
+            </div>
+            <span class="preview-text">Image attached (Groq AI Vision)</span>
+        </div>
+
         <form id="chatForm" onsubmit="handleChatSubmit(event)">
+            <input type="file" id="chatImageInput" accept="image/*" style="display: none;" onchange="handleChatImageSelected(event)">
+            
+            <button type="button" class="chat-attach-btn" onclick="document.getElementById('chatImageInput').click()" title="Attach image to analyze">
+                <!-- Camera / Image SVG icon -->
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+            </button>
+
             <input type="text" id="chatInput" placeholder="Ask a question..." autocomplete="off">
+
             <button type="submit" class="chat-send-btn" aria-label="Send message">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="22" y1="2" x2="11" y2="13"></line>

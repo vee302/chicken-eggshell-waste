@@ -143,7 +143,13 @@ try {
                     <h1>Dashboard Overview</h1>
                     <p>Welcome back, <?= htmlspecialchars($faculty_name) ?>. Here is your research summary.</p>
                 </div>
-                <a href="validate_accuracy.php" class="btn btn-primary">Review Pending Submissions</a>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <a href="../export_dataset_csv.php" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 4px;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Export Dataset (.csv)
+                    </a>
+                    <a href="validate_accuracy.php" class="btn btn-primary">Review Pending Submissions</a>
+                </div>
             </div>
 
             <!-- SUMMARY CARDS -->

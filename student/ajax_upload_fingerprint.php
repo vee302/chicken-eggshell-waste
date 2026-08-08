@@ -108,18 +108,19 @@ if ($stmt->fetch()) {
     sendResponse(false, 'Please wait 15 seconds before submitting another fingerprint evaluation.');
 }
 
-// Generate a unique trial_id early to use as the filename
+// Generate a unique trial_id and collision-free filename
+$unique_suffix = round(microtime(true)) . '_' . bin2hex(random_bytes(4));
 try {
     $stmt = $pdo->prepare("SELECT MAX(id) FROM fingerprint_tests");
     $stmt->execute();
-    $max_id = $stmt->fetchColumn() ?: 0;
+    $max_id = (int)($stmt->fetchColumn() ?: 0);
     $next_id = $max_id + 1;
     $trial_id = 'TR-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
 } catch (PDOException $e) {
     sendResponse(false, 'Database error generating ID: ' . $e->getMessage());
 }
 
-$filename = $trial_id . '.' . $ext;
+$filename = 'fingerprint_' . $unique_suffix . '.' . $ext;
 $dest_dir = dirname(__DIR__) . '/uploads/fingerprints/';
 if (!is_dir($dest_dir)) {
     @mkdir($dest_dir, 0777, true);
@@ -152,17 +153,16 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
     $ai_msg = "";
     $ai_success = false;
 
-    // Execute Python script safely with multi-platform command fallback (python3 vs python)
+    // Execute Python script safely with multi-platform command fallback
     $output = null;
     if (function_exists('shell_exec') && !in_array('shell_exec', array_map('trim', explode(',', ini_get('disable_functions'))))) {
-        $py_cmd = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? 'python' : 'python3';
-        $command = "$py_cmd " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " " . escapeshellarg($surface_type) . " 2>&1";
-        $output = @shell_exec($command);
-
-        // Fallback command if primary binary is not found
-        if (($output === null || empty(trim($output))) && $py_cmd === 'python3') {
-            $command = "python " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " " . escapeshellarg($surface_type) . " 2>&1";
+        $py_binaries = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? ['python', 'py', 'python3'] : ['python3', 'python'];
+        foreach ($py_binaries as $py_cmd) {
+            $command = "$py_cmd " . escapeshellarg($python_script) . " " . escapeshellarg($dest) . " " . escapeshellarg($surface_type) . " 2>&1";
             $output = @shell_exec($command);
+            if ($output !== null && !empty(trim($output))) {
+                break;
+            }
         }
     }
 

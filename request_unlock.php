@@ -8,57 +8,81 @@ $reason = "";
 $error_message = "";
 $success_message = "";
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_request'])) {
-    $email = strtolower(trim($_POST["email"] ?? ""));
-    $reason = trim($_POST["reason"] ?? "");
-
-    if (empty($email)) {
-        $error_message = "Registered Email Address is required.";
+    $csrf_token = $_POST['csrf_token'] ?? '';
+    if (empty($csrf_token) || !hash_equals($_SESSION['csrf_token'], $csrf_token)) {
+        $error_message = "Invalid or expired security token. Please refresh the page and try again.";
     } else {
-        try {
-            // Check if there is an existing pending request for this email
-            $chk_stmt = $pdo->prepare("SELECT COUNT(*) FROM account_unlock_requests WHERE email = :email AND status = 'pending'");
-            $chk_stmt->execute([':email' => $email]);
-            $pending_count = (int)$chk_stmt->fetchColumn();
+        $email = strtolower(trim($_POST["email"] ?? ""));
+        $reason = trim($_POST["reason"] ?? "");
 
-            if ($pending_count > 0) {
-                $error_message = "You already have a pending unlock request.";
-            } else {
-                // Find if user exists to associate user_id
-                $user_stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
-                $user_stmt->execute([':email' => $email]);
-                $user = $user_stmt->fetch(PDO::FETCH_ASSOC);
-                $user_id = $user ? (int)$user['id'] : null;
-
-                // Save unlock request
-                $ins_stmt = $pdo->prepare("INSERT INTO account_unlock_requests (user_id, email, reason, status) VALUES (:user_id, :email, :reason, 'pending')");
-                $ins_stmt->execute([
-                    ':user_id' => $user_id,
-                    ':email' => $email,
-                    ':reason' => !empty($reason) ? $reason : null
-                ]);
-
-                // Add activity log record
+        if (empty($email)) {
+            $error_message = "Registered Email Address is required.";
+        } else {
+            try {
                 $ip_address = $_SERVER["REMOTE_ADDR"] ?? '127.0.0.1';
-                $user_agent = $_SERVER["HTTP_USER_AGENT"] ?? 'Unknown';
-                $log_stmt = $pdo->prepare("INSERT INTO activity_logs (user_id, user_email, action, details, ip_address, user_agent) VALUES (:user_id, :user_email, 'Unlock Request Submitted', :details, :ip, :ua)");
-                $log_stmt->execute([
-                    ':user_id' => $user_id,
-                    ':user_email' => $email,
-                    ':details' => "Unlock request submitted for $email" . (!empty($reason) ? " with reason: $reason" : ""),
-                    ':ip' => $ip_address,
-                    ':ua' => $user_agent
-                ]);
 
-                // Set success message (generic for security)
-                $success_message = "Your unlock request has been submitted. If the account exists, the Super Administrator will review it.";
-                
-                // Clear fields on success
-                $email = "";
-                $reason = "";
+                // ANTI-SPAM PROTECTION 1: IP Rate Limiting (Max 3 unlock requests per IP per 1 hour)
+                $rate_stmt = $pdo->prepare("SELECT COUNT(*) FROM activity_logs WHERE ip_address = :ip AND action = 'Unlock Request Submitted' AND created_at >= NOW() - INTERVAL 1 HOUR");
+                $rate_stmt->execute([':ip' => $ip_address]);
+                $ip_attempts = (int)$rate_stmt->fetchColumn();
+
+                if ($ip_attempts >= 3) {
+                    $error_message = "Too many unlock requests submitted from your IP address. Please wait an hour before trying again.";
+                } else {
+                    // ANTI-SPAM PROTECTION 2: Registered Email Only Validation
+                    $user_stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
+                    $user_stmt->execute([':email' => $email]);
+                    $user = $user_stmt->fetch(PDO::FETCH_ASSOC);
+
+                    if (!$user) {
+                        $error_message = "No registered account found with this email address. Please verify your email or register a new account.";
+                    } else {
+                        $user_id = (int)$user['id'];
+
+                        // ANTI-SPAM PROTECTION 3: Existing Pending Request Check
+                        $chk_stmt = $pdo->prepare("SELECT COUNT(*) FROM account_unlock_requests WHERE email = :email AND status = 'pending'");
+                        $chk_stmt->execute([':email' => $email]);
+                        $pending_count = (int)$chk_stmt->fetchColumn();
+
+                        if ($pending_count > 0) {
+                            $error_message = "You already have a pending unlock request. Please wait for an administrator to review it.";
+                        } else {
+                            // Save unlock request
+                            $ins_stmt = $pdo->prepare("INSERT INTO account_unlock_requests (user_id, email, reason, status) VALUES (:user_id, :email, :reason, 'pending')");
+                            $ins_stmt->execute([
+                                ':user_id' => $user_id,
+                                ':email' => $email,
+                                ':reason' => !empty($reason) ? $reason : null
+                            ]);
+
+                            // Add activity log record
+                            $user_agent = $_SERVER["HTTP_USER_AGENT"] ?? 'Unknown';
+                            $log_stmt = $pdo->prepare("INSERT INTO activity_logs (user_id, user_email, action, details, ip_address, user_agent) VALUES (:user_id, :user_email, 'Unlock Request Submitted', :details, :ip, :ua)");
+                            $log_stmt->execute([
+                                ':user_id' => $user_id,
+                                ':user_email' => $email,
+                                ':details' => "Unlock request submitted for $email" . (!empty($reason) ? " with reason: $reason" : ""),
+                                ':ip' => $ip_address,
+                                ':ua' => $user_agent
+                            ]);
+
+                            // Set success message
+                            $success_message = "Your account unlock request has been submitted successfully. A Super Administrator will review your request.";
+                            
+                            // Clear fields on success
+                            $email = "";
+                            $reason = "";
+                        }
+                    }
+                }
+            } catch (PDOException $e) {
+                $error_message = "Database Error: " . $e->getMessage();
             }
-        } catch (PDOException $e) {
-            $error_message = "Database Error: " . $e->getMessage();
         }
     }
 }
@@ -147,6 +171,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_request'])) {
             <?php endif; ?>
 
             <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" autocomplete="off">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                 <div class="form-group">
                     <label for="email">Registered Email Address <span style="color: var(--error-red);">*</span></label>
                     <input type="email" name="email" id="email" class="form-control-plain" placeholder="you@example.com"

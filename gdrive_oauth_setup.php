@@ -37,7 +37,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'exchange') {
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
 
         $resData = json_decode($response, true);
 
@@ -86,7 +85,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'exchange') {
 
             $response2 = curl_exec($ch);
             $httpCode2 = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
             $resData2 = json_decode($response2, true);
 
             if (($httpCode2 === 200 || $httpCode2 === 201) && !empty($resData2['refresh_token'])) {

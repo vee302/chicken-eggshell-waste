@@ -6,17 +6,18 @@ header('Content-Type: application/json');
 require_once dirname(__DIR__) . "/config.php";
 
 // Output JSON and exit
-function send_response($success, $reply, $source = 'offline', $http_code = 200)
+function send_response($success, $reply, $source = 'offline', $http_code = 200, $extraData = [])
 {
     if (ob_get_length()) {
         ob_clean();
     }
     http_response_code($http_code);
-    echo json_encode([
+    $payload = array_merge([
         "success" => $success,
         "reply" => $reply,
         "source" => $source
-    ]);
+    ], $extraData);
+    echo json_encode($payload);
     exit;
 }
 
@@ -28,8 +29,9 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 // Read JSON input
 $input = json_decode(file_get_contents('php://input'), true);
 $message = trim($input['message'] ?? '');
+$image = $input['image'] ?? null;
 
-// Session profanity tracking initialization
+// Session profanity tracking & 5-minute cooldown initialization
 if (!isset($_SESSION['chat_profanity_count'])) {
     $_SESSION['chat_profanity_count'] = 0;
 }
@@ -37,13 +39,36 @@ if (!isset($_SESSION['chat_profanity_blocked'])) {
     $_SESSION['chat_profanity_blocked'] = false;
 }
 
-// 0. Check if user is already blocked
-if ($_SESSION['chat_profanity_blocked'] === true || $_SESSION['chat_profanity_count'] >= 2) {
-    $_SESSION['chat_profanity_blocked'] = true;
+$cooldownDuration = 300; // 5 minutes in seconds
+
+// 0. Check if user is currently blocked or in cooldown
+if (isset($_SESSION['chat_profanity_blocked_until'])) {
+    $remainingSeconds = $_SESSION['chat_profanity_blocked_until'] - time();
+    if ($remainingSeconds > 0) {
+        $_SESSION['chat_profanity_blocked'] = true;
+        $minutesLeft = ceil($remainingSeconds / 60);
+        send_response(
+            false,
+            "Ang iyong access sa AI Support Assistant ay pansamantalang na-block dahil sa paggamit ng hindi angkop na pananalita. Maaari kang sumubok muli pagkalipas ng " . $minutesLeft . " minuto.",
+            "blocked",
+            200,
+            ['remaining_seconds' => $remainingSeconds]
+        );
+    } else {
+        // Cooldown timer expired! Automatically unlock user.
+        $_SESSION['chat_profanity_count'] = 0;
+        unset($_SESSION['chat_profanity_blocked_until']);
+        unset($_SESSION['chat_profanity_blocked']);
+    }
+} elseif ($_SESSION['chat_profanity_blocked'] === true || $_SESSION['chat_profanity_count'] >= 2) {
+    // If blocked flag was set without timestamp, set 5-min timer starting now
+    $_SESSION['chat_profanity_blocked_until'] = time() + $cooldownDuration;
     send_response(
         false,
-        "Ang iyong access sa AI Support Assistant ay na-block dahil sa paulit-ulit na paggamit ng hindi angkop na pananalita.",
-        "blocked"
+        "Ang iyong access sa AI Support Assistant ay pansamantalang na-block ng 5 minuto dahil sa paggamit ng hindi angkop na pananalita.",
+        "blocked",
+        200,
+        ['remaining_seconds' => $cooldownDuration]
     );
 }
 
@@ -61,7 +86,8 @@ $profanities = [
 
 $foundProfanity = false;
 foreach ($profanities as $badWord) {
-    if (preg_match('/\b' . preg_quote($badWord, '/') . '\b/i', $lowerMessage) || strpos($lowerMessage, $badWord) !== false) {
+    // Strict word boundary matching: prevents Tagalog words like "gagamitin" or "gagamiting" from triggering "gaga"
+    if (preg_match('/(?<![a-z0-9])' . preg_quote($badWord, '/') . '(?![a-z0-9])/i', $lowerMessage)) {
         $foundProfanity = true;
         break;
     }
@@ -72,15 +98,18 @@ if ($foundProfanity) {
 
     if ($_SESSION['chat_profanity_count'] >= 2) {
         $_SESSION['chat_profanity_blocked'] = true;
+        $_SESSION['chat_profanity_blocked_until'] = time() + $cooldownDuration;
         send_response(
             false,
-            "Ang iyong access sa AI Support Assistant ay na-block dahil sa paulit-ulit na paggamit ng hindi angkop na pananalita.",
-            "blocked"
+            "Ang iyong access sa AI Support Assistant ay pansamantalang na-block ng 5 minuto dahil sa paulit-ulit na paggamit ng hindi angkop na pananalita.",
+            "blocked",
+            200,
+            ['remaining_seconds' => $cooldownDuration]
         );
     } else {
         send_response(
             true,
-            "Babala (1/2): Mangyaring gumamit ng magalang at angkop na pananalita. Ang uuliting paggamit ng hindi angkop na salita ay magdudulot ng pagka-block ng iyong chat access.",
+            "Babala (1/2): Mangyaring gumamit ng magalang at angkop na pananalita. Ang uuliting paggamit ng hindi angkop na salita ay magdudulot ng 5-minute block sa iyong chat access.",
             "warning"
         );
     }
@@ -256,7 +285,6 @@ function callPollinationsAI($message, $systemInstruction)
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     if ($httpCode === 200 && !empty($response)) {
         return trim($response);
@@ -264,22 +292,50 @@ function callPollinationsAI($message, $systemInstruction)
     return null;
 }
 
-// Groq AI query
-function callGroqAI($message, $systemInstruction)
+// Groq AI query (Text & Vision)
+function callGroqAI($message, $systemInstruction, $image = null)
 {
     $groqKey = env('GROQ_API_KEY');
     if (empty($groqKey)) {
         return null;
     }
 
-    $model = env('GROQ_MODEL', 'llama-3.3-70b-versatile');
     $url = "https://api.groq.com/openai/v1/chat/completions";
-    $data = [
-        "model" => $model,
-        "messages" => [
+
+    if (!empty($image)) {
+        // Groq Multimodal Vision Model (qwen/qwen3.6-27b)
+        $model = "qwen/qwen3.6-27b";
+        $userContent = [];
+
+        if (!empty($message)) {
+            $userContent[] = ["type" => "text", "text" => $message];
+        } else {
+            $userContent[] = ["type" => "text", "text" => "Suriin nang detalyado ang larawang ito at sabihin ang obserbasyon sa kalidad nito."];
+        }
+
+        $userContent[] = [
+            "type" => "image_url",
+            "image_url" => [
+                "url" => $image
+            ]
+        ];
+
+        $messagesPayload = [
+            ["role" => "system", "content" => $systemInstruction],
+            ["role" => "user", "content" => $userContent]
+        ];
+    } else {
+        // Text-only model
+        $model = env('GROQ_MODEL', 'llama-3.1-8b-instant');
+        $messagesPayload = [
             ["role" => "system", "content" => $systemInstruction],
             ["role" => "user", "content" => $message]
-        ],
+        ];
+    }
+
+    $data = [
+        "model" => $model,
+        "messages" => $messagesPayload,
         "temperature" => 0.4,
         "max_tokens" => 800
     ];
@@ -292,28 +348,29 @@ function callGroqAI($message, $systemInstruction)
         'Content-Type: application/json',
         'Authorization: Bearer ' . $groqKey
     ]);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 12);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     if ($httpCode === 200 && !empty($response)) {
         $res = json_decode($response, true);
         $reply = $res['choices'][0]['message']['content'] ?? null;
         if (!empty($reply)) {
+            // Strip out internal AI thinking/reasoning process (<think>...</think>)
+            $reply = preg_replace('/<think>[\s\S]*?<\/think>/i', '', $reply);
             return trim($reply);
         }
     }
     return null;
 }
 
-$systemInstruction = "You are the Green Forensics Support Assistant. Help users with the Green Forensics Evaluating System. Answer clearly, politely, and briefly. You can help with registration, pending accounts, login lockout, account unlock requests, fingerprint image upload, webcam capture, AI-assisted image quality evaluation, faculty validation, Terms of Use, Privacy Policy, and role-based dashboards. For account lockouts, password resets, failed logins, or unlock requests, guide the user to visit request_unlock.php. Do not ask for their password or private credentials. Fingerprint images are used only for academic research evaluation and image quality assessment, not biometric identification. If a user asks about locked account, login failed, forgot password, cannot login, or requesting an unlock, you must respond with: 'If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php'. If a user asks who the developer of the system is, respond with: 'Ang developer nitong system ay si Yvez Jayvee Gesmundo ang full stock developer. ang frontend ay si Marron Brimbuela at si Kevin Cloud Fajardo.' If the user greets you, respond warmly and ask how you can help.";
+$systemInstruction = "You are the Green Forensics Support Assistant. Help users with the Green Forensics Evaluating System. Answer clearly, politely, and concisely in a few sentences. Do not output internal thinking or reasoning tags (<think>). Answer directly. You can help with registration, pending accounts, login lockout, account unlock requests, fingerprint image upload, webcam capture, AI-assisted image quality evaluation, faculty validation, Terms of Use, Privacy Policy, and role-based dashboards. For account lockouts, password resets, failed logins, or unlock requests, guide the user to visit request_unlock.php. Do not ask for their password or private credentials. Fingerprint images are used only for academic research evaluation and image quality assessment, not biometric identification. If a user asks about locked account, login failed, forgot password, cannot login, or requesting an unlock, you must respond with: 'If your account is locked after multiple failed login attempts, you may wait 15 minutes or submit an unlock request for Super Admin review. Open the Request Unlock page here: request_unlock.php'. If a user asks who the developer of the system is, respond with: 'Ang developer nitong system ay si Yvez Jayvee Gesmundo ang full stock developer. ang frontend ay si Marron Brimbuela at si Kevin Cloud Fajardo.' If the user greets you, respond warmly and ask how you can help.";
 
-// 1. Primary: Groq AI
-$groqReply = callGroqAI($message, $systemInstruction);
+// 1. Primary: Groq AI (Text + Vision)
+$groqReply = callGroqAI($message, $systemInstruction, $image);
 if ($groqReply !== null) {
     send_response(true, $groqReply, "groq");
 }

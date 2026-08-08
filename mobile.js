@@ -450,15 +450,17 @@ if (window.innerWidth > 768) {
         updateJarPosition(jarTrigger.progress);
 
         // Secondary Effects
-        gsap.to("#maskRect", {
-            attr: { height: 200 },
-            scrollTrigger: {
-                trigger: ".fingerprint-demo",
-                start: "top 50%",
-                end: "center 20%",
-                scrub: 1
-            }
-        });
+        if (document.querySelector("#maskRect") && document.querySelector(".fingerprint-demo")) {
+            gsap.to("#maskRect", {
+                attr: { height: 200 },
+                scrollTrigger: {
+                    trigger: ".fingerprint-demo",
+                    start: "top 50%",
+                    end: "center 20%",
+                    scrub: 1
+                }
+            });
+        }
     }
 
     // ===================================
@@ -490,31 +492,33 @@ if (window.innerWidth > 768) {
             }
         });
 
-        gsap.from('.toxic-icon', {
-            opacity: 0,
-            scale: 0.7,
-            y: 30,
-            duration: 1,
-            stagger: 0.15,
-            scrollTrigger: {
-                trigger: '.toxic-visual',
-                start: 'top 70%',
-                toggleActions: 'play none none reverse'
-            }
-        });
+        if (document.querySelector('.toxic-visual')) {
+            gsap.from('.toxic-icon', {
+                opacity: 0,
+                scale: 0.7,
+                y: 30,
+                duration: 1,
+                stagger: 0.15,
+                scrollTrigger: {
+                    trigger: '.toxic-visual',
+                    start: 'top 70%',
+                    toggleActions: 'play none none reverse'
+                }
+            });
 
-        gsap.from('.eco-icon', {
-            opacity: 0,
-            scale: 0.7,
-            y: 30,
-            duration: 1,
-            stagger: 0.15,
-            scrollTrigger: {
-                trigger: '.toxic-visual',
-                start: 'center 60%',
-                toggleActions: 'play none none reverse'
-            }
-        });
+            gsap.from('.eco-icon', {
+                opacity: 0,
+                scale: 0.7,
+                y: 30,
+                duration: 1,
+                stagger: 0.15,
+                scrollTrigger: {
+                    trigger: '.toxic-visual',
+                    start: 'center 60%',
+                    toggleActions: 'play none none reverse'
+                }
+            });
+        }
 
         gsap.fromTo('.solution-section .section-label, .solution-section .section-title',
             { opacity: 0, y: 40 },
@@ -588,17 +592,19 @@ if (window.innerWidth > 768) {
             }
         });
 
-        gsap.from('.info-card', {
-            opacity: 0,
-            x: 40,
-            duration: 1,
-            stagger: 0.2,
-            scrollTrigger: {
-                trigger: '.demo-info',
-                start: 'top 75%',
-                toggleActions: 'play none none none'
-            }
-        });
+        if (document.querySelector('.demo-info') && document.querySelector('.info-card')) {
+            gsap.from('.info-card', {
+                opacity: 0,
+                x: 40,
+                duration: 1,
+                stagger: 0.2,
+                scrollTrigger: {
+                    trigger: '.demo-info',
+                    start: 'top 75%',
+                    toggleActions: 'play none none none'
+                }
+            });
+        }
 
         // Benefits section (Bento Grid) reveal with enter & exit scroll animations
         gsap.fromTo('.benefits-section .section-label, .benefits-section .section-title',
@@ -1012,23 +1018,27 @@ if (window.innerWidth > 768) {
         });
 
         // Open customize modal
-        btnCustomize.addEventListener('click', () => {
-            // Read saved settings or default to false
-            const preferences = localStorage.getItem('cookiePreference') === 'true';
-            const analytics = localStorage.getItem('cookieAnalytics') === 'true';
+        if (btnCustomize && modal) {
+            btnCustomize.addEventListener('click', () => {
+                // Read saved settings or default to false
+                const preferences = localStorage.getItem('cookiePreference') === 'true';
+                const analytics = localStorage.getItem('cookieAnalytics') === 'true';
 
-            const preferencesCheckbox = document.getElementById('cookiePreferences');
-            const analyticsCheckbox = document.getElementById('cookieAnalytics');
+                const preferencesCheckbox = document.getElementById('cookiePreferences');
+                const analyticsCheckbox = document.getElementById('cookieAnalytics');
 
-            if (preferencesCheckbox) preferencesCheckbox.checked = preferences;
-            if (analyticsCheckbox) analyticsCheckbox.checked = analytics;
+                if (preferencesCheckbox) preferencesCheckbox.checked = preferences;
+                if (analyticsCheckbox) analyticsCheckbox.checked = analytics;
 
-            modal.classList.add('active');
-        });
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        }
 
         // Close customize modal
         function closeModal() {
-            modal.classList.remove('active');
+            if (modal) modal.classList.remove('active');
+            document.body.style.overflow = '';
         }
 
         if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);

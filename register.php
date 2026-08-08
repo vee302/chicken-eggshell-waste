@@ -125,8 +125,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                             mkdir($upload_dir, 0755, true);
                         }
 
-                        $temp = explode(".", $file_name);
-                        $new_filename = 'proof_' . round(microtime(true)) . '_' . bin2hex(random_bytes(8)) . '.' . end($temp);
+                        $new_filename = 'proof_' . round(microtime(true)) . '_' . bin2hex(random_bytes(8)) . '.' . $file_ext;
                         $dest_path = $upload_dir . $new_filename;
                         if (move_uploaded_file($file['tmp_name'], $dest_path)) {
                             $proof_path = $dest_path;

@@ -1170,6 +1170,18 @@ body {
     .surface-grid    { grid-template-columns: 1fr; }
     .filter-grid     { grid-template-columns: 1fr 1fr; }
     .report-actions  { justify-content: flex-start; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="search"],
+    input[type="date"],
+    select,
+    textarea,
+    .form-control {
+        font-size: 16px !important;
+    }
 }
 @media (max-width: 480px) {
     .filter-grid  { grid-template-columns: 1fr; }

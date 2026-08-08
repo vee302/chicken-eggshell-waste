@@ -159,6 +159,12 @@ if (isset($_GET['view'])) {
                         <h1>Trial Records Monitoring</h1>
                         <p>Detailed evaluation database of latent fingerprint powder clarity, accuracy scores, and validation histories.</p>
                     </div>
+                    <div>
+                        <a href="../export_dataset_csv.php" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 4px; text-decoration: none;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span>Export Dataset (.csv)</span>
+                        </a>
+                    </div>
                 </div>
 
                 <?php

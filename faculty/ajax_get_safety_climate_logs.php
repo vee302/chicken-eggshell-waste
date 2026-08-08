@@ -25,7 +25,7 @@ try {
     // Check if assigned_faculty_id exists in fingerprint_tests
     $check_cols = $pdo->query("SHOW COLUMNS FROM `fingerprint_tests` LIKE 'assigned_faculty_id'")->fetch();
     if ($check_cols) {
-        $where_clauses[] = "(scl.trial_id IS NOT NULL AND ft.assigned_faculty_id = :faculty_id)";
+        $where_clauses[] = "(scl.trial_id IS NULL OR ft.assigned_faculty_id = :faculty_id)";
         $params[':faculty_id'] = $faculty_id;
     }
 

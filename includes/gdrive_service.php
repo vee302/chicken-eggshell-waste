@@ -44,7 +44,6 @@ function get_gdrive_access_token()
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
 
         if ($httpCode === 200 && $response) {
             $tokenData = json_decode($response, true);
@@ -131,7 +130,6 @@ function get_gdrive_access_token()
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     if ($httpCode !== 200 || !$response) {
         error_log("Google Drive Access Token Request failed: HTTP $httpCode Response: $response");
@@ -207,7 +205,6 @@ function gdrive_upload_file($localFilePath, $fileName, $folderId = null)
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     if (($httpCode === 200 || $httpCode === 201) && $response) {
         $resData = json_decode($response, true);
@@ -242,7 +239,6 @@ function gdrive_stream_file($fileId)
     $data = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-    curl_close($ch);
 
     if ($httpCode === 200 && $data) {
         if ($contentType) {
@@ -280,7 +276,6 @@ function gdrive_delete_file($fileId)
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     return ($httpCode === 200 || $httpCode === 204);
 }

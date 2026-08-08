@@ -404,6 +404,10 @@ try {
                     <div class="report-actions">
                         <a href="generate_reports.php" class="btn btn-secondary">Reset Filters</a>
                         <button type="submit" class="btn btn-primary">Preview Report</button>
+                        <a href="../export_dataset_csv.php?student_id=<?= urlencode($f_student) ?>&powder=<?= urlencode($f_powder) ?>&surface=<?= urlencode($f_surface) ?>&from=<?= urlencode($f_from) ?>&to=<?= urlencode($f_to) ?>" class="btn btn-primary" style="background-color: #2d6a4f; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Export Dataset (.csv)
+                        </a>
                         <?php if (!empty($records)): ?>
                             <button type="button" class="btn btn-primary" onclick="printReport()" style="background-color: #1b4332;">
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>

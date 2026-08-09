@@ -235,6 +235,12 @@ if (move_uploaded_file($file['tmp_name'], $dest)) {
         $inserted_id = $pdo->lastInsertId();
         $pdo->commit();
 
+        // Trigger automated SMS notification to student on submission
+        if (file_exists(dirname(__DIR__) . '/includes/sms_service.php')) {
+            require_once dirname(__DIR__) . '/includes/sms_service.php';
+            send_trial_status_sms($inserted_id, 'submitted');
+        }
+
         sendResponse(true, $ai_msg, [
             'id' => $inserted_id,
             'trial_id' => $trial_id,

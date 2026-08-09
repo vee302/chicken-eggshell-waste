@@ -174,13 +174,23 @@ function send_trial_status_sms($test_id, $status, $faculty_score = null, $remark
         $phone = $trial['contact_number'];
         $clean_remarks = !empty($remarks) ? mb_strimwidth(trim($remarks), 0, 60, '...') : '';
 
-        if (strtolower($status) === 'approved') {
+        $status_lower = strtolower($status);
+        if ($status_lower === 'submitted') {
+            $msg = "GreenForensics: Hi {$first_name}, your fingerprint trial {$trial_code} ({$powder_name} on {$surface_name}) was SUBMITTED successfully and is now PENDING faculty review.";
+        } elseif ($status_lower === 'approved') {
             $score_str = ($faculty_score !== null) ? number_format((float) $faculty_score, 1) . '%' : 'Pass';
-            $msg = "GreenForensics: Hi {$first_name}, your fingerprint trial {$trial_code} ({$powder_name} on {$surface_name}) has been APPROVED by Faculty with a score of {$score_str}! Check your dashboard for details.";
+            $remark_str = !empty($clean_remarks) ? " Remarks: {$clean_remarks}." : "";
+            $msg = "GreenForensics: Hi {$first_name}, your fingerprint trial {$trial_code} ({$powder_name} on {$surface_name}) has been APPROVED by Faculty with a score of {$score_str}!{$remark_str} Check your portal.";
+        } elseif ($status_lower === 'rejected') {
+            $remark_str = !empty($clean_remarks) ? " Remarks: {$clean_remarks}." : "";
+            $msg = "GreenForensics: Hi {$first_name}, your fingerprint trial {$trial_code} ({$powder_name} on {$surface_name}) was REJECTED by Faculty.{$remark_str} Please review and resubmit.";
+        } elseif ($status_lower === 'needs_revision') {
+            $remark_str = !empty($clean_remarks) ? " Remarks: {$clean_remarks}." : "";
+            $msg = "GreenForensics: Hi {$first_name}, your fingerprint trial {$trial_code} ({$powder_name} on {$surface_name}) NEEDS REVISION.{$remark_str} Please update your trial.";
         } else {
             $status_upper = strtoupper(str_replace('_', ' ', $status));
             $remark_str = !empty($clean_remarks) ? " Remarks: {$clean_remarks}." : "";
-            $msg = "GreenForensics: Hi {$first_name}, your fingerprint trial {$trial_code} ({$powder_name} on {$surface_name}) status has been updated to {$status_upper}.{$remark_str} Check your dashboard.";
+            $msg = "GreenForensics: Hi {$first_name}, your fingerprint trial {$trial_code} ({$powder_name} on {$surface_name}) status has been updated to {$status_upper}.{$remark_str} Check your portal.";
         }
 
         return send_sms_notification($phone, $msg);

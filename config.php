@@ -576,6 +576,18 @@ try {
         FOREIGN KEY (`reviewed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+    // ============================================================
+    // 10f. Create SMS_LOGS table
+    // ============================================================
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `sms_logs` (
+        `id`              INT AUTO_INCREMENT PRIMARY KEY,
+        `recipient_phone` VARCHAR(50) NOT NULL,
+        `message`         TEXT NOT NULL,
+        `provider`        VARCHAR(50) DEFAULT 'Audit Log',
+        `status`          VARCHAR(20) DEFAULT 'sent',
+        `created_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
 
     // ============================================================
     // 10d. Create SYSTEM_SETTINGS table

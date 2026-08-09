@@ -1,0 +1,13 @@
+{
+    "name": "greenforensics/waste-eggshell",
+    "description": "Green Forensics Evaluating System - Sustainable Fingerprint Evaluation",
+    "type": "project",
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "GreenForensics\\": "includes/"
+        }
+    }
+}

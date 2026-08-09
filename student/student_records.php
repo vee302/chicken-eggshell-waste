@@ -752,8 +752,15 @@ try {
                         <h2>My Records &amp; Reports</h2>
                     </div>
                 </div>
-                <div class="header-right">
+                <div class="header-right" style="display:flex;align-items:center;gap:10px;">
                     <div class="header-role-chip">Criminology Student</div>
+                    <a href="profile.php" class="btn-profile-top" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#ffffff;border:1.5px solid var(--medium-green,#2d6a4f);border-radius:20px;color:var(--dark-green,#1b4332);text-decoration:none;font-weight:700;font-size:0.83rem;box-shadow:0 2px 6px rgba(0,0,0,0.06);">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <span>SMS &amp; Account Profile</span>
+                    </a>
                 </div>
             </header>
 

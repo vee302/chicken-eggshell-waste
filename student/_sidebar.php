@@ -150,6 +150,19 @@ function nav_active(string $page, string $current): string {
                 <span class="menu-text">View Records / Reports</span>
             </a>
         </li>
+
+        <li class="menu-section-label">Account</li>
+
+        <li class="menu-item<?= nav_active('profile', $active_page ?? '') ?>">
+            <a href="profile.php" class="menu-link" id="nav-profile">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span class="menu-text">My Profile &amp; Settings</span>
+            </a>
+        </li>
     </ul>
 
     <!-- Bottom: Logout + Profile -->
@@ -166,13 +179,13 @@ function nav_active(string $page, string $current): string {
             </a>
         </div>
 
-        <div class="sidebar-profile">
+        <a href="profile.php" class="sidebar-profile" style="text-decoration:none;color:inherit;cursor:pointer;">
             <div class="profile-avatar"><?= htmlspecialchars($initials) ?></div>
             <div class="profile-info">
                 <div class="profile-name"><?= htmlspecialchars($s_name) ?></div>
                 <div class="profile-role">Criminology Student</div>
             </div>
-        </div>
+        </a>
     </div>
 </aside>
 

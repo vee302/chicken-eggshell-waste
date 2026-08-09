@@ -48,6 +48,12 @@ try {
 
     log_activity("Approve User", "Approved user registration for $email (assigned role: $approved_role)");
 
+    // Trigger automated SMS notification to approved user
+    if (file_exists(dirname(__DIR__) . '/includes/sms_service.php')) {
+        require_once dirname(__DIR__) . '/includes/sms_service.php';
+        send_user_approval_sms($user_id, $approved_role);
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'User account approved and role assigned successfully.',

@@ -28,6 +28,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["action"])) {
                 $stmt->execute([':role' => $approved_role, ':id' => $uid]);
                 
                 log_activity("Approve User", "Approved user registration for $u_email (assigned role: $approved_role)");
+
+                // Trigger automated SMS notification to approved user
+                if (file_exists(dirname(__DIR__) . '/includes/sms_service.php')) {
+                    require_once dirname(__DIR__) . '/includes/sms_service.php';
+                    send_user_approval_sms($uid, $approved_role);
+                }
+
                 $success = "User account approved and role assigned successfully.";
             } catch (PDOException $e) { 
                 $error = "Error: " . $e->getMessage(); 

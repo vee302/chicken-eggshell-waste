@@ -165,6 +165,20 @@ CREATE TABLE IF NOT EXISTS `account_unlock_requests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+-- SMS LOGS TABLE
+-- Audit logs for automated SMS notifications
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `sms_logs` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `recipient_phone` VARCHAR(50) NOT NULL,
+    `message` TEXT NOT NULL,
+    `provider` VARCHAR(50) DEFAULT 'Audit Log',
+    `status` VARCHAR(20) DEFAULT 'sent',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ============================================================
 -- SEED: Default Users
 -- Passwords hashed using PASSWORD_BCRYPT via password_hash()
 -- super_admin: admin123 | faculty: faculty123 | student: student123

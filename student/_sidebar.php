@@ -151,8 +151,6 @@ function nav_active(string $page, string $current): string {
             </a>
         </li>
 
-        <li class="menu-section-label">Account</li>
-
         <li class="menu-item<?= nav_active('profile', $active_page ?? '') ?>">
             <a href="profile.php" class="menu-link" id="nav-profile">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -160,7 +158,7 @@ function nav_active(string $page, string $current): string {
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                     <circle cx="12" cy="7" r="4"/>
                 </svg>
-                <span class="menu-text">My Profile &amp; Settings</span>
+                <span class="menu-text">SMS &amp; Account Profile</span>
             </a>
         </li>
     </ul>

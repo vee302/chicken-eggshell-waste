@@ -54,7 +54,11 @@ function send_sms_notification($phone_number, $message)
         return false;
     }
 
-    $target_phone = format_ph_phone_number($phone_number) ?: $phone_number;
+    $target_phone = format_ph_phone_number($phone_number);
+    if (!$target_phone) {
+        error_log("send_sms_notification SKIPPED: Invalid PH mobile phone number format '{$phone_number}'.");
+        return false;
+    }
 
     $traccar_url   = env('TRACCAR_GATEWAY_URL', 'http://192.168.1.14:8082');
     $traccar_token = env('TRACCAR_GATEWAY_TOKEN', '47ef11ea-31dc-4096-887c-679e1f044193');
@@ -159,6 +163,7 @@ function send_trial_status_sms($test_id, $status, $faculty_score = null, $remark
         $trial = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$trial || empty($trial['contact_number'])) {
+            error_log("send_trial_status_sms SKIPPED: Student ID " . ($trial['student_id'] ?? 'N/A') . " (" . ($trial['full_name'] ?? 'Unknown') . ") has no contact_number saved in database.");
             return false;
         }
 

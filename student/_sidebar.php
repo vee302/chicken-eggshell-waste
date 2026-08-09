@@ -152,7 +152,7 @@ function nav_active(string $page, string $current): string {
         </li>
     </ul>
 
-    <!-- Bottom: Logout + Profile -->
+    <!-- Bottom: Logout -->
     <div class="sidebar-bottom">
         <div class="sidebar-logout">
             <a href="../logout.php" class="logout-link" id="nav-logout">
@@ -165,14 +165,6 @@ function nav_active(string $page, string $current): string {
                 <span>Logout</span>
             </a>
         </div>
-
-        <a href="profile.php" class="sidebar-profile" style="text-decoration:none;color:inherit;cursor:pointer;">
-            <div class="profile-avatar"><?= htmlspecialchars($initials) ?></div>
-            <div class="profile-info">
-                <div class="profile-name"><?= htmlspecialchars($s_name) ?></div>
-                <div class="profile-role">Criminology Student</div>
-            </div>
-        </a>
     </div>
 </aside>
 

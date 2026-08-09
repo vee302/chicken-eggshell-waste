@@ -642,7 +642,6 @@ try {
                 <?php if (empty($student_phone)): ?>
                 <div style="background:#fff3cd;border:1px solid #ffeeba;color:#856404;padding:12px 18px;border-radius:10px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:0.9rem;">
                     <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:1.2rem;">📱</span>
                         <span><strong>SMS Notification Alert:</strong> Your mobile phone number is missing. Add your mobile number to receive instant SMS notifications when Faculty grades your trials.</span>
                     </div>
                     <button onclick="promptContactUpdate()" class="btn btn-primary btn-sm" style="white-space:nowrap;padding:6px 14px;font-size:0.8rem;background:var(--medium-green,#2d6a4f);border:none;border-radius:6px;color:#fff;cursor:pointer;">Add Contact Number</button>

@@ -361,7 +361,7 @@ $has_phone = !empty($user['contact_number']);
                                 </div>
 
                                 <div class="form-group-custom">
-                                    <label for="contact_number">📱 Mobile / Contact Number (For SMS Alerts) *</label>
+                                    <label for="contact_number">Mobile / Contact Number (For SMS Alerts) *</label>
                                     <div class="phone-input-wrap">
                                         <input type="text" id="contact_number" name="contact_number" class="form-control-custom"
                                                placeholder="09171234567" value="<?= htmlspecialchars($user['contact_number'] ?? '') ?>">

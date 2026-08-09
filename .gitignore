@@ -45,3 +45,7 @@ python/__pycache__/
 # Uploads enhanced
 /uploads/fingerprint_enhanced/*
 
+# Generated deployment bundles
+*.zip
+waste-eggshell-aws.zip
+deploy-package.zip

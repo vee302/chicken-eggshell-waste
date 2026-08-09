@@ -56,9 +56,9 @@ function send_sms_notification($phone_number, $message)
 
     $target_phone = format_ph_phone_number($phone_number) ?: $phone_number;
 
-    $traccar_url   = env('TRACCAR_GATEWAY_URL');
-    $traccar_token = env('TRACCAR_GATEWAY_TOKEN');
-    $cloud_token   = env('TRACCAR_CLOUD_TOKEN');
+    $traccar_url   = env('TRACCAR_GATEWAY_URL', 'http://192.168.1.14:8082');
+    $traccar_token = env('TRACCAR_GATEWAY_TOKEN', '47ef11ea-31dc-4096-887c-679e1f044193');
+    $cloud_token   = env('TRACCAR_CLOUD_TOKEN', 'd0Hicn0OSw2PxjJlaP5KUp:APA91bGnvzSieZz1iPzeU57NBWN2PeQMMlcNGjL-r4YKqKqFqZYJhem-gqtiT7cOt8yv0kObILwr9ZHvzu7s5hYx-vx2XHhxDgw4DO2B48H8EOTo3xd-o5q8');
 
     $sent = false;
     $provider = 'System Audit Log';

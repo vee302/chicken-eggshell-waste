@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `requested_role` VARCHAR(50) DEFAULT NULL,
     `reason_for_access` TEXT DEFAULT NULL,
     `proof_of_affiliation` VARCHAR(255) DEFAULT NULL,
+    `profile_picture` VARCHAR(255) DEFAULT NULL,
     `password` VARCHAR(255) NOT NULL,
     `role` ENUM('super_admin','faculty_researcher','criminology_student','alumni_police_partner') DEFAULT NULL,
     `status` ENUM('active','inactive','pending','rejected','suspended') DEFAULT 'pending',
@@ -175,6 +176,21 @@ CREATE TABLE IF NOT EXISTS `sms_logs` (
     `provider` VARCHAR(50) DEFAULT 'Audit Log',
     `status` VARCHAR(20) DEFAULT 'sent',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- USER LOGIN LOGS TABLE
+-- Audit logs for user security & recent login history
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `user_login_logs` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `ip_address` VARCHAR(45) NOT NULL,
+    `user_agent` VARCHAR(255) DEFAULT NULL,
+    `device_type` VARCHAR(50) DEFAULT 'Desktop',
+    `status` ENUM('success', 'failed') DEFAULT 'success',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

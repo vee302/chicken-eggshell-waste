@@ -24,6 +24,10 @@ $error_message = "";
 $form_data = [];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])) {
+    $first_name = trim($_POST["first_name"] ?? "");
+    $middle_name = trim($_POST["middle_name"] ?? "");
+    $last_name = trim($_POST["last_name"] ?? "");
+
     $id_number = trim($_POST["id_number"] ?? "");
     if (empty($id_number)) {
         $id_number = "N/A";
@@ -675,9 +679,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                                     of Use</a> and <a href="privacy.php" target="_blank" rel="noopener noreferrer"
                                     style="color: var(--dark-green); font-weight: 700; text-decoration: underline;">Privacy
                                     Policy</a>.</span>
-                        </label>
-                    </div>
-
                     <div class="form-nav">
                         <button type="button" class="btn-back" onclick="goToStep1()">Back</button>
                         <button type="submit" name="submit_registration" class="btn-next" id="submitBtn"

@@ -33,7 +33,8 @@ if (!function_exists('getallheaders')) {
 
 // Define env() helper function if not exists
 if (!function_exists('env')) {
-    function env($key, $default = null) {
+    function env($key, $default = null)
+    {
         $val = getenv($key);
         if ($val === false) {
             if (isset($_ENV[$key])) {
@@ -45,9 +46,12 @@ if (!function_exists('env')) {
             }
         }
         $lowerVal = strtolower($val);
-        if ($lowerVal === 'true') return true;
-        if ($lowerVal === 'false') return false;
-        if ($lowerVal === 'null' || $lowerVal === '(null)') return null;
+        if ($lowerVal === 'true')
+            return true;
+        if ($lowerVal === 'false')
+            return false;
+        if ($lowerVal === 'null' || $lowerVal === '(null)')
+            return null;
         return $val;
     }
 }
@@ -91,9 +95,9 @@ date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Manila'));
 // Production Validation Guard
 if (env('APP_ENV') === 'production') {
     $has_host = !empty(env('DB_HOST')) || !empty(env('MYSQLHOST'));
-    $has_db   = !empty(env('DB_DATABASE')) || !empty(env('MYSQLDATABASE'));
+    $has_db = !empty(env('DB_DATABASE')) || !empty(env('MYSQLDATABASE'));
     $has_user = !empty(env('DB_USERNAME')) || !empty(env('MYSQLUSER'));
-    
+
     if (!$has_host || !$has_db || !$has_user) {
         http_response_code(500);
         die("System configuration is incomplete. Please contact the administrator.");
@@ -128,6 +132,80 @@ define('DB_NAME', env('DB_DATABASE', env('DB_NAME', env('MYSQLDATABASE', env('RD
 define('DB_PORT', env('DB_PORT', env('MYSQLPORT', env('RDS_PORT', '3306'))));
 define('GROQ_API_KEY', env('GROQ_API_KEY', ''));
 define('GROQ_MODEL', env('GROQ_MODEL', 'llama-3.3-70b-versatile'));
+
+// Google reCAPTCHA v2 Configuration
+define('RECAPTCHA_SITE_KEY', env('RECAPTCHA_SITE_KEY', '6LeJW4AtAAAAAGWzBRisnnCrq6NKJBzzzV7iv6Qc'));
+define('RECAPTCHA_SECRET_KEY', env('RECAPTCHA_SECRET_KEY', '6LeJW4AtAAAAAM9ntBfFDSiMMjIppuGcHh-xF1iH'));
+define('RECAPTCHA_ENABLED', env('RECAPTCHA_ENABLED', true));
+
+/**
+ * Helper function to verify Google reCAPTCHA v2 token
+ * @param string $recaptcha_response
+ * @return bool
+ */
+if (!function_exists('verify_recaptcha')) {
+    function verify_recaptcha($recaptcha_response, $expected_action = 'register', $threshold = 0.5)
+    {
+        if (!RECAPTCHA_ENABLED) {
+            return true;
+        }
+        if (empty($recaptcha_response)) {
+            return false;
+        }
+
+        $secret = RECAPTCHA_SECRET_KEY;
+        if (empty($secret) || $secret === 'YOUR_RECAPTCHA_SECRET_KEY_HERE') {
+            return true;
+        }
+
+        $url = 'https://www.google.com/recaptcha/api/siteverify';
+        $post_data = http_build_query([
+            'secret' => $secret,
+            'response' => $recaptcha_response,
+            'remoteip' => $_SERVER['REMOTE_ADDR'] ?? ''
+        ]);
+
+        $result = false;
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            $result = curl_exec($ch);
+            curl_close($ch);
+        }
+
+        if ($result === false) {
+            $opts = [
+                'http' => [
+                    'method' => 'POST',
+                    'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                    'content' => $post_data,
+                    'timeout' => 10
+                ]
+            ];
+            $context = stream_context_create($opts);
+            $result = @file_get_contents($url, false, $context);
+        }
+
+        if ($result !== false) {
+            $json = json_decode($result, true);
+            if (isset($json['success']) && $json['success'] === true) {
+                // If v3 score is returned, check if score is above threshold
+                if (isset($json['score']) && (float) $json['score'] < $threshold) {
+                    error_log("reCAPTCHA v3 score too low: " . $json['score']);
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
 
 try {
     // 1. Connect to MySQL without selecting a database first
@@ -205,6 +283,7 @@ try {
     $addUserColumn('requested_role', "`requested_role` VARCHAR(50) DEFAULT NULL AFTER `affiliation`");
     $addUserColumn('reason_for_access', "`reason_for_access` TEXT DEFAULT NULL AFTER `requested_role`");
     $addUserColumn('proof_of_affiliation', "`proof_of_affiliation` VARCHAR(255) DEFAULT NULL AFTER `reason_for_access`");
+    $addUserColumn('profile_picture', "`profile_picture` VARCHAR(255) DEFAULT NULL AFTER `proof_of_affiliation`");
 
     if (!in_array('role', $cols)) {
         $pdo->exec("ALTER TABLE `users` ADD COLUMN `role`
@@ -231,7 +310,7 @@ try {
         $pdo->exec("ALTER TABLE `users` ADD COLUMN `updated_at`
             TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`");
     }
-    
+
     $addUserColumn('failed_login_attempts', "`failed_login_attempts` INT DEFAULT 0 AFTER `status`");
     $addUserColumn('locked_until', "`locked_until` DATETIME NULL AFTER `failed_login_attempts`");
     $addUserColumn('last_failed_login', "`last_failed_login` DATETIME NULL AFTER `locked_until`");
@@ -292,7 +371,8 @@ try {
     $pdo->exec("UPDATE `fingerprint_tests` SET `student_id` = 4 WHERE `student_id` IS NULL OR `student_id` = 0");
     try {
         $pdo->exec("ALTER TABLE `fingerprint_tests` MODIFY COLUMN `student_id` INT NOT NULL");
-    } catch (Exception $e) {}
+    } catch (Exception $e) {
+    }
     $addTestColumn('ridge_clarity_score', "`ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL");
     $addTestColumn('visibility_score', "`visibility_score` DECIMAL(5,2) DEFAULT NULL");
     $addTestColumn('adhesion_score', "`adhesion_score` DECIMAL(5,2) DEFAULT NULL");
@@ -354,12 +434,13 @@ try {
     $hasSafetyTable = false;
     try {
         $hasSafetyTable = $pdo->query("SELECT 1 FROM `safety_climate_log` LIMIT 1") !== false;
-    } catch (Exception $e) {}
+    } catch (Exception $e) {
+    }
 
     if ($hasSafetyTable) {
         // Check if table contains data
-        $rowCount = (int)$pdo->query("SELECT COUNT(*) FROM `safety_climate_log`")->fetchColumn();
-        
+        $rowCount = (int) $pdo->query("SELECT COUNT(*) FROM `safety_climate_log`")->fetchColumn();
+
         if ($rowCount === 0) {
             // Drop and recreate empty table
             $pdo->exec("DROP TABLE IF EXISTS `safety_climate_log`");
@@ -367,12 +448,12 @@ try {
         } else {
             // Migrate existing table using ALTER
             $sclCols = $pdo->query("SHOW COLUMNS FROM `safety_climate_log`")->fetchAll(PDO::FETCH_COLUMN);
-            
+
             // Add student_id if not present
             if (!in_array('student_id', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `student_id` INT NOT NULL");
             }
-            
+
             // Add trial_id if not present
             if (!in_array('trial_id', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `trial_id` INT DEFAULT NULL");
@@ -381,7 +462,7 @@ try {
                     $pdo->exec("UPDATE `safety_climate_log` SET `trial_id` = `test_id` WHERE `trial_id` IS NULL");
                 }
             }
-            
+
             // Add powder_type if not present (default to empty or eggshell)
             if (!in_array('powder_type', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `powder_type` VARCHAR(100) NOT NULL DEFAULT 'eggshell'");
@@ -390,7 +471,7 @@ try {
                             JOIN `fingerprint_tests` ft ON scl.trial_id = ft.id 
                             SET scl.powder_type = ft.powder_type");
             }
-            
+
             // Add surface_type if not present (default to empty or glass)
             if (!in_array('surface_type', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `surface_type` VARCHAR(100) NOT NULL DEFAULT 'glass'");
@@ -399,30 +480,32 @@ try {
                             JOIN `fingerprint_tests` ft ON scl.trial_id = ft.id 
                             SET scl.surface_type = ft.surface_type");
             }
-            
+
             // Add temperature if not present, otherwise ensure type is DECIMAL(5,2)
             if (!in_array('temperature', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `temperature` DECIMAL(5,2) DEFAULT NULL");
             } else {
                 try {
                     $pdo->exec("ALTER TABLE `safety_climate_log` MODIFY COLUMN `temperature` DECIMAL(5,2) DEFAULT NULL");
-                } catch (Exception $e) {}
+                } catch (Exception $e) {
+                }
             }
-            
+
             // Add humidity if not present, otherwise ensure type is DECIMAL(5,2)
             if (!in_array('humidity', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `humidity` DECIMAL(5,2) DEFAULT NULL");
             } else {
                 try {
                     $pdo->exec("ALTER TABLE `safety_climate_log` MODIFY COLUMN `humidity` DECIMAL(5,2) DEFAULT NULL");
-                } catch (Exception $e) {}
+                } catch (Exception $e) {
+                }
             }
-            
+
             // Add health_feedback if not present
             if (!in_array('health_feedback', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `health_feedback` VARCHAR(255) DEFAULT NULL");
             }
-            
+
             // Add irritation_status if not present (convert irritation_report if it exists)
             if (!in_array('irritation_status', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `irritation_status` ENUM('none','mild','moderate','severe') DEFAULT 'none'");
@@ -436,19 +519,21 @@ try {
                                 END");
                 }
             }
-            
+
             // Add remarks if not present
             if (!in_array('remarks', $sclCols, true)) {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD COLUMN `remarks` TEXT DEFAULT NULL");
             }
-            
+
             // Add foreign keys constraints if possible
             try {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD CONSTRAINT `fk_scl_student` FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE");
-            } catch (Exception $e) {}
+            } catch (Exception $e) {
+            }
             try {
                 $pdo->exec("ALTER TABLE `safety_climate_log` ADD CONSTRAINT `fk_scl_trial` FOREIGN KEY (`trial_id`) REFERENCES `fingerprint_tests`(`id`) ON DELETE SET NULL");
-            } catch (Exception $e) {}
+            } catch (Exception $e) {
+            }
         }
     }
 
@@ -558,8 +643,8 @@ try {
         `created_at`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
- 
- 
+
+
     // ============================================================
     // 10c. Create ACCOUNT_UNLOCK_REQUESTS table
     // ============================================================
@@ -614,6 +699,20 @@ try {
             $insertSetting->execute([':key' => $key, ':val' => $val]);
         }
     }
+
+    // ============================================================
+    // 10b. Create USER LOGIN LOGS table
+    // ============================================================
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `user_login_logs` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `user_id` INT NOT NULL,
+        `ip_address` VARCHAR(45) NOT NULL,
+        `user_agent` VARCHAR(255) DEFAULT NULL,
+        `device_type` VARCHAR(50) DEFAULT 'Desktop',
+        `status` ENUM('success', 'failed') DEFAULT 'success',
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // ============================================================
     // 11. Seed default accounts using INSERT IGNORE
@@ -710,5 +809,7 @@ register_shutdown_function(function () {
             <?php
         }
     }
+});
+?> }
 });
 ?>

@@ -12,11 +12,12 @@ require_once __DIR__ . '/../config.php';
  */
 function format_ph_phone_number($phone, $style = 'e164')
 {
-    if (empty($phone)) return false;
-    
+    if (empty($phone))
+        return false;
+
     // Remove any non-numeric characters
     $clean = preg_replace('/[^0-9]/', '', $phone);
-    
+
     $mobile10 = null;
     if (strlen($clean) === 11 && substr($clean, 0, 2) === '09') {
         $mobile10 = substr($clean, 1);
@@ -25,11 +26,11 @@ function format_ph_phone_number($phone, $style = 'e164')
     } elseif (strlen($clean) === 12 && substr($clean, 0, 2) === '63' && substr($clean, 2, 1) === '9') {
         $mobile10 = substr($clean, 2);
     }
-    
+
     if (!$mobile10) {
         return false;
     }
-    
+
     switch ($style) {
         case 'national':
             return '0' . $mobile10;
@@ -60,20 +61,50 @@ function send_sms_notification($phone_number, $message)
         return false;
     }
 
-    $traccar_url   = env('TRACCAR_GATEWAY_URL', 'http://192.168.1.14:8082');
+    $textbee_api_key = env('TEXTBEE_API_KEY', 'txb_UVwdYK9MDFGl4IW5aYfNM0cnKEXjdebj');
+    $textbee_device_id = env('TEXTBEE_DEVICE_ID', '6a79ebeaeaac10680d0e7e9f');
+    $traccar_url = env('TRACCAR_GATEWAY_URL', 'http://192.168.1.3:8082');
     $traccar_token = env('TRACCAR_GATEWAY_TOKEN', '47ef11ea-31dc-4096-887c-679e1f044193');
-    $cloud_token   = env('TRACCAR_CLOUD_TOKEN', 'd0Hicn0OSw2PxjJlaP5KUp:APA91bGnvzSieZz1iPzeU57NBWN2PeQMMlcNGjL-r4YKqKqFqZYJhem-gqtiT7cOt8yv0kObILwr9ZHvzu7s5hYx-vx2XHhxDgw4DO2B48H8EOTo3xd-o5q8');
+    $cloud_token = env('TRACCAR_CLOUD_TOKEN', 'd0Hicn0OSw2PxjJlaP5KUp:APA91bGnvzSieZz1iPzeU57NBWN2PeQMMlcNGjL-r4YKQKqFqZYJhem-gqtiT7cOt8yv0kObILwr9ZHvzu7s5hYx-vx2XHhxDgw4DO2B48H8EOTo3xd-o5q8');
 
     $sent = false;
     $provider = 'System Audit Log';
 
+    // 1. Try TextBee Gateway API first (Works 24/7 on AWS Cloud & Localhost)
+    if (!empty($textbee_api_key) && !empty($textbee_device_id)) {
+        $textbee_url = "https://api.textbee.dev/api/v1/gateway/devices/{$textbee_device_id}/send-sms";
+        $textbee_payload = json_encode([
+            'recipients' => [$target_phone],
+            'message' => $message
+        ]);
+
+        $ch = curl_init($textbee_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $textbee_payload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'x-api-key: ' . $textbee_api_key
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+
+        $res = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($http_code === 200 || $http_code === 201 || $http_code === 202) {
+            $sent = true;
+            $provider = 'TextBee Gateway';
+        }
+    }
+
     $payload = json_encode([
-        'to'      => $target_phone,
+        'to' => $target_phone,
         'message' => $message
     ]);
 
-    // 1. Try Local Traccar Gateway IP first
-    if (!empty($traccar_url)) {
+    // 2. Fallback to Local Traccar Gateway IP
+    if (!$sent && !empty($traccar_url)) {
         $ch = curl_init();
         $endpoint = rtrim($traccar_url, '/');
         $parsed_path = parse_url($endpoint, PHP_URL_PATH);
@@ -102,7 +133,7 @@ function send_sms_notification($phone_number, $message)
         }
     }
 
-    // 2. Fallback to Traccar Cloud Relay (for AWS Web App) if local IP is unreachable
+    // 3. Fallback to Traccar Cloud Relay (for AWS Web App) if local IP is unreachable
     if (!$sent && !empty($cloud_token)) {
         $ch = curl_init('https://www.traccar.org/sms/');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

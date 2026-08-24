@@ -22,6 +22,34 @@ try {
     die("Database error: " . $e->getMessage());
 }
 
+// Fetch Recent Login Security Logs for the Student
+$login_logs = [];
+try {
+    $log_query = $pdo->prepare("SELECT ip_address, device_type, status, created_at FROM user_login_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 5");
+    $log_query->execute([$student_id]);
+    $login_logs = $log_query->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $login_logs = [];
+}
+
+// Fallback: If no logs exist yet (initial run), generate active session entry
+if (empty($login_logs)) {
+    $current_ip = $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    if (strpos($current_ip, ',') !== false) {
+        $current_ip = trim(explode(',', $current_ip)[0]);
+    }
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $device_type = (preg_match('/(android|bb\d+|meego).+mobile|avail|blackberry|iphone|ipad|ipod|palm|phone|tablet|windows phone/i', $user_agent)) ? 'Mobile' : 'Desktop';
+    $login_logs = [
+        [
+            'ip_address' => $current_ip,
+            'device_type' => $device_type,
+            'status' => 'success',
+            'created_at' => date('Y-m-d H:i:s')
+        ]
+    ];
+}
+
 // Handle Form Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
     $first_name     = trim($_POST['first_name'] ?? '');
@@ -31,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $id_number      = trim($_POST['id_number'] ?? '');
     $department     = trim($_POST['department'] ?? '');
     $new_password   = trim($_POST['new_password'] ?? '');
+    $remove_avatar  = trim($_POST['remove_avatar'] ?? '0');
 
     if (empty($first_name) || empty($last_name)) {
         $error = "First name and last name are required.";
@@ -52,35 +81,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         if (empty($error)) {
             try {
                 $full_name = trim("$first_name " . ($middle_name ? "$middle_name " : "") . $last_name);
+                $profile_pic_filename = $user['profile_picture'] ?? null;
 
-                if (!empty($new_password)) {
-                    if (strlen($new_password) < 6) {
-                        $error = "New password must be at least 6 characters long.";
-                    } else {
-                        $hashed = password_hash($new_password, PASSWORD_DEFAULT);
-                        $upd_stmt = $pdo->prepare("
-                            UPDATE users 
-                            SET first_name = ?, middle_name = ?, last_name = ?, full_name = ?, contact_number = ?, id_number = ?, department = ?, password = ?
-                            WHERE id = ?
-                        ");
-                        $upd_stmt->execute([$first_name, $middle_name, $last_name, $full_name, $formatted_phone, $id_number, $department, $hashed, $student_id]);
+                // Process Avatar Removal if requested
+                if ($remove_avatar === '1' && !empty($profile_pic_filename)) {
+                    $old_file = dirname(__DIR__) . '/uploads/avatars/' . $profile_pic_filename;
+                    if (file_exists($old_file)) {
+                        @unlink($old_file);
                     }
-                } else {
-                    $upd_stmt = $pdo->prepare("
-                        UPDATE users 
-                        SET first_name = ?, middle_name = ?, last_name = ?, full_name = ?, contact_number = ?, id_number = ?, department = ?
-                        WHERE id = ?
-                    ");
-                    $upd_stmt->execute([$first_name, $middle_name, $last_name, $full_name, $formatted_phone, $id_number, $department, $student_id]);
+                    $profile_pic_filename = null;
+                }
+
+                // Process New Avatar Upload
+                if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
+                    $file_tmp  = $_FILES['profile_picture']['tmp_name'];
+                    $file_name = $_FILES['profile_picture']['name'];
+                    $file_size = $_FILES['profile_picture']['size'];
+
+                    $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+                    $allowed_exts = ['jpg', 'jpeg', 'png', 'webp'];
+
+                    if (!in_array($ext, $allowed_exts)) {
+                        $error = "Invalid image format. Allowed formats: JPG, PNG, WEBP.";
+                    } elseif ($file_size > 5 * 1024 * 1024) {
+                        $error = "Profile picture size exceeds 5MB limit.";
+                    } else {
+                        $upload_dir = dirname(__DIR__) . '/uploads/avatars/';
+                        if (!is_dir($upload_dir)) {
+                            @mkdir($upload_dir, 0777, true);
+                        }
+
+                        // Remove previous picture
+                        if (!empty($profile_pic_filename)) {
+                            $old_file = $upload_dir . $profile_pic_filename;
+                            if (file_exists($old_file)) {
+                                @unlink($old_file);
+                            }
+                        }
+
+                        $new_filename = 'avatar_' . $student_id . '_' . time() . '.' . $ext;
+                        $target_file  = $upload_dir . $new_filename;
+
+                        if (move_uploaded_file($file_tmp, $target_file)) {
+                            @chmod($target_file, 0777);
+                            $profile_pic_filename = $new_filename;
+                        } else {
+                            $error = "Failed to save profile picture to server.";
+                        }
+                    }
                 }
 
                 if (empty($error)) {
-                    $_SESSION['user_name'] = $full_name;
-                    $success = "Profile and SMS contact preferences updated successfully!";
+                    if (!empty($new_password)) {
+                        if (strlen($new_password) < 6) {
+                            $error = "New password must be at least 6 characters long.";
+                        } else {
+                            $hashed = password_hash($new_password, PASSWORD_DEFAULT);
+                            $upd_stmt = $pdo->prepare("
+                                UPDATE users 
+                                SET first_name = ?, middle_name = ?, last_name = ?, full_name = ?, contact_number = ?, id_number = ?, department = ?, profile_picture = ?, password = ?
+                                WHERE id = ?
+                            ");
+                            $upd_stmt->execute([$first_name, $middle_name, $last_name, $full_name, $formatted_phone, $id_number, $department, $profile_pic_filename, $hashed, $student_id]);
+                        }
+                    } else {
+                        $upd_stmt = $pdo->prepare("
+                            UPDATE users 
+                            SET first_name = ?, middle_name = ?, last_name = ?, full_name = ?, contact_number = ?, id_number = ?, department = ?, profile_picture = ?
+                            WHERE id = ?
+                        ");
+                        $upd_stmt->execute([$first_name, $middle_name, $last_name, $full_name, $formatted_phone, $id_number, $department, $profile_pic_filename, $student_id]);
+                    }
 
-                    // Refresh user data
-                    $stmt->execute([$student_id]);
-                    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if (empty($error)) {
+                        $_SESSION['user_name'] = $full_name;
+                        $success = "Profile details and avatar updated successfully!";
+
+                        // Refresh user data
+                        $stmt->execute([$student_id]);
+                        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                    }
                 }
             } catch (PDOException $e) {
                 $error = "Failed to update profile: " . $e->getMessage();
@@ -305,18 +385,41 @@ $has_phone = !empty($user['contact_number']);
                         </div>
                     <?php endif; ?>
 
-                    <form method="POST" action="profile.php">
+                    <form method="POST" action="profile.php" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="update_profile">
 
                         <!-- CARD 1: PROFILE OVERVIEW -->
                         <div class="profile-card">
-                            <div class="profile-header-block">
-                                <div class="avatar-circle-lg">
-                                    <?= htmlspecialchars(strtoupper(substr($user['first_name'] ?? 'S', 0, 1) . substr($user['last_name'] ?? 'T', 0, 1))) ?>
+                            <div class="profile-header-block" style="flex-wrap:wrap;">
+                                <?php 
+                                $avatar_file = $user['profile_picture'] ?? '';
+                                $avatar_exists = !empty($avatar_file) && file_exists(dirname(__DIR__) . '/uploads/avatars/' . $avatar_file);
+                                $avatar_src = $avatar_exists ? '../uploads/avatars/' . htmlspecialchars($avatar_file) : '';
+                                ?>
+                                <div class="avatar-circle-lg" style="overflow:hidden;position:relative;flex-shrink:0;">
+                                    <img id="avatar-img-preview" src="<?= $avatar_src ?>" alt="Profile Avatar" style="width:100%;height:100%;object-fit:cover;display:<?= $avatar_exists ? 'block' : 'none' ?>;">
+                                    <span id="avatar-initials-span" style="display:<?= $avatar_exists ? 'none' : 'block' ?>;">
+                                        <?= htmlspecialchars(strtoupper(substr($user['first_name'] ?? 'S', 0, 1) . substr($user['last_name'] ?? 'T', 0, 1))) ?>
+                                    </span>
                                 </div>
-                                <div class="profile-header-info">
+                                <div class="profile-header-info" style="flex:1;min-width:240px;">
                                     <h2><?= htmlspecialchars($user['full_name'] ?? 'Criminology Student') ?></h2>
                                     <p><?= htmlspecialchars($user['email']) ?> • Criminology Student</p>
+                                    
+                                    <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                        <label for="profile_picture_input" style="padding:7px 14px;background:#2d6a4f;color:#ffffff;border-radius:6px;font-size:0.83rem;font-weight:700;cursor:pointer;display:inline-block;">
+                                            Upload Profile Picture
+                                        </label>
+                                        <input type="file" id="profile_picture_input" name="profile_picture" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleAvatarPreview(this)">
+                                        
+                                        <input type="hidden" name="remove_avatar" id="remove_avatar_input" value="0">
+                                        <button type="button" id="btn-remove-avatar" onclick="removeAvatarImage()" style="padding:7px 14px;background:#f8f9fa;color:#dc3545;border:1px solid #dc3545;border-radius:6px;font-size:0.83rem;font-weight:700;cursor:pointer;display:<?= $avatar_exists ? 'inline-block' : 'none' ?>;">
+                                            Remove Photo
+                                        </button>
+                                    </div>
+                                    <div style="font-size:0.75rem;color:#6c757d;margin-top:4px;">Allowed formats: JPG, PNG, WEBP (Max 5MB). Live preview enabled.</div>
+                                </div>
+                            </div>
                                     
                                     <?php if ($has_phone): ?>
                                         <div class="sms-status-pill sms-active">
@@ -393,12 +496,61 @@ $has_phone = !empty($user['contact_number']);
 
                         <!-- CARD 2: PASSWORD CHANGE (OPTIONAL) -->
                         <div class="profile-card">
-                            <h3 style="font-size:1.1rem;color:var(--dark-green,#1b4332);margin:0 0 1rem 0;">Security & Password</h3>
+                            <h3 style="font-size:1.1rem;color:var(--dark-green,#1b4332);margin:0 0 1rem 0;">Security &amp; Password</h3>
                             
                             <div class="form-group-custom">
                                 <label for="new_password">New Password (Leave blank to keep current password)</label>
                                 <input type="password" id="new_password" name="new_password" class="form-control-custom"
                                        placeholder="Enter at least 6 characters">
+                            </div>
+                        </div>
+
+                        <!-- CARD 3: RECENT LOGIN HISTORY -->
+                        <div class="profile-card">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px;">
+                                <h3 style="font-size:1.1rem;color:var(--dark-green,#1b4332);margin:0;">
+                                    Recent Security &amp; Login History
+                                </h3>
+                                <span style="font-size:0.78rem;color:#2d6a4f;background:rgba(45,106,79,0.1);padding:4px 12px;border-radius:12px;border:1px solid rgba(45,106,79,0.2);font-weight:700;">
+                                    Last 3 Active Logins
+                                </span>
+                            </div>
+
+                            <div style="overflow-x:auto;">
+                                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;text-align:left;">
+                                    <thead>
+                                        <tr style="background:#f8f9fa;border-bottom:2px solid #e9ecef;color:var(--dark-green,#1b4332);">
+                                            <th style="padding:10px 12px;font-weight:700;">Date &amp; Time</th>
+                                            <th style="padding:10px 12px;font-weight:700;">IP Address</th>
+                                            <th style="padding:10px 12px;font-weight:700;">Device</th>
+                                            <th style="padding:10px 12px;font-weight:700;text-align:right;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach (array_slice($login_logs, 0, 3) as $log): ?>
+                                            <tr style="border-bottom:1px solid #f1f3f5;">
+                                                <td style="padding:12px;color:#212529;font-weight:600;">
+                                                    <?= date('M d, Y • h:i A', strtotime($log['created_at'])) ?>
+                                                </td>
+                                                <td style="padding:12px;font-family:monospace;color:#495057;font-weight:600;">
+                                                    <?= htmlspecialchars($log['ip_address']) ?>
+                                                </td>
+                                                <td style="padding:12px;color:#495057;font-weight:600;">
+                                                    <?php if (strtolower($log['device_type']) === 'mobile'): ?>
+                                                        Mobile Device
+                                                    <?php else: ?>
+                                                        Desktop PC
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td style="padding:12px;text-align:right;">
+                                                    <span style="display:inline-block;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;background:rgba(40,167,69,0.12);color:#1e7e34;border:1px solid rgba(40,167,69,0.25);">
+                                                        Success
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -416,6 +568,36 @@ $has_phone = !empty($user['contact_number']);
     </div>
 
     <?php require_once '_sidebar_js.php'; ?>
+    <script>
+    function handleAvatarPreview(input) {
+        if (input.files && input.files[0]) {
+            var file = input.files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size exceeds 5MB limit.');
+                input.value = '';
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('avatar-img-preview').src = e.target.result;
+                document.getElementById('avatar-img-preview').style.display = 'block';
+                document.getElementById('avatar-initials-span').style.display = 'none';
+                document.getElementById('btn-remove-avatar').style.display = 'inline-block';
+                document.getElementById('remove_avatar_input').value = '0';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function removeAvatarImage() {
+        document.getElementById('avatar-img-preview').src = '';
+        document.getElementById('avatar-img-preview').style.display = 'none';
+        document.getElementById('avatar-initials-span').style.display = 'block';
+        document.getElementById('btn-remove-avatar').style.display = 'none';
+        document.getElementById('profile_picture_input').value = '';
+        document.getElementById('remove_avatar_input').value = '1';
+    }
+    </script>
 </body>
 
 </html>

@@ -166,6 +166,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             $_SESSION["user_email"] = $email;
                                             $_SESSION["user_role"] = $user_role;
 
+                                            // Log successful login for security audit history
+                                            try {
+                                                $ip_address = $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+                                                if (strpos($ip_address, ',') !== false) {
+                                                    $ip_address = trim(explode(',', $ip_address)[0]);
+                                                }
+                                                $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                                                $device_type = (preg_match('/(android|bb\d+|meego).+mobile|avail|blackberry|iphone|ipad|ipod|palm|phone|tablet|windows phone/i', $user_agent)) ? 'Mobile' : 'Desktop';
+
+                                                $log_stmt = $pdo->prepare("INSERT INTO user_login_logs (user_id, ip_address, user_agent, device_type, status, created_at) VALUES (?, ?, ?, ?, 'success', NOW())");
+                                                $log_stmt->execute([$id, substr($ip_address, 0, 45), substr($user_agent, 0, 255), $device_type]);
+                                            } catch (Exception $e) {
+                                                // Ignore
+                                            }
+
                                             // Redirect based on role
                                             if ($user_role === 'super_admin') {
                                                 header("Location: admin/dashboard.php");

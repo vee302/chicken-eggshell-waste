@@ -15,7 +15,9 @@ try {
     $approved          = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='approved'")->fetchColumn();
     $rejected          = $pdo->query("SELECT COUNT(*) FROM fingerprint_tests WHERE status='rejected'")->fetchColumn();
     $avg_accuracy      = $pdo->query("SELECT ROUND(AVG(COALESCE(faculty_final_score, faculty_accuracy_score, ai_accuracy_score, accuracy_score)),1) FROM fingerprint_tests WHERE (accuracy_score > 0 OR faculty_final_score > 0 OR faculty_accuracy_score > 0 OR ai_accuracy_score > 0)")->fetchColumn() ?? 0;
-    $report_count      = $pdo->query("SELECT COUNT(*) FROM reports WHERE generated_by=$faculty_id")->fetchColumn();
+    $rep_stmt          = $pdo->prepare("SELECT COUNT(*) FROM reports WHERE generated_by = ?");
+    $rep_stmt->execute([$faculty_id]);
+    $report_count      = $rep_stmt->fetchColumn() ?: 0;
 } catch (PDOException $e) {}
 
 // Recent 6 submissions

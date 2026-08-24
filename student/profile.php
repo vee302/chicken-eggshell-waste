@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     } else {
                         $upload_dir = dirname(__DIR__) . '/uploads/avatars/';
                         if (!is_dir($upload_dir)) {
-                            @mkdir($upload_dir, 0777, true);
+                            @mkdir($upload_dir, 0755, true);
                         }
 
                         // Remove previous picture
@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         $target_file  = $upload_dir . $new_filename;
 
                         if (move_uploaded_file($file_tmp, $target_file)) {
-                            @chmod($target_file, 0777);
+                            @chmod($target_file, 0644);
                             $profile_pic_filename = $new_filename;
                         } else {
                             $error = "Failed to save profile picture to server.";
@@ -133,8 +133,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
                 if (empty($error)) {
                     if (!empty($new_password)) {
-                        if (strlen($new_password) < 6) {
-                            $error = "New password must be at least 6 characters long.";
+                        if (
+                            strlen($new_password) < 8 ||
+                            !preg_match('/[A-Z]/', $new_password) ||
+                            !preg_match('/[a-z]/', $new_password) ||
+                            !preg_match('/[0-9]/', $new_password) ||
+                            !preg_match('/[^A-Za-z0-9]/', $new_password)
+                        ) {
+                            $error = "New password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special symbol.";
                         } else {
                             $hashed = password_hash($new_password, PASSWORD_DEFAULT);
                             $upd_stmt = $pdo->prepare("

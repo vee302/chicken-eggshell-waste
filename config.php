@@ -94,9 +94,9 @@ date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Manila'));
 
 // Production Validation Guard
 if (env('APP_ENV') === 'production') {
-    $has_host = !empty(env('DB_HOST')) || !empty(env('MYSQLHOST'));
-    $has_db = !empty(env('DB_DATABASE')) || !empty(env('MYSQLDATABASE'));
-    $has_user = !empty(env('DB_USERNAME')) || !empty(env('MYSQLUSER'));
+    $has_host = !empty(env('DB_HOST')) || !empty(env('MYSQLHOST')) || !empty(env('RDS_HOSTNAME'));
+    $has_db   = !empty(env('DB_DATABASE')) || !empty(env('DB_NAME')) || !empty(env('MYSQLDATABASE')) || !empty(env('RDS_DB_NAME'));
+    $has_user = !empty(env('DB_USERNAME')) || !empty(env('DB_USER')) || !empty(env('MYSQLUSER')) || !empty(env('RDS_USERNAME'));
 
     if (!$has_host || !$has_db || !$has_user) {
         http_response_code(500);

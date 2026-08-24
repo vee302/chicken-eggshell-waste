@@ -90,6 +90,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $error_message = "Passwords do not match.";
     } elseif (!isset($_POST['terms_agreed']) || $_POST['terms_agreed'] !== '1') {
         $error_message = "You must agree to the Terms of Use and Privacy Policy before registering.";
+    } elseif (defined('TURNSTILE_ENABLED') && TURNSTILE_ENABLED && !verify_turnstile($_POST['cf-turnstile-response'] ?? '')) {
+        $error_message = "Security verification failed. Please complete the Cloudflare Turnstile check.";
     } else {
         // Process file upload if provided
         $proof_path = null;
@@ -204,6 +206,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     <title>Register - Green Forensics Evaluating System</title>
     <link rel="stylesheet" href="css/login.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
         .login-container {
             max-width: 640px;
@@ -679,6 +682,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                                     of Use</a> and <a href="privacy.php" target="_blank" rel="noopener noreferrer"
                                     style="color: var(--dark-green); font-weight: 700; text-decoration: underline;">Privacy
                                     Policy</a>.</span>
+                        </label>
+                    </div>
+
+                    <!-- Cloudflare Turnstile Widget -->
+                    <?php if (defined('TURNSTILE_ENABLED') && TURNSTILE_ENABLED): ?>
+                        <div class="form-group" style="margin-top: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: center;">
+                            <div class="cf-turnstile" data-sitekey="<?php echo htmlspecialchars(TURNSTILE_SITE_KEY); ?>" data-theme="light"></div>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="form-nav">
                         <button type="button" class="btn-back" onclick="goToStep1()">Back</button>
                         <button type="submit" name="submit_registration" class="btn-next" id="submitBtn"

@@ -138,6 +138,74 @@ define('RECAPTCHA_SITE_KEY', env('RECAPTCHA_SITE_KEY', '6LeJW4AtAAAAAGWzBRisnnCr
 define('RECAPTCHA_SECRET_KEY', env('RECAPTCHA_SECRET_KEY', '6LeJW4AtAAAAAM9ntBfFDSiMMjIppuGcHh-xF1iH'));
 define('RECAPTCHA_ENABLED', env('RECAPTCHA_ENABLED', true));
 
+// Cloudflare Turnstile Configuration
+define('TURNSTILE_SITE_KEY', env('TURNSTILE_SITE_KEY', '0x4AAAAAAEapwGNxjnqkVtIk'));
+define('TURNSTILE_SECRET_KEY', env('TURNSTILE_SECRET_KEY', '0x4AAAAAAEapwLSoCLytAlengphotH5LUpo'));
+define('TURNSTILE_ENABLED', env('TURNSTILE_ENABLED', true));
+
+/**
+ * Helper function to verify Cloudflare Turnstile response token
+ * @param string $turnstile_response
+ * @return bool
+ */
+if (!function_exists('verify_turnstile')) {
+    function verify_turnstile($turnstile_response)
+    {
+        if (!TURNSTILE_ENABLED) {
+            return true;
+        }
+        if (empty($turnstile_response)) {
+            return false;
+        }
+
+        $secret = TURNSTILE_SECRET_KEY;
+        if (empty($secret)) {
+            return true;
+        }
+
+        $url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+        $post_data = http_build_query([
+            'secret' => $secret,
+            'response' => $turnstile_response,
+            'remoteip' => $_SERVER['REMOTE_ADDR'] ?? ''
+        ]);
+
+        $result = false;
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            $result = curl_exec($ch);
+            curl_close($ch);
+        }
+
+        if ($result === false) {
+            $opts = [
+                'http' => [
+                    'method' => 'POST',
+                    'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                    'content' => $post_data,
+                    'timeout' => 10
+                ]
+            ];
+            $context = stream_context_create($opts);
+            $result = @file_get_contents($url, false, $context);
+        }
+
+        if ($result !== false) {
+            $json = json_decode($result, true);
+            if (isset($json['success']) && $json['success'] === true) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
 /**
  * Helper function to verify Google reCAPTCHA v2 token
  * @param string $recaptcha_response

@@ -172,10 +172,22 @@ function clearSelectedChatImage() {
     if (previewBar) previewBar.style.display = 'none';
 }
 
+// Clean internal AI reasoning/thinking tags (<think>...</think>)
+function cleanAiResponseText(text) {
+    if (!text || typeof text !== 'string') return text;
+    let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    cleaned = cleaned.replace(/<think>[\s\S]*/gi, '');
+    return cleaned.trim();
+}
+
 // Append message helper
 function appendMessage(text, isUser = false, imageBase64 = null, shouldSave = true) {
     const chatMessages = document.getElementById('chatMessages');
     if (!chatMessages) return;
+
+    if (!isUser && text) {
+        text = cleanAiResponseText(text);
+    }
 
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('chat-message');
@@ -208,6 +220,8 @@ function appendMessage(text, isUser = false, imageBase64 = null, shouldSave = tr
 function appendBotMessageWithUnlock(text, useButton = false, shouldSave = true) {
     const chatMessages = document.getElementById('chatMessages');
     if (!chatMessages) return;
+
+    text = cleanAiResponseText(text);
 
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('chat-message', 'bot-message');

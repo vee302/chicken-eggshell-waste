@@ -336,8 +336,8 @@ function callGroqAI($message, $systemInstruction, $image = null)
     $data = [
         "model" => $model,
         "messages" => $messagesPayload,
-        "temperature" => 0.4,
-        "max_tokens" => 800
+        "temperature" => 0.3,
+        "max_tokens" => 2048
     ];
 
     $ch = curl_init($url);
@@ -348,7 +348,7 @@ function callGroqAI($message, $systemInstruction, $image = null)
         'Content-Type: application/json',
         'Authorization: Bearer ' . $groqKey
     ]);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
@@ -359,9 +359,14 @@ function callGroqAI($message, $systemInstruction, $image = null)
         $res = json_decode($response, true);
         $reply = $res['choices'][0]['message']['content'] ?? null;
         if (!empty($reply)) {
-            // Strip out internal AI thinking/reasoning process (<think>...</think>)
+            // 1. Strip completed <think>...</think> blocks
             $reply = preg_replace('/<think>[\s\S]*?<\/think>/i', '', $reply);
-            return trim($reply);
+            // 2. Strip unclosed <think>... blocks if truncated
+            $reply = preg_replace('/<think>[\s\S]*/i', '', $reply);
+            $reply = trim($reply);
+            if (!empty($reply)) {
+                return $reply;
+            }
         }
     }
     return null;

@@ -42,6 +42,12 @@ try {
 
     log_activity("Reject User", "Rejected user registration for $email");
 
+    // Trigger automated Email notification to rejected user
+    if (file_exists(dirname(__DIR__) . '/includes/mail_service.php')) {
+        require_once dirname(__DIR__) . '/includes/mail_service.php';
+        send_user_rejection_email($user_id);
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Registration request rejected successfully.',

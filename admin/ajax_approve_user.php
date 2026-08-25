@@ -19,7 +19,7 @@ if (empty($csrf_token) || !hash_equals($_SESSION['csrf_token'] ?? '', $csrf_toke
     exit;
 }
 
-$user_id = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
+$user_id = isset($_POST['user_id']) ? (int) $_POST['user_id'] : 0;
 $approved_role = trim($_POST['approved_role'] ?? '');
 
 if ($user_id <= 0) {

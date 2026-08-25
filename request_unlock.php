@@ -221,7 +221,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_request'])) {
                     });
                 }, 400);
             }, 800);
+
+            // Trigger Firebase Password Reset Email on Form Submit
+            const form = document.querySelector("form");
+            if (form) {
+                form.addEventListener("submit", function (e) {
+                    const emailInput = document.getElementById("email");
+                    if (emailInput && emailInput.value && typeof window.sendFirebasePasswordReset === "function") {
+                        window.sendFirebasePasswordReset(emailInput.value.trim());
+                    }
+                });
+            }
         });
     </script>
+    <?php
+    if (file_exists(__DIR__ . '/includes/firebase_service.php')) {
+        require_once __DIR__ . '/includes/firebase_service.php';
+        render_firebase_scripts();
+    }
+    ?>
 </body>
 </html>
+
+

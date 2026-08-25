@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS `fingerprint_tests` (
     `enhanced_image_path` VARCHAR(255) DEFAULT NULL,
     `image_label` VARCHAR(255) DEFAULT NULL,
     `image_hash` VARCHAR(64) DEFAULT NULL,
+    `gdrive_file_id` VARCHAR(255) DEFAULT NULL,
     `ridge_clarity_score` DECIMAL(5,2) DEFAULT NULL,
     `visibility_score` DECIMAL(5,2) DEFAULT NULL,
     `adhesion_score` DECIMAL(5,2) DEFAULT NULL,
@@ -82,8 +83,8 @@ CREATE TABLE IF NOT EXISTS `safety_climate_log` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `student_id` INT NOT NULL,
     `trial_id` INT DEFAULT NULL,
-    `powder_type` VARCHAR(100) NOT NULL,
-    `surface_type` VARCHAR(100) NOT NULL,
+    `powder_type` VARCHAR(100) NOT NULL DEFAULT 'eggshell',
+    `surface_type` VARCHAR(100) NOT NULL DEFAULT 'glass',
     `temperature` DECIMAL(5,2) DEFAULT NULL,
     `humidity` DECIMAL(5,2) DEFAULT NULL,
     `health_feedback` VARCHAR(255) DEFAULT NULL,
@@ -150,6 +151,37 @@ CREATE TABLE IF NOT EXISTS `reports` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+-- FIELD FEEDBACK TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `field_feedback` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `partner_id` INT NOT NULL,
+    `feedback_type` VARCHAR(100) NOT NULL,
+    `surface_type` VARCHAR(50) DEFAULT NULL,
+    `powder_type` VARCHAR(50) DEFAULT NULL,
+    `observation` TEXT NOT NULL,
+    `usability_rating` INT NOT NULL,
+    `suggested_improvement` TEXT DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`partner_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- ACTIVITY LOGS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `activity_logs` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT DEFAULT NULL,
+    `user_email` VARCHAR(150) NOT NULL,
+    `action` VARCHAR(100) NOT NULL,
+    `details` TEXT NOT NULL,
+    `ip_address` VARCHAR(45) DEFAULT NULL,
+    `user_agent` VARCHAR(255) DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
 -- ACCOUNT UNLOCK REQUESTS TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `account_unlock_requests` (
@@ -176,6 +208,14 @@ CREATE TABLE IF NOT EXISTS `sms_logs` (
     `provider` VARCHAR(50) DEFAULT 'Audit Log',
     `status` VARCHAR(20) DEFAULT 'sent',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- SYSTEM SETTINGS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `system_settings` (
+    `setting_key` VARCHAR(100) PRIMARY KEY,
+    `setting_value` TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

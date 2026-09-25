@@ -153,6 +153,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         }
 
         if (!$file_error) {
+            $registration_saved = false;
             try {
                 // Check email uniqueness
                 $chk = $pdo->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
@@ -183,6 +184,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                         ':proof' => $proof_path
                     ]);
 
+                    $registration_saved = true;
                     $registeredUserId = (int) $pdo->lastInsertId();
                     $_SESSION['pending_registration_user_id'] = $registeredUserId;
                     $_SESSION['pending_registration_email'] = $email;
@@ -191,7 +193,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                     exit;
                 }
             } catch (PDOException $e) {
-                $error_message = "Database Error: " . $e->getMessage();
+                error_log("Registration database error: " . $e->getMessage());
+                $error_message = $e->getCode() === '23000'
+                    ? "Registration could not be completed. The email may already be registered."
+                    : "Registration could not be completed. Please try again.";
+            } finally {
+                // Remove only this request's upload when no account was saved,
+                // including duplicate-email races caught by the unique index.
+                if (!$registration_saved && $proof_path !== null && is_file(__DIR__ . '/' . $proof_path)) {
+                    if (!unlink(__DIR__ . '/' . $proof_path)) {
+                        error_log("Could not remove unused registration proof: " . $proof_path);
+                    }
+                }
             }
         }
     }

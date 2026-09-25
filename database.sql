@@ -234,47 +234,5 @@ CREATE TABLE IF NOT EXISTS `user_login_logs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
--- ============================================================
--- SEED: Default Users
--- Passwords hashed using PASSWORD_BCRYPT via password_hash()
--- super_admin: admin123 | faculty: faculty123 | student: student123
--- ============================================================
-INSERT INTO `users` (`id`, `first_name`, `middle_name`, `last_name`, `full_name`, `email`, `password`, `role`, `status`) VALUES
-(1, 'System', NULL, 'Administrator', 'System Administrator', 'admin@greenforensics.com', '$2y$10$vU3vA6Kj24M75WqYFfL2aO/Qk2tQZlS66HWhFmgz4qEw3Q1c6lGxe', 'super_admin', 'active'),
-(2, 'System', NULL, 'Administrator', 'System Administrator (Edu)', 'admin@greenforensics.edu.ph', '$2y$10$Cde1Vjp9ICu1HX.MbUnSXek0NUwgFr6m2VThMuTikxhTYlgn4sc.C', 'super_admin', 'active'),
-(3, 'Maria', NULL, 'Santos', 'Dr. Maria Santos', 'faculty@greenforensics.edu.ph', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'faculty_researcher', 'active'),
-(4, 'Juan', NULL, 'dela Cruz', 'Juan dela Cruz', 'student@greenforensics.edu.ph', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'criminology_student', 'active')
-ON DUPLICATE KEY UPDATE `id`=`id`;
-
--- ============================================================
--- SEED: Sample fingerprint test submissions
--- ============================================================
-INSERT INTO `fingerprint_tests` (`id`, `trial_id`, `student_id`, `powder_type`, `surface_type`, `image_path`, `ridge_clarity_score`, `visibility_score`, `adhesion_score`, `accuracy_score`, `status`, `submitted_at`, `validated_by`, `validated_at`) VALUES
-(1, 'TR-0001', 4, 'eggshell', 'glass', 'TR-0001.jpg', 88.50, 91.00, 85.00, 88.17, 'pending_validation', '2026-05-28 08:30:00', NULL, NULL),
-(2, 'TR-0002', 4, 'commercial', 'glass', 'TR-0002.jpg', 90.00, 92.50, 88.00, 90.17, 'approved', '2026-05-28 09:00:00', 3, '2026-05-28 10:00:00'),
-(3, 'TR-0003', 4, 'eggshell', 'paper', 'TR-0003.jpg', 82.00, 79.50, 80.00, 80.50, 'pending_validation', '2026-05-29 10:00:00', NULL, NULL),
-(4, 'TR-0004', 4, 'eggshell', 'wood', 'TR-0004.jpg', 75.00, 77.00, 73.00, 75.00, 'rejected', '2026-05-29 11:00:00', 3, '2026-05-29 12:00:00'),
-(5, 'TR-0005', 4, 'commercial', 'plastic', 'TR-0005.jpg', 93.00, 94.00, 92.00, 93.00, 'approved', '2026-05-30 09:30:00', 3, '2026-05-30 10:00:00'),
-(6, 'TR-0006', 4, 'eggshell', 'metal', 'TR-0006.jpg', 86.00, 88.00, 84.00, 86.00, 'pending_validation', '2026-05-30 10:30:00', NULL, NULL)
-ON DUPLICATE KEY UPDATE `id`=`id`;
-
--- ============================================================
--- SEED: Sample safety climate logs
--- ============================================================
-INSERT INTO `safety_climate_log` (`id`, `student_id`, `trial_id`, `powder_type`, `surface_type`, `temperature`, `humidity`, `health_feedback`, `irritation_status`, `remarks`) VALUES
-(1, 4, 1, 'eggshell', 'glass', 27.50, 65.00, 'No discomfort reported during testing.', 'none', 'Testing conditions were within safe parameters.'),
-(2, 4, 2, 'commercial', 'glass', 28.00, 68.00, 'Mild dryness in throat after 30 minutes.', 'none', 'Recommended to use mask during extended testing.'),
-(3, 4, 3, 'eggshell', 'paper', 26.00, 60.00, 'No issues reported.', 'none', 'Comfortable testing environment.'),
-(4, 4, 4, 'eggshell', 'wood', 29.00, 72.00, 'Slight irritation in eyes noted.', 'mild', 'Goggles required for next session.'),
-(5, 4, 5, 'commercial', 'plastic', 27.00, 63.00, 'No discomfort.', 'none', 'Good environmental conditions.'),
-(6, 4, 6, 'eggshell', 'metal', 28.50, 70.00, 'No issues.', 'none', 'Standard testing protocol followed.')
-ON DUPLICATE KEY UPDATE `id`=`id`;
-
--- ============================================================
--- SEED: Sample faculty remarks
--- ============================================================
-INSERT INTO `faculty_remarks` (`id`, `test_id`, `faculty_id`, `remarks`, `decision`) VALUES
-(1, 2, 3, 'Clear ridge patterns visible. Eggshell powder showed comparable results to commercial grade. Approved for inclusion in final report.', 'approved'),
-(2, 4, 3, 'Ridge clarity insufficient on wood surface. Recommend re-testing with finer powder particle size.', 'rejected'),
-(3, 5, 3, 'Excellent results on plastic surface. Commercial powder baseline confirmed.', 'approved')
-ON DUPLICATE KEY UPDATE `id`=`id`;
+-- No default accounts or sample research data are imported.
+-- Provision the first administrator with scripts/create_admin.php.

@@ -110,20 +110,11 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Smart RDS Auto-Detection & Credential Enforcement
+// Use the same explicit credentials for local, Railway and AWS RDS hosts.
+// Canonical DB_* settings take precedence over legacy/provider aliases.
 $detected_db_server = env('DB_HOST', env('MYSQLHOST', env('RDS_HOSTNAME', 'localhost')));
-$is_rds_host = (strpos($detected_db_server, '.rds.amazonaws.com') !== false);
-
-$user_val = env('DB_USER', env('RDS_USERNAME', ''));
-$pass_val = env('DB_PASS', env('RDS_PASSWORD', ''));
-
-if ($is_rds_host) {
-    $db_user = !empty($user_val) ? $user_val : 'admin';
-    $db_pass = !empty($pass_val) ? $pass_val : 'GreenForensics2026!';
-} else {
-    $db_user = env('DB_USERNAME', env('DB_USER', 'root'));
-    $db_pass = env('DB_PASSWORD', env('DB_PASS', ''));
-}
+$db_user = env('DB_USERNAME', env('DB_USER', env('MYSQLUSER', env('RDS_USERNAME', 'root'))));
+$db_pass = env('DB_PASSWORD', env('DB_PASS', env('MYSQLPASSWORD', env('RDS_PASSWORD', ''))));
 
 define('DB_SERVER', $detected_db_server);
 define('DB_USERNAME', $db_user);
@@ -620,69 +611,23 @@ function ensure_database_schema(PDO $pdo)
             'allowed_registration_roles' => 'criminology_student,faculty_researcher,alumni_police_partner',
             'maintenance_mode' => '0',
             'max_login_attempts' => '5',
-            'lockout_time' => '15',
-            'schema_version' => (string)APP_SCHEMA_VERSION
+            'lockout_time' => '15'
         ];
-        $checkSetting = $pdo->prepare("SELECT COUNT(*) FROM `system_settings` WHERE `setting_key` = :key");
-        $insertSetting = $pdo->prepare("INSERT INTO `system_settings` (`setting_key`, `setting_value`) VALUES (:key, :val) ON DUPLICATE KEY UPDATE `setting_value` = :val_up");
+        // Fill missing settings without replacing values saved by administrators.
+        $insertSetting = $pdo->prepare("INSERT INTO `system_settings` (`setting_key`, `setting_value`) VALUES (:key, :val) ON DUPLICATE KEY UPDATE `setting_key` = `setting_key`");
         foreach ($defaultSettings as $key => $val) {
-            $insertSetting->execute([':key' => $key, ':val' => $val, ':val_up' => $val]);
+            $insertSetting->execute([':key' => $key, ':val' => $val]);
         }
 
-        // ============================================================
-        // 14. Seed default accounts using INSERT IGNORE
-        // ============================================================
-        $defaultAccounts = [
-            [
-                'first_name'  => 'System',
-                'middle_name' => null,
-                'last_name'   => 'Administrator',
-                'full_name'   => 'System Administrator',
-                'email'       => 'admin@greenforensics.com',
-                'password'    => password_hash('admin123', PASSWORD_DEFAULT),
-                'role'        => 'super_admin',
-                'status'      => 'active'
-            ],
-            [
-                'first_name'  => 'System',
-                'middle_name' => null,
-                'last_name'   => 'Administrator',
-                'full_name'   => 'System Administrator (Edu)',
-                'email'       => 'admin@greenforensics.edu.ph',
-                'password'    => password_hash('admin123', PASSWORD_DEFAULT),
-                'role'        => 'super_admin',
-                'status'      => 'active'
-            ],
-            [
-                'first_name'  => 'Maria',
-                'middle_name' => null,
-                'last_name'   => 'Santos',
-                'full_name'   => 'Dr. Maria Santos',
-                'email'       => 'faculty@greenforensics.edu.ph',
-                'password'    => password_hash('faculty123', PASSWORD_DEFAULT),
-                'role'        => 'faculty_researcher',
-                'status'      => 'active'
-            ],
-            [
-                'first_name'  => 'Juan',
-                'middle_name' => null,
-                'last_name'   => 'dela Cruz',
-                'full_name'   => 'Juan dela Cruz',
-                'email'       => 'student@greenforensics.edu.ph',
-                'password'    => password_hash('student123', PASSWORD_DEFAULT),
-                'role'        => 'criminology_student',
-                'status'      => 'active'
-            ],
-        ];
-        $ins = $pdo->prepare(
-            "INSERT IGNORE INTO `users`
-                (`first_name`, `middle_name`, `last_name`, `full_name`, `email`, `password`, `role`, `status`)
-             VALUES
-                (:first_name, :middle_name, :last_name, :full_name, :email, :password, :role, :status)"
-        );
-        foreach ($defaultAccounts as $acc) {
-            $ins->execute($acc);
-        }
+        // Only the migration version is advanced after schema setup succeeds.
+        $versionStmt = $pdo->prepare("INSERT INTO `system_settings` (`setting_key`, `setting_value`) VALUES ('schema_version', :version) ON DUPLICATE KEY UPDATE `setting_value` = :updated_version");
+        $versionStmt->execute([
+            ':version' => (string)APP_SCHEMA_VERSION,
+            ':updated_version' => (string)APP_SCHEMA_VERSION
+        ]);
+
+        // Accounts are never seeded by web requests. Provision the first admin
+        // explicitly with scripts/create_admin.php using a unique password.
 
     } catch (Exception $e) {
         error_log("Database Migration Warning: " . $e->getMessage());
